@@ -1,0 +1,21 @@
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.eslintcache
+
+# Backend
+backend/venv/
+backend/env/
+backend/__pycache__/
+backend/*.pyc
+backend/.env
+backend/temp_audio/
+
+# Databases
+*.db
+*.sqlite3
+
+# Misc
+.DS_Store
+.env
