@@ -28,7 +28,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 
 // Header Component so we can use useAuth and useLocation safely inside Router
 const AppHeader = () => {
-  const { currentUser, logout } = useAuth();
+  const { currentUser, userRole, logout } = useAuth();
   const location = useLocation();
 
   return (
