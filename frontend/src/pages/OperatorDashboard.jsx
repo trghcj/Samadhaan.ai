@@ -131,7 +131,7 @@ const OperatorDashboard = () => {
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
           backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50
         }}>
-          <div className="card" style={{ width: '100%', maxWidth: '550px', margin: '1rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <div className="card" style={{ width: '100%', maxWidth: '550px', margin: '1rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', maxHeight: '90vh', overflowY: 'auto' }}>
             
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '1rem' }}>
               <h2 style={{ fontSize: '1.25rem', fontWeight: 600 }}>Review Grievance #{selectedGrievance.id}</h2>
