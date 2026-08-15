@@ -43,8 +43,11 @@ async def root():
 @app.get("/api/grievances")
 def get_grievances(db: Session = Depends(get_db)):
     """Fetch all grievances for the Operator Dashboard"""
-    grievances = db.query(models.Grievance).order_by(models.Grievance.created_at.desc()).all()
-    return grievances
+    try:
+        grievances = db.query(models.Grievance).order_by(models.Grievance.created_at.desc()).all()
+        return grievances
+    except Exception as e:
+        return {"error": str(e), "status": 500}
 
 from pydantic import BaseModel
 class ResolveRequest(BaseModel):
@@ -92,8 +95,11 @@ def sync_user(req: UserSyncRequest, db: Session = Depends(get_db)):
 @app.get("/api/grievances/me/{uid}")
 def get_my_grievances(uid: str, db: Session = Depends(get_db)):
     """Fetch grievances for a specific citizen"""
-    grievances = db.query(models.Grievance).filter(models.Grievance.citizen_uid == uid).order_by(models.Grievance.created_at.desc()).all()
-    return grievances
+    try:
+        grievances = db.query(models.Grievance).filter(models.Grievance.citizen_uid == uid).order_by(models.Grievance.created_at.desc()).all()
+        return grievances
+    except Exception as e:
+        return {"error": str(e), "status": 500}
 
 
 from typing import Optional
