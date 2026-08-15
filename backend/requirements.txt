@@ -4,8 +4,6 @@ sqlalchemy
 psycopg2-binary
 pydantic
 python-multipart
-celery
-redis
 faster-whisper
 google-generativeai
 python-dotenv

@@ -1,7 +1,6 @@
 import os
 import json
 from faster_whisper import WhisperModel
-from worker import celery_app
 from dotenv import load_dotenv
 from database import SessionLocal
 import models
@@ -25,7 +24,6 @@ except Exception as e:
     print(f"Error loading whisper: {e}")
     whisper_model = None
 
-@celery_app.task(name="process_audio_task")
 def process_audio_task(audio_file_path: str):
     # 1. Transcription Phase
     transcript = ""

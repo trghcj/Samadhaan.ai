@@ -1,9 +1,12 @@
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, File, UploadFile, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
-from celery.result import AsyncResult
 from ai_pipeline import process_audio_task
 import shutil
 import os
+import uuid
+
+# In-memory dictionary to track background task status
+task_tracker = {}
 
 app = FastAPI(title="CivicSense API")
 
@@ -58,30 +61,45 @@ def resolve_grievance(g_id: int, req: ResolveRequest, db: Session = Depends(get_
     return {"status": "success"}
 
 @app.post("/api/upload")
-async def upload_audio(file: UploadFile = File(...)):
+async def upload_audio(background_tasks: BackgroundTasks, file: UploadFile = File(...)):
     """
-    Accepts audio, saves it locally, and queues the ML task in Celery.
+    Accepts audio, saves it locally, and queues the ML task in FastAPI BackgroundTasks.
     Returns immediately with a task_id so the frontend doesn't hang.
     """
     file_path = f"temp_audio/{file.filename}"
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
         
-    # Dispatch Celery task
-    task = process_audio_task.delay(file_path)
+    # Generate unique task ID
+    task_id = str(uuid.uuid4())
+    task_tracker[task_id] = {"status": "processing"}
     
-    return {"task_id": task.id, "status": "processing"}
+    # Define the background worker function
+    def run_ai_task(tid, fp):
+        try:
+            result = process_audio_task(fp)
+            task_tracker[tid] = {
+                "status": "success",
+                "ai_result": result
+            }
+        except Exception as e:
+            task_tracker[tid] = {
+                "status": "error",
+                "error": str(e)
+            }
+            
+    # Dispatch native FastAPI background task
+    background_tasks.add_task(run_ai_task, task_id, file_path)
+    
+    return {"task_id": task_id, "status": "processing"}
 
 @app.get("/api/status/{task_id}")
 async def get_status(task_id: str):
     """
     Endpoint for the frontend to poll the task status.
     """
-    task_result = AsyncResult(task_id)
-    
-    if task_result.ready():
-        return {
-            "status": "success",
-            "ai_result": task_result.get()
-        }
-    return {"status": "processing"}
+    task_info = task_tracker.get(task_id)
+    if not task_info:
+        return {"status": "error", "error": "Task not found in memory"}
+        
+    return task_info
