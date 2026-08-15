@@ -5,11 +5,10 @@ from dotenv import load_dotenv
 from database import SessionLocal
 import models
 
-# Use the stable SDK to prevent Render crashes
-try:
-    import google.generativeai as genai
-except ImportError:
-    genai = None
+import requests
+
+# Use REST API to prevent Render OOM crashes and dependency conflicts
+genai = None
 
 # Load environment variables
 load_dotenv()
@@ -17,8 +16,8 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 
 # Initialize Whisper model globally so it stays in memory across tasks
 print("Loading Whisper Model (this may take a moment on first run)...")
-try:
-    whisper_model = WhisperModel("base", device="cpu", compute_type="int8")
+    # Using 'tiny' instead of 'base' to save ~150MB RAM on Render Free Tier
+    whisper_model = WhisperModel("tiny", device="cpu", compute_type="int8")
     print("Whisper Model loaded successfully.")
 except Exception as e:
     print(f"Error loading whisper: {e}")
@@ -52,13 +51,13 @@ def process_audio_task(audio_file_path: str, user_id: str = None, reporter_name:
             "error": "Gemini API key missing. Mock classification used."
         }
         
-    if genai is None:
+    if GEMINI_API_KEY == "":
         return {
             "prediction_set": "Error",
             "confidence_level": "Low",
             "confidence_score": 0.0,
             "transcript": transcript,
-            "error": "Please run: pip install google-genai"
+            "error": "Missing GEMINI_API_KEY"
         }
 
     try:
@@ -86,16 +85,21 @@ def process_audio_task(audio_file_path: str, user_id: str = None, reporter_name:
             "confidence_score": 0.65
         }}
         """
-        genai.configure(api_key=GEMINI_API_KEY)
-        
-        selected_model = 'gemini-pro'
-        print(f"Using Gemini model: {selected_model}")
+        # Use REST API instead of heavy SDK to avoid gRPC OOM crashes
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
+        payload = {
+            "contents": [{
+                "parts": [{"text": prompt}]
+            }]
+        }
         
         try:
-            model = genai.GenerativeModel(selected_model)
-            response = model.generate_content(prompt)
+            response = requests.post(url, json=payload, headers={"Content-Type": "application/json"}, timeout=15)
+            response.raise_for_status()
+            data = response.json()
+            result_text = data['candidates'][0]['content']['parts'][0]['text'].strip()
         except Exception as e:
-            print(f"Gemini API Error: {e}")
+            print(f"Gemini API REST Error: {e}")
             return {
                 "prediction_set": "Error",
                 "confidence_level": "Low",
@@ -103,7 +107,6 @@ def process_audio_task(audio_file_path: str, user_id: str = None, reporter_name:
                 "transcript": transcript
             }
             
-        result_text = response.text.strip()
         if result_text.startswith("```json"):
             result_text = result_text[7:-3].strip()
         elif result_text.startswith("```"):
