@@ -12,7 +12,7 @@ const OperatorDashboard = () => {
   const fetchGrievances = async () => {
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:8000/api/grievances');
+      const response = await fetch('https://samadhaan-ai.onrender.com/api/grievances');
       const data = await response.json();
       setGrievances(data);
     } catch (err) {
@@ -177,7 +177,7 @@ const OperatorDashboard = () => {
               {!selectedGrievance.is_resolved && (
                 <button className="btn btn-primary" onClick={async () => {
                   try {
-                    await fetch(`http://localhost:8000/api/grievances/${selectedGrievance.id}/resolve`, {
+                    await fetch(`https://samadhaan-ai.onrender.com/api/grievances/${selectedGrievance.id}/resolve`, {
                       method: 'PATCH',
                       headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({ notes: reviewNotes })

@@ -29,7 +29,7 @@ const CitizenPortal = () => {
         formData.append('file', blob, 'recording.webm');
         
         try {
-          const response = await fetch('http://localhost:8000/api/upload', {
+          const response = await fetch('https://samadhaan-ai.onrender.com/api/upload', {
             method: 'POST',
             body: formData,
           });
@@ -40,7 +40,7 @@ const CitizenPortal = () => {
             // Start polling the status endpoint every 2 seconds
             const pollInterval = setInterval(async () => {
               try {
-                const statusRes = await fetch(`http://localhost:8000/api/status/${data.task_id}`);
+                const statusRes = await fetch(`https://samadhaan-ai.onrender.com/api/status/${data.task_id}`);
                 const statusData = await statusRes.json();
                 
                 if (statusData.status === 'success') {
