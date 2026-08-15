@@ -39,9 +39,9 @@ const OperatorDashboard = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '3rem' }}>
         <div>
           <h1 style={{ 
-            fontSize: '2.75rem', 
+            fontSize: '2.25rem', 
             marginBottom: '1.5rem', 
-            background: 'linear-gradient(90deg, #FF6A00, #EE0979)', 
+            background: 'linear-gradient(90deg, #FF6A00, #222222)', 
             WebkitBackgroundClip: 'text', 
             WebkitTextFillColor: 'transparent',
             fontWeight: 800,
