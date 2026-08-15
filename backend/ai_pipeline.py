@@ -5,9 +5,9 @@ from dotenv import load_dotenv
 from database import SessionLocal
 import models
 
-# Use the NEW SDK as requested by the deprecation warning
+# Use the stable SDK to prevent Render crashes
 try:
-    from google import genai
+    import google.generativeai as genai
 except ImportError:
     genai = None
 
@@ -86,17 +86,14 @@ def process_audio_task(audio_file_path: str, user_id: str = None, reporter_name:
             "confidence_score": 0.65
         }}
         """
-        
-        client = genai.Client(api_key=GEMINI_API_KEY)
+        genai.configure(api_key=GEMINI_API_KEY)
         
         selected_model = 'gemini-1.5-flash'
         print(f"Using Gemini model: {selected_model}")
         
         try:
-            response = client.models.generate_content(
-                model=selected_model,
-                contents=prompt
-            )
+            model = genai.GenerativeModel(selected_model)
+            response = model.generate_content(prompt)
         except Exception as e:
             print(f"Gemini API Error: {e}")
             return {
