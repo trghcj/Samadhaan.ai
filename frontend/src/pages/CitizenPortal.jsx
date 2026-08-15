@@ -8,6 +8,7 @@ const CitizenPortal = () => {
   const [audioData, setAudioData] = useState(null);
   const [status, setStatus] = useState('idle'); // idle, recording, form, processing, success, clarification
   const [result, setResult] = useState(null);
+  const [statusStep, setStatusStep] = useState(null);
   
   // New Form Fields
   const [reporterName, setReporterName] = useState('');
@@ -100,6 +101,11 @@ const CitizenPortal = () => {
               console.error("Backend Task Error:", statusData.error);
               alert("An error occurred during AI processing: " + (statusData.error || "Unknown Error. Please try again."));
               setStatus('idle');
+            } else if (statusData.status === 'processing') {
+              // Update the UI with the specific step from the backend
+              if (statusData.step) {
+                setStatusStep(statusData.step);
+              }
             }
           } catch (pollErr) {
             console.error("Polling error:", pollErr);
@@ -184,10 +190,10 @@ const CitizenPortal = () => {
             </div>
           </form>
         ) : status === 'processing' ? (
-          <div style={{ padding: '2rem' }}>
+          <div style={{ padding: '2rem', textAlign: 'center' }}>
             {/* simple inline spinner style */}
             <div style={{ border: '4px solid #E2E8F0', borderTop: '4px solid var(--color-primary)', borderRadius: '50%', width: '50px', height: '50px', animation: 'spin 1s linear infinite', margin: '0 auto 1.5rem' }} />
-            <p style={{ fontSize: '1.125rem', fontWeight: 500 }}>Analyzing grievance...</p>
+            <p style={{ fontSize: '1.125rem', fontWeight: 500 }}>{statusStep || 'Analyzing grievance...'}</p>
             <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
           </div>
         ) : status === 'success' ? (

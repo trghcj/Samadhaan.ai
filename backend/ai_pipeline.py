@@ -17,23 +17,25 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 # Initialize Whisper model lazily to prevent blocking Uvicorn startup
 whisper_model = None
 
-def get_whisper_model():
+def get_whisper_model(progress_callback=None):
     global whisper_model
     if whisper_model is None:
+        if progress_callback: progress_callback("Downloading and loading audio model (first run only, takes ~30s)...")
         print("Loading Whisper Model (this may take a moment on first run)...")
         try:
-            # Using 'tiny' instead of 'base' to save ~150MB RAM on Render Free Tier
-            whisper_model = WhisperModel("tiny", device="cpu", compute_type="int8")
+            # Using 'tiny' with 'default' compute_type to prevent AVX instruction hangs on older Render CPUs
+            whisper_model = WhisperModel("tiny", device="cpu", compute_type="default")
             print("Whisper Model loaded successfully.")
         except Exception as e:
             print(f"Error loading whisper: {e}")
     return whisper_model
 
-def process_audio_task(audio_file_path: str, user_id: str = None, reporter_name: str = None, reporter_phone: str = None, location: str = None, extra_details: str = None):
+def process_audio_task(audio_file_path: str, user_id: str = None, reporter_name: str = None, reporter_phone: str = None, location: str = None, extra_details: str = None, progress_callback=None):
     # 1. Transcription Phase
     transcript = ""
-    model = get_whisper_model()
+    model = get_whisper_model(progress_callback)
     if model:
+        if progress_callback: progress_callback("Transcribing audio...")
         try:
             segments, info = model.transcribe(audio_file_path, beam_size=5)
             transcript = " ".join([segment.text for segment in segments]).strip()
@@ -93,6 +95,7 @@ def process_audio_task(audio_file_path: str, user_id: str = None, reporter_name:
         }}
         """
         # Use REST API instead of heavy SDK to avoid gRPC OOM crashes
+        if progress_callback: progress_callback("Analyzing transcript with AI...")
         url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
         payload = {
             "contents": [{
@@ -123,6 +126,7 @@ def process_audio_task(audio_file_path: str, user_id: str = None, reporter_name:
         result_dict["transcript"] = transcript
         
         # Save the result to PostgreSQL
+        if progress_callback: progress_callback("Saving grievance to database...")
         try:
             db = SessionLocal()
             new_g = models.Grievance(

@@ -123,8 +123,12 @@ async def upload_audio(
     
     # Define the background worker function
     def run_ai_task(tid, fp, c_uid, r_name, r_phone, loc, extra):
+        def update_progress(msg):
+            task_tracker[tid] = {"status": "processing", "step": msg}
+            print(f"Task {tid} progress: {msg}")
+            
         try:
-            result = process_audio_task(fp, c_uid, r_name, r_phone, loc, extra)
+            result = process_audio_task(fp, c_uid, r_name, r_phone, loc, extra, progress_callback=update_progress)
             task_tracker[tid] = {
                 "status": "success",
                 "ai_result": result
