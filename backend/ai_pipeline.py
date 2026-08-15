@@ -88,7 +88,7 @@ def process_audio_task(audio_file_path: str, user_id: str = None, reporter_name:
         """
         genai.configure(api_key=GEMINI_API_KEY)
         
-        selected_model = 'gemini-1.5-flash'
+        selected_model = 'gemini-pro'
         print(f"Using Gemini model: {selected_model}")
         
         try:
