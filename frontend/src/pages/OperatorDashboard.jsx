@@ -36,7 +36,7 @@ const OperatorDashboard = () => {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '3rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3rem' }}>
         <div>
 
           <div style={{ display: 'flex', gap: '1.5rem', borderBottom: '1px solid var(--border)' }}>
@@ -54,7 +54,7 @@ const OperatorDashboard = () => {
             </button>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: '2rem', alignItems: 'center', marginTop: '1.5rem' }}>
+        <div style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: 'var(--bg-main)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '0.35rem 0.85rem' }}>
             <Filter size={16} color="var(--text-muted)" />
             <select 
