@@ -15,6 +15,7 @@ const AuthPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [phone, setPhone] = useState('');
+  const [countryCode, setCountryCode] = useState('+91');
   const [otp, setOtp] = useState('');
   const [confirmationResult, setConfirmationResult] = useState(null);
   const [error, setError] = useState('');
@@ -65,7 +66,8 @@ const AuthPage = () => {
     setError('');
     setLoading(true);
     try {
-      const confirmation = await signInWithPhoneNumber(auth, phone, window.recaptchaVerifier);
+      const fullPhoneNumber = countryCode + phone.replace(/^0+/, '').replace(/\s+/g, '');
+      const confirmation = await signInWithPhoneNumber(auth, fullPhoneNumber, window.recaptchaVerifier);
       setConfirmationResult(confirmation);
     } catch (err) {
       setError(err.message);
@@ -144,8 +146,20 @@ const AuthPage = () => {
             {!confirmationResult ? (
               <form onSubmit={handlePhoneSignIn} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Phone Number (with country code)</label>
-                  <input type="tel" placeholder="+91 9876543210" value={phone} onChange={(e) => setPhone(e.target.value)} required style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-main)' }} />
+                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Phone Number</label>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <select 
+                      value={countryCode} 
+                      onChange={(e) => setCountryCode(e.target.value)}
+                      style={{ padding: '0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-main)', width: '100px' }}
+                    >
+                      <option value="+91">+91 (IN)</option>
+                      <option value="+1">+1 (US)</option>
+                      <option value="+44">+44 (UK)</option>
+                      <option value="+61">+61 (AU)</option>
+                    </select>
+                    <input type="tel" placeholder="9876543210" value={phone} onChange={(e) => setPhone(e.target.value)} required style={{ flex: 1, padding: '0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-main)' }} />
+                  </div>
                 </div>
                 <button type="submit" className="btn btn-primary" disabled={loading} style={{ marginTop: '0.5rem' }}>
                   Send Verification Code
