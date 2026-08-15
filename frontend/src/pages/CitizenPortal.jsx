@@ -1,5 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Mic, Square, CheckCircle, AlertTriangle } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const CitizenPortal = () => {
   const [isRecording, setIsRecording] = useState(false);
@@ -8,8 +10,20 @@ const CitizenPortal = () => {
   const [result, setResult] = useState(null);
   const mediaRecorderRef = useRef(null);
   const chunksRef = useRef([]);
+  
+  const { currentUser } = useAuth();
+  const navigate = useNavigate();
 
   const startRecording = async () => {
+    if (!currentUser && !localStorage.getItem('skipAuthWarning')) {
+      const wantToLogin = window.confirm("Log in to track your grievance status on a personalized dashboard!\n\nClick OK to log in, or Cancel to report anonymously.");
+      if (wantToLogin) {
+        navigate('/auth');
+        return;
+      } else {
+        localStorage.setItem('skipAuthWarning', 'true');
+      }
+    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       mediaRecorderRef.current = new MediaRecorder(stream);
@@ -27,6 +41,9 @@ const CitizenPortal = () => {
         
         const formData = new FormData();
         formData.append('file', blob, 'recording.webm');
+        if (currentUser) {
+          formData.append('user_id', currentUser.uid);
+        }
         
         try {
           const response = await fetch('https://samadhaan-ai.onrender.com/api/upload', {

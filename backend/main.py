@@ -55,37 +55,56 @@ def resolve_grievance(g_id: int, req: ResolveRequest, db: Session = Depends(get_
     grievance = db.query(models.Grievance).filter(models.Grievance.id == g_id).first()
     if not grievance:
         return {"error": "Not found"}
+    from datetime import datetime
     grievance.is_resolved = True
     grievance.resolution_notes = req.notes
+    grievance.resolved_at = datetime.utcnow()
     db.commit()
     return {"status": "success"}
 
-class OperatorSyncRequest(BaseModel):
+class UserSyncRequest(BaseModel):
     uid: str
     email: str
     display_name: str | None = None
+    role: str = "citizen"
 
-@app.post("/api/operators/sync")
-def sync_operator(req: OperatorSyncRequest, db: Session = Depends(get_db)):
+@app.post("/api/users/sync")
+def sync_user(req: UserSyncRequest, db: Session = Depends(get_db)):
     from datetime import datetime
-    operator = db.query(models.Operator).filter(models.Operator.uid == req.uid).first()
-    if not operator:
-        operator = models.Operator(
+    user = db.query(models.User).filter(models.User.uid == req.uid).first()
+    if not user:
+        user = models.User(
             uid=req.uid,
             email=req.email,
-            display_name=req.display_name
+            display_name=req.display_name,
+            role=req.role
         )
-        db.add(operator)
+        db.add(user)
     else:
-        # Update existing operator on fresh login
-        operator.email = req.email
-        operator.display_name = req.display_name
-        operator.last_login = datetime.utcnow()
+        # Update existing user on fresh login (don't overwrite role)
+        user.email = req.email
+        user.display_name = req.display_name
+        user.last_login = datetime.utcnow()
+    
     db.commit()
-    return {"status": "success"}
+    return {"status": "success", "role": user.role}
+
+@app.get("/api/grievances/me/{uid}")
+def get_my_grievances(uid: str, db: Session = Depends(get_db)):
+    """Fetch grievances for a specific citizen"""
+    grievances = db.query(models.Grievance).filter(models.Grievance.citizen_uid == uid).order_by(models.Grievance.created_at.desc()).all()
+    return grievances
+
+
+from typing import Optional
+from fastapi import Form
 
 @app.post("/api/upload")
-async def upload_audio(background_tasks: BackgroundTasks, file: UploadFile = File(...)):
+async def upload_audio(
+    background_tasks: BackgroundTasks, 
+    file: UploadFile = File(...),
+    user_id: Optional[str] = Form(None)
+):
     """
     Accepts audio, saves it locally, and queues the ML task in FastAPI BackgroundTasks.
     Returns immediately with a task_id so the frontend doesn't hang.
@@ -99,9 +118,9 @@ async def upload_audio(background_tasks: BackgroundTasks, file: UploadFile = Fil
     task_tracker[task_id] = {"status": "processing"}
     
     # Define the background worker function
-    def run_ai_task(tid, fp):
+    def run_ai_task(tid, fp, c_uid):
         try:
-            result = process_audio_task(fp)
+            result = process_audio_task(fp, c_uid)
             task_tracker[tid] = {
                 "status": "success",
                 "ai_result": result
@@ -113,7 +132,7 @@ async def upload_audio(background_tasks: BackgroundTasks, file: UploadFile = Fil
             }
             
     # Dispatch native FastAPI background task
-    background_tasks.add_task(run_ai_task, task_id, file_path)
+    background_tasks.add_task(run_ai_task, task_id, file_path, user_id)
     
     return {"task_id": task_id, "status": "processing"}
 

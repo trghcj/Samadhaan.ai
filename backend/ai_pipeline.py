@@ -24,7 +24,7 @@ except Exception as e:
     print(f"Error loading whisper: {e}")
     whisper_model = None
 
-def process_audio_task(audio_file_path: str):
+def process_audio_task(audio_file_path: str, user_id: str = None):
     # 1. Transcription Phase
     transcript = ""
     if whisper_model:
@@ -122,7 +122,8 @@ def process_audio_task(audio_file_path: str):
                 transcript=transcript,
                 prediction=result_dict.get("prediction_set", "Error"),
                 confidence=result_dict.get("confidence_level", "Low"),
-                confidence_score=float(result_dict.get("confidence_score", 0.0))
+                confidence_score=float(result_dict.get("confidence_score", 0.0)),
+                citizen_uid=user_id
             )
             db.add(new_g)
             db.commit()

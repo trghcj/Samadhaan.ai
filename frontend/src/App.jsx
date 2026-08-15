@@ -2,17 +2,27 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, Navigate, useLocation } from 'react-router-dom';
 import CitizenPortal from './pages/CitizenPortal';
 import OperatorDashboard from './pages/OperatorDashboard';
+import CitizenDashboard from './pages/CitizenDashboard';
 import AuthPage from './pages/AuthPage';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { LogOut } from 'lucide-react';
 import './index.css';
 
 // Protected Route Wrapper
-const ProtectedRoute = ({ children }) => {
-  const { currentUser } = useAuth();
+const ProtectedRoute = ({ children, allowedRoles }) => {
+  const { currentUser, userRole, loading } = useAuth();
+  
+  if (loading) return <div>Loading...</div>;
+
   if (!currentUser) {
     return <Navigate to="/auth" />;
   }
+
+  // If roles are specified and user's role doesn't match
+  if (allowedRoles && userRole && !allowedRoles.includes(userRole)) {
+    return <Navigate to="/" />;
+  }
+
   return children;
 };
 
@@ -31,11 +41,18 @@ const AppHeader = () => {
 
       <div className="nav-links">
         <Link to="/" className={`nav-item ${location.pathname === '/' ? 'active' : ''}`} style={{ textDecoration: 'none' }}>
-          Product
+          Report Issue
         </Link>
-        <Link to="/operator" className={`nav-item ${location.pathname.startsWith('/operator') ? 'active' : ''}`} style={{ textDecoration: 'none' }}>
-          Operator Dashboard
-        </Link>
+        {currentUser && userRole === 'operator' && (
+          <Link to="/operator" className={`nav-item ${location.pathname.startsWith('/operator') ? 'active' : ''}`} style={{ textDecoration: 'none' }}>
+            Operator Dashboard
+          </Link>
+        )}
+        {currentUser && userRole === 'citizen' && (
+          <Link to="/dashboard" className={`nav-item ${location.pathname.startsWith('/dashboard') ? 'active' : ''}`} style={{ textDecoration: 'none' }}>
+            My Dashboard
+          </Link>
+        )}
       </div>
 
       <div>
@@ -65,8 +82,16 @@ function App() {
               <Route 
                 path="/operator" 
                 element={
-                  <ProtectedRoute>
+                  <ProtectedRoute allowedRoles={['operator']}>
                     <OperatorDashboard />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/dashboard" 
+                element={
+                  <ProtectedRoute allowedRoles={['citizen']}>
+                    <CitizenDashboard />
                   </ProtectedRoute>
                 } 
               />
