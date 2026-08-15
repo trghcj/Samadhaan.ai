@@ -8,7 +8,7 @@ import {
   RecaptchaVerifier, 
   signInWithPhoneNumber 
 } from 'firebase/auth';
-import { Chrome } from 'lucide-react';
+import { LogIn } from 'lucide-react';
 
 const AuthPage = () => {
   const [authMode, setAuthMode] = useState('email_login'); // email_login, email_signup, phone
@@ -178,7 +178,7 @@ const AuthPage = () => {
           className="btn btn-outline" 
           style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
         >
-          <Chrome size={18} /> Continue with Google
+          <LogIn size={18} /> Continue with Google
         </button>
         
       </div>
