@@ -14,22 +14,28 @@ genai = None
 load_dotenv()
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 
-# Initialize Whisper model globally so it stays in memory across tasks
-print("Loading Whisper Model (this may take a moment on first run)...")
-try:
-    # Using 'tiny' instead of 'base' to save ~150MB RAM on Render Free Tier
-    whisper_model = WhisperModel("tiny", device="cpu", compute_type="int8")
-    print("Whisper Model loaded successfully.")
-except Exception as e:
-    print(f"Error loading whisper: {e}")
-    whisper_model = None
+# Initialize Whisper model lazily to prevent blocking Uvicorn startup
+whisper_model = None
+
+def get_whisper_model():
+    global whisper_model
+    if whisper_model is None:
+        print("Loading Whisper Model (this may take a moment on first run)...")
+        try:
+            # Using 'tiny' instead of 'base' to save ~150MB RAM on Render Free Tier
+            whisper_model = WhisperModel("tiny", device="cpu", compute_type="int8")
+            print("Whisper Model loaded successfully.")
+        except Exception as e:
+            print(f"Error loading whisper: {e}")
+    return whisper_model
 
 def process_audio_task(audio_file_path: str, user_id: str = None, reporter_name: str = None, reporter_phone: str = None, location: str = None, extra_details: str = None):
     # 1. Transcription Phase
     transcript = ""
-    if whisper_model:
+    model = get_whisper_model()
+    if model:
         try:
-            segments, info = whisper_model.transcribe(audio_file_path, beam_size=5)
+            segments, info = model.transcribe(audio_file_path, beam_size=5)
             transcript = " ".join([segment.text for segment in segments]).strip()
         except Exception as e:
             print(f"Transcription error: {e}")
