@@ -40,6 +40,16 @@ def get_db():
 async def root():
     return {"message": "Samadhaan.ai Backend is running", "status": "ok"}
 
+@app.get("/api/reset-db")
+def reset_database():
+    """Temporary endpoint to fix missing columns in whatever database Render is using"""
+    try:
+        models.Base.metadata.drop_all(bind=engine)
+        models.Base.metadata.create_all(bind=engine)
+        return {"status": "success", "message": "Database schema forcefully reset."}
+    except Exception as e:
+        return {"error": str(e), "status": 500}
+
 @app.get("/api/grievances")
 def get_grievances(db: Session = Depends(get_db)):
     """Fetch all grievances for the Operator Dashboard"""
