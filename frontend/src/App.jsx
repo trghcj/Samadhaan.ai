@@ -34,7 +34,7 @@ const AppHeader = () => {
           Product
         </Link>
         <Link to="/operator" className={`nav-item ${location.pathname.startsWith('/operator') ? 'active' : ''}`} style={{ textDecoration: 'none' }}>
-          Dashboard
+          Operator Dashboard
         </Link>
       </div>
 

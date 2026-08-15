@@ -38,17 +38,7 @@ const OperatorDashboard = () => {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '3rem' }}>
         <div>
-          <h1 style={{ 
-            fontSize: '2.25rem', 
-            marginBottom: '1.5rem', 
-            background: 'linear-gradient(90deg, #FF6A00, #222222)', 
-            WebkitBackgroundClip: 'text', 
-            WebkitTextFillColor: 'transparent',
-            fontWeight: 800,
-            letterSpacing: '-0.02em'
-          }}>
-            Operator Dashboard
-          </h1>
+
           <div style={{ display: 'flex', gap: '1.5rem', borderBottom: '1px solid var(--border)' }}>
             <button 
               onClick={() => setActiveTab('pending')}
