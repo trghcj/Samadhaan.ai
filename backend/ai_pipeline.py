@@ -104,7 +104,7 @@ def process_audio_task(audio_file_path: str, user_id: str = None, reporter_name:
         }
         
         try:
-            response = requests.post(url, json=payload, headers={"Content-Type": "application/json"}, timeout=15)
+            response = requests.post(url, json=payload, headers={"Content-Type": "application/json"}, timeout=60)
             response.raise_for_status()
             data = response.json()
             result_text = data['candidates'][0]['content']['parts'][0]['text'].strip()
