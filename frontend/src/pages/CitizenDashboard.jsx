@@ -27,7 +27,7 @@ const CitizenDashboard = () => {
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <h1 style={{ fontSize: '2.25rem', background: 'linear-gradient(90deg, #FF6A00, #222222)', WebkitBackgroundClip: 'text', color: 'transparent', fontWeight: 800 }}>
+        <h1 style={{ fontSize: '2.25rem', color: '#FF5722', fontWeight: 800 }}>
           My Reported Issues
         </h1>
         <button className="btn btn-primary" onClick={() => navigate('/')} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>

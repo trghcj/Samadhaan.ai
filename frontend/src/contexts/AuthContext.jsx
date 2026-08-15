@@ -45,10 +45,15 @@ export const AuthProvider = ({ children }) => {
     setUserRole(null);
   };
 
+  const toggleRoleForDemo = () => {
+    setUserRole(prev => prev === 'citizen' ? 'operator' : 'citizen');
+  };
+
   const value = {
     currentUser,
     userRole,
-    logout
+    logout,
+    toggleRoleForDemo
   };
 
   return (
