@@ -23,8 +23,8 @@ def get_whisper_model(progress_callback=None):
         if progress_callback: progress_callback("Downloading and loading audio model (first run only, takes ~30s)...")
         print("Loading Whisper Model (this may take a moment on first run)...")
         try:
-            # Using 'tiny' with 'default' compute_type to prevent AVX instruction hangs on older Render CPUs
-            whisper_model = WhisperModel("tiny", device="cpu", compute_type="default")
+            # Using 'tiny' with 'default' compute_type and cpu_threads=1 to prevent Render CPU thrashing
+            whisper_model = WhisperModel("tiny", device="cpu", compute_type="default", cpu_threads=1)
             print("Whisper Model loaded successfully.")
         except Exception as e:
             print(f"Error loading whisper: {e}")
