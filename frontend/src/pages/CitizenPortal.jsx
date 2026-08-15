@@ -212,9 +212,14 @@ const CitizenPortal = () => {
                 The AI encountered an error: <br/><strong style={{color: '#EF4444'}}>{result?.error || 'Unknown classification error'}</strong>
               </p>
             ) : (
-              <p style={{ color: 'var(--text-muted)' }}>
-                We detected this might be about <strong>{result?.prediction_set || 'multiple departments'}</strong>. Could you specify which?
-              </p>
+              <div style={{ textAlign: 'center', maxWidth: '400px' }}>
+                <p style={{ color: 'var(--text-muted)', marginBottom: '1rem' }}>
+                  We detected this might be about <strong>{result?.prediction_set || 'multiple departments'}</strong>, but we aren't 100% sure.
+                </p>
+                <p style={{ color: 'var(--text-muted)' }}>
+                  Please re-record your <strong>entire issue</strong> with more specific details so we can route it correctly.
+                </p>
+              </div>
             )}
             <button className="btn btn-primary" style={{ marginTop: '2rem' }} onClick={() => setStatus('idle')}>Re-record</button>
           </div>
