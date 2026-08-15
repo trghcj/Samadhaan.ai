@@ -14,7 +14,12 @@ const OperatorDashboard = () => {
     try {
       const response = await fetch('https://samadhaan-ai.onrender.com/api/grievances');
       const data = await response.json();
-      setGrievances(data);
+      if (Array.isArray(data)) {
+        setGrievances(data);
+      } else {
+        console.error("Expected array but got:", data);
+        setGrievances([]);
+      }
     } catch (err) {
       console.error("Failed to fetch grievances", err);
     }
