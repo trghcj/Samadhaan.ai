@@ -162,9 +162,10 @@ const AuthPage = () => {
                 </button>
               </form>
             )}
-            <div id="recaptcha-container"></div>
           </div>
         )}
+        
+        <div id="recaptcha-container"></div>
 
         <div style={{ margin: '2rem 0', display: 'flex', alignItems: 'center' }}>
           <div style={{ flex: 1, height: '1px', backgroundColor: 'var(--border)' }}></div>
