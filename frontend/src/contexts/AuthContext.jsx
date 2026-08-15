@@ -11,7 +11,22 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        try {
+          await fetch('https://samadhaan-ai.onrender.com/api/operators/sync', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              uid: user.uid,
+              email: user.email || '',
+              display_name: user.displayName || 'Unknown Operator'
+            })
+          });
+        } catch (err) {
+          console.error("Failed to sync operator to database", err);
+        }
+      }
       setCurrentUser(user);
       setLoading(false);
     });

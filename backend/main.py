@@ -60,6 +60,30 @@ def resolve_grievance(g_id: int, req: ResolveRequest, db: Session = Depends(get_
     db.commit()
     return {"status": "success"}
 
+class OperatorSyncRequest(BaseModel):
+    uid: str
+    email: str
+    display_name: str | None = None
+
+@app.post("/api/operators/sync")
+def sync_operator(req: OperatorSyncRequest, db: Session = Depends(get_db)):
+    from datetime import datetime
+    operator = db.query(models.Operator).filter(models.Operator.uid == req.uid).first()
+    if not operator:
+        operator = models.Operator(
+            uid=req.uid,
+            email=req.email,
+            display_name=req.display_name
+        )
+        db.add(operator)
+    else:
+        # Update existing operator on fresh login
+        operator.email = req.email
+        operator.display_name = req.display_name
+        operator.last_login = datetime.utcnow()
+    db.commit()
+    return {"status": "success"}
+
 @app.post("/api/upload")
 async def upload_audio(background_tasks: BackgroundTasks, file: UploadFile = File(...)):
     """

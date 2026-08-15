@@ -13,3 +13,12 @@ class Grievance(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     is_resolved = Column(Boolean, default=False)
     resolution_notes = Column(String, nullable=True)
+
+class Operator(Base):
+    __tablename__ = "operators"
+
+    uid = Column(String, primary_key=True, index=True)
+    email = Column(String, index=True)
+    display_name = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    last_login = Column(DateTime, default=datetime.utcnow)
