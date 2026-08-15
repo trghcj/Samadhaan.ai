@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider } from "firebase/auth";
+import { initializeAuth, browserLocalPersistence, GoogleAuthProvider } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -12,5 +12,8 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
+// Explicitly use localStorage instead of IndexedDB to prevent "Database is closing" crashes
+export const auth = initializeAuth(app, {
+  persistence: browserLocalPersistence
+});
 export const googleProvider = new GoogleAuthProvider();
