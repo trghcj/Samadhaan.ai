@@ -206,8 +206,18 @@ const CitizenPortal = () => {
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <AlertTriangle size={72} style={{ marginBottom: '1.5rem', color: '#F59E0B' }} />
-            <h2 style={{ color: 'var(--text-main)', marginBottom: '0.5rem' }}>Clarification Needed</h2>
-            <p style={{ color: 'var(--text-muted)' }}>We detected this might be about <strong>{result?.prediction_set || 'multiple departments'}</strong>. Could you specify which?</p>
+            <h2 style={{ color: 'var(--text-main)', marginBottom: '0.5rem' }}>
+              {result?.prediction_set === 'Error' ? 'Analysis Failed' : 'Clarification Needed'}
+            </h2>
+            {result?.prediction_set === 'Error' ? (
+              <p style={{ color: 'var(--text-muted)', textAlign: 'center' }}>
+                The AI encountered an error: <br/><strong style={{color: '#EF4444'}}>{result?.error || 'Unknown classification error'}</strong>
+              </p>
+            ) : (
+              <p style={{ color: 'var(--text-muted)' }}>
+                We detected this might be about <strong>{result?.prediction_set || 'multiple departments'}</strong>. Could you specify which?
+              </p>
+            )}
             <button className="btn btn-primary" style={{ marginTop: '2rem' }} onClick={() => setStatus('idle')}>Re-record</button>
           </div>
         )}

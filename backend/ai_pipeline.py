@@ -96,7 +96,7 @@ def process_audio_task(audio_file_path: str, user_id: str = None, reporter_name:
         """
         # Use REST API instead of heavy SDK to avoid gRPC OOM crashes
         if progress_callback: progress_callback("Analyzing transcript with AI...")
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key={GEMINI_API_KEY}"
         payload = {
             "contents": [{
                 "parts": [{"text": prompt}]
