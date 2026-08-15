@@ -61,7 +61,9 @@ const AppHeader = () => {
             <LogOut size={14} /> Logout
           </button>
         ) : (
-          <div style={{ width: '80px' }}></div>
+          <Link to="/auth" className="btn btn-primary" style={{ textDecoration: 'none', padding: '0.4rem 1rem', fontSize: '0.875rem', fontWeight: 600 }}>
+            Login / Register
+          </Link>
         )}
       </div>
     </header>

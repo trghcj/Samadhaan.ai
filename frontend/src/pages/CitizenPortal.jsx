@@ -23,13 +23,11 @@ const CitizenPortal = () => {
   const navigate = useNavigate();
 
   const startRecording = async () => {
-    if (!currentUser && !localStorage.getItem('skipAuthWarning')) {
+    if (!currentUser) {
       const wantToLogin = window.confirm("Log in to track your grievance status on a personalized dashboard!\n\nClick OK to log in, or Cancel to report anonymously.");
       if (wantToLogin) {
         navigate('/auth');
         return;
-      } else {
-        localStorage.setItem('skipAuthWarning', 'true');
       }
     }
     try {
