@@ -95,6 +95,11 @@ const CitizenPortal = () => {
               } else {
                 setStatus('clarification');
               }
+            } else if (statusData.status === 'error') {
+              clearInterval(pollInterval);
+              console.error("Backend Task Error:", statusData.error);
+              alert("An error occurred during AI processing: " + (statusData.error || "Unknown Error. Please try again."));
+              setStatus('idle');
             }
           } catch (pollErr) {
             console.error("Polling error:", pollErr);
