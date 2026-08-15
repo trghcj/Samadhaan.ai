@@ -109,12 +109,17 @@ def process_audio_task(audio_file_path: str, user_id: str = None, reporter_name:
             data = response.json()
             result_text = data['candidates'][0]['content']['parts'][0]['text'].strip()
         except Exception as e:
-            print(f"Gemini API REST Error: {e}")
+            err_msg = str(e)
+            if hasattr(e, 'response') and e.response is not None:
+                try: err_msg += f" - Response: {e.response.text}"
+                except: pass
+            print(f"Gemini API REST Error: {err_msg}")
             return {
                 "prediction_set": "Error",
                 "confidence_level": "Low",
                 "confidence_score": 0.0,
-                "transcript": transcript
+                "transcript": transcript,
+                "error": f"API Error: {err_msg}"
             }
             
         if result_text.startswith("```json"):
