@@ -36,11 +36,11 @@ const OperatorDashboard = () => {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '3rem' }}>
         <div>
           <h1 style={{ 
-            fontSize: '2.5rem', 
-            marginBottom: '1rem', 
+            fontSize: '2.75rem', 
+            marginBottom: '1.5rem', 
             background: 'linear-gradient(90deg, #FF6A00, #EE0979)', 
             WebkitBackgroundClip: 'text', 
             WebkitTextFillColor: 'transparent',
@@ -92,12 +92,12 @@ const OperatorDashboard = () => {
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
           <thead style={{ backgroundColor: 'var(--color-surface-hover)', borderBottom: '1px solid var(--color-border)' }}>
             <tr>
-              <th style={{ padding: '1.5rem', fontWeight: 700, color: 'var(--text-muted)', fontSize: '0.95rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>ID</th>
-              <th style={{ padding: '1.5rem', fontWeight: 700, color: 'var(--text-muted)', fontSize: '0.95rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Transcript Snippet</th>
-              <th style={{ padding: '1.5rem', fontWeight: 700, color: 'var(--text-muted)', fontSize: '0.95rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Prediction Set</th>
-              <th style={{ padding: '1.5rem', fontWeight: 700, color: 'var(--text-muted)', fontSize: '0.95rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Confidence</th>
-              <th style={{ padding: '1.5rem', fontWeight: 700, color: 'var(--text-muted)', fontSize: '0.95rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Time</th>
-              <th style={{ padding: '1.5rem', fontWeight: 700, color: 'var(--text-muted)', fontSize: '0.95rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Action</th>
+              <th style={{ padding: '1.75rem 1.5rem', fontWeight: 700, color: 'var(--text-muted)', fontSize: '1.05rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>ID</th>
+              <th style={{ padding: '1.75rem 1.5rem', fontWeight: 700, color: 'var(--text-muted)', fontSize: '1.05rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Transcript Snippet</th>
+              <th style={{ padding: '1.75rem 1.5rem', fontWeight: 700, color: 'var(--text-muted)', fontSize: '1.05rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Prediction Set</th>
+              <th style={{ padding: '1.75rem 1.5rem', fontWeight: 700, color: 'var(--text-muted)', fontSize: '1.05rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Confidence</th>
+              <th style={{ padding: '1.75rem 1.5rem', fontWeight: 700, color: 'var(--text-muted)', fontSize: '1.05rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Time</th>
+              <th style={{ padding: '1.75rem 1.5rem', fontWeight: 700, color: 'var(--text-muted)', fontSize: '1.05rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Action</th>
             </tr>
           </thead>
           <tbody>
