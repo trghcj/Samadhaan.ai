@@ -64,8 +64,8 @@ const OperatorDashboard = () => {
             </button>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: 'var(--bg-main)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '0.25rem 0.75rem' }}>
+        <div style={{ display: 'flex', gap: '2rem', alignItems: 'center', marginTop: '1.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: 'var(--bg-main)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '0.35rem 0.85rem' }}>
             <Filter size={16} color="var(--text-muted)" />
             <select 
               value={confidenceFilter}
