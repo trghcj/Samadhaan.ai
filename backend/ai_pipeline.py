@@ -16,6 +16,7 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 
 # Initialize Whisper model globally so it stays in memory across tasks
 print("Loading Whisper Model (this may take a moment on first run)...")
+try:
     # Using 'tiny' instead of 'base' to save ~150MB RAM on Render Free Tier
     whisper_model = WhisperModel("tiny", device="cpu", compute_type="int8")
     print("Whisper Model loaded successfully.")
