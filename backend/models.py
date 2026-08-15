@@ -14,6 +14,7 @@ class Grievance(Base):
     resolution_notes = Column(String, nullable=True)
     citizen_uid = Column(String, nullable=True, index=True)
     resolved_at = Column(DateTime, nullable=True)
+    is_resolved = Column(Boolean, default=False)
     
     # New Fields for Anonymous/Detailed Reporting
     reporter_name = Column(String, nullable=True)
