@@ -75,6 +75,16 @@ def resolve_grievance(g_id: int, req: ResolveRequest, db: Session = Depends(get_
     db.commit()
     return {"status": "success"}
 
+@app.delete("/api/grievances/{g_id}")
+def delete_grievance(g_id: int, db: Session = Depends(get_db)):
+    grievance = db.query(models.Grievance).filter(models.Grievance.id == g_id).first()
+    if not grievance:
+        return {"error": "Not found", "status": 404}
+    
+    db.delete(grievance)
+    db.commit()
+    return {"status": "success"}
+
 class UserSyncRequest(BaseModel):
     uid: str
     email: str

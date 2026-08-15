@@ -64,7 +64,7 @@ const OperatorDashboard = () => {
             >
               <option value="All">All Confidence</option>
               <option value="High">High Confidence</option>
-              <option value="Moderate">Moderate Confidence</option>
+              <option value="Medium">Medium Confidence</option>
               <option value="Low">Low Confidence</option>
             </select>
           </div>
@@ -197,6 +197,18 @@ const OperatorDashboard = () => {
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '0.5rem' }}>
+              <button className="btn btn-outline" style={{ marginRight: 'auto', borderColor: '#EF4444', color: '#EF4444' }} onClick={async () => {
+                if(window.confirm('Are you sure you want to permanently delete this issue?')) {
+                  try {
+                    await fetch(`https://samadhaan-ai.onrender.com/api/grievances/${selectedGrievance.id}`, { method: 'DELETE' });
+                    setSelectedGrievance(null);
+                    fetchGrievances();
+                  } catch(err) {
+                    console.error(err);
+                    alert("Failed to delete grievance");
+                  }
+                }
+              }}>Delete Issue</button>
               <button className="btn btn-outline" onClick={() => setSelectedGrievance(null)}>Close</button>
               {!selectedGrievance.is_resolved && (
                 <button className="btn btn-primary" onClick={async () => {

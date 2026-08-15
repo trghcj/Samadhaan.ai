@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { Clock, CheckCircle, Navigation } from 'lucide-react';
+import { Clock, CheckCircle, Navigation, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const CitizenDashboard = () => {
@@ -56,9 +56,28 @@ const CitizenDashboard = () => {
             <div key={g.id} className="card" style={{ padding: '1.5rem', borderLeft: g.is_resolved ? '4px solid #10B981' : '4px solid #F59E0B' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem', gap: '1rem' }}>
                 <p style={{ fontSize: '1.1rem', fontWeight: 500, lineHeight: 1.5, flex: 1 }}>"{g.transcript}"</p>
-                <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
-                  {new Date(g.created_at).toLocaleDateString()}
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+                    {new Date(g.created_at).toLocaleDateString()}
+                  </span>
+                  <button 
+                    onClick={async () => {
+                      if(window.confirm('Are you sure you want to permanently delete this issue?')) {
+                        try {
+                          await fetch(`https://samadhaan-ai.onrender.com/api/grievances/${g.id}`, { method: 'DELETE' });
+                          setGrievances(prev => prev.filter(item => item.id !== g.id));
+                        } catch(err) {
+                          console.error(err);
+                          alert("Failed to delete grievance");
+                        }
+                      }
+                    }} 
+                    style={{ background: 'none', border: 'none', color: '#EF4444', cursor: 'pointer', padding: '0.25rem' }} 
+                    title="Delete Issue"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                </div>
               </div>
               
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', backgroundColor: g.is_resolved ? '#D1FAE5' : '#FEF3C7', color: g.is_resolved ? '#065F46' : '#92400E', borderRadius: 'var(--radius-sm)' }}>
