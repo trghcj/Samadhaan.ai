@@ -6,8 +6,15 @@ import { useNavigate } from 'react-router-dom';
 const CitizenPortal = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [audioData, setAudioData] = useState(null);
-  const [status, setStatus] = useState('idle'); // idle, recording, processing, success, clarification
+  const [status, setStatus] = useState('idle'); // idle, recording, form, processing, success, clarification
   const [result, setResult] = useState(null);
+  
+  // New Form Fields
+  const [reporterName, setReporterName] = useState('');
+  const [reporterPhone, setReporterPhone] = useState('');
+  const [location, setLocation] = useState('');
+  const [extraDetails, setExtraDetails] = useState('');
+
   const mediaRecorderRef = useRef(null);
   const chunksRef = useRef([]);
   
@@ -37,52 +44,7 @@ const CitizenPortal = () => {
         setAudioData(blob);
         chunksRef.current = [];
         
-        setStatus('processing');
-        
-        const formData = new FormData();
-        formData.append('file', blob, 'recording.webm');
-        if (currentUser) {
-          formData.append('user_id', currentUser.uid);
-        }
-        
-        try {
-          const response = await fetch('https://samadhaan-ai.onrender.com/api/upload', {
-            method: 'POST',
-            body: formData,
-          });
-          
-          const data = await response.json();
-          
-          if (data.task_id) {
-            // Start polling the status endpoint every 2 seconds
-            const pollInterval = setInterval(async () => {
-              try {
-                const statusRes = await fetch(`https://samadhaan-ai.onrender.com/api/status/${data.task_id}`);
-                const statusData = await statusRes.json();
-                
-                if (statusData.status === 'success') {
-                  clearInterval(pollInterval);
-                  setResult(statusData.ai_result);
-                  if (statusData.ai_result.confidence_level === 'High') {
-                    setStatus('success');
-                  } else {
-                    setStatus('clarification');
-                  }
-                  // Optionally, you can log the transcript here:
-                  console.log("Transcription & AI Result:", statusData.ai_result);
-                }
-              } catch (pollErr) {
-                console.error("Polling error:", pollErr);
-              }
-            }, 2000);
-          }
-        } catch (err) {
-          console.error("Backend not running, falling back to mock simulation:", err);
-          setTimeout(() => {
-            const mockResult = Math.random() > 0.5 ? 'success' : 'clarification';
-            setStatus(mockResult);
-          }, 2000);
-        }
+        setStatus('form');
       };
 
       mediaRecorderRef.current.start();
@@ -91,6 +53,60 @@ const CitizenPortal = () => {
     } catch (err) {
       console.error("Error accessing microphone:", err);
       alert("Microphone access is required to report a grievance.");
+    }
+  };
+
+  const submitGrievanceForm = async (e) => {
+    e.preventDefault();
+    setStatus('processing');
+    
+    const formData = new FormData();
+    formData.append('file', audioData, 'recording.webm');
+    
+    if (currentUser) {
+      formData.append('user_id', currentUser.uid);
+    } else {
+      formData.append('reporter_name', reporterName);
+      formData.append('reporter_phone', reporterPhone);
+    }
+    formData.append('location', location);
+    if (extraDetails) formData.append('extra_details', extraDetails);
+    
+    try {
+      const response = await fetch('https://samadhaan-ai.onrender.com/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      const data = await response.json();
+      
+      if (data.task_id) {
+        // Start polling the status endpoint every 2 seconds
+        const pollInterval = setInterval(async () => {
+          try {
+            const statusRes = await fetch(`https://samadhaan-ai.onrender.com/api/status/${data.task_id}`);
+            const statusData = await statusRes.json();
+            
+            if (statusData.status === 'success') {
+              clearInterval(pollInterval);
+              setResult(statusData.ai_result);
+              if (statusData.ai_result.confidence_level === 'High') {
+                setStatus('success');
+              } else {
+                setStatus('clarification');
+              }
+            }
+          } catch (pollErr) {
+            console.error("Polling error:", pollErr);
+          }
+        }, 2000);
+      }
+    } catch (err) {
+      console.error("Backend error, mock fallback:", err);
+      setTimeout(() => {
+        const mockResult = Math.random() > 0.5 ? 'success' : 'clarification';
+        setStatus(mockResult);
+      }, 2000);
     }
   };
 
@@ -130,6 +146,38 @@ const CitizenPortal = () => {
               {isRecording ? "Recording... Tap to stop" : "Tap to start recording"}
             </p>
           </>
+        ) : status === 'form' ? (
+          <form onSubmit={submitGrievanceForm} style={{ width: '100%', textAlign: 'left' }}>
+            <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', textAlign: 'center', fontWeight: 700 }}>Just a few more details...</h2>
+            
+            {!currentUser && (
+              <>
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.25rem', color: 'var(--text-muted)' }}>Full Name *</label>
+                  <input type="text" value={reporterName} onChange={e => setReporterName(e.target.value)} required style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-main)' }} placeholder="E.g. Ramesh Kumar" />
+                </div>
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.25rem', color: 'var(--text-muted)' }}>Phone Number *</label>
+                  <input type="tel" value={reporterPhone} onChange={e => setReporterPhone(e.target.value)} required style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-main)' }} placeholder="E.g. +91 98765 43210" />
+                </div>
+              </>
+            )}
+            
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.25rem', color: 'var(--text-muted)' }}>Location / Village *</label>
+              <input type="text" value={location} onChange={e => setLocation(e.target.value)} required style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-main)' }} placeholder="E.g. Near main square, Palampur" />
+            </div>
+
+            <div style={{ marginBottom: '2rem' }}>
+              <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.25rem', color: 'var(--text-muted)' }}>Extra Details (Optional)</label>
+              <textarea value={extraDetails} onChange={e => setExtraDetails(e.target.value)} rows="3" style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-main)' }} placeholder="Any other context we should know?" />
+            </div>
+
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <button type="button" className="btn btn-outline" style={{ flex: 1, padding: '1rem' }} onClick={() => setStatus('idle')}>Cancel</button>
+              <button type="submit" className="btn btn-primary" style={{ flex: 2, padding: '1rem' }}>Submit Grievance</button>
+            </div>
+          </form>
         ) : status === 'processing' ? (
           <div style={{ padding: '2rem' }}>
             {/* simple inline spinner style */}

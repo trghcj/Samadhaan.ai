@@ -11,10 +11,15 @@ class Grievance(Base):
     confidence = Column(String)
     confidence_score = Column(Float)
     created_at = Column(DateTime, default=datetime.utcnow)
-    is_resolved = Column(Boolean, default=False)
     resolution_notes = Column(String, nullable=True)
     citizen_uid = Column(String, nullable=True, index=True)
     resolved_at = Column(DateTime, nullable=True)
+    
+    # New Fields for Anonymous/Detailed Reporting
+    reporter_name = Column(String, nullable=True)
+    reporter_phone = Column(String, nullable=True)
+    location = Column(String, nullable=True)
+    extra_details = Column(String, nullable=True)
 
 class User(Base):
     __tablename__ = "users"

@@ -163,12 +163,36 @@ const OperatorDashboard = () => {
                   {selectedGrievance.resolution_notes || 'No notes provided.'}
                 </p>
               ) : (
-                <textarea 
-                  value={reviewNotes}
-                  onChange={(e) => setReviewNotes(e.target.value)}
-                  placeholder="Add documentation, contact info, or action taken..."
-                  style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', minHeight: '100px', resize: 'none', fontFamily: 'inherit' }}
-                />
+                <>
+                  <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+                    <div style={{ flex: 1, minWidth: '200px' }}>
+                      <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.25rem', fontWeight: 600 }}>Location</p>
+                      <p style={{ fontSize: '1rem', fontWeight: 500 }}>{selectedGrievance.location || 'Not Provided'}</p>
+                    </div>
+                    <div style={{ flex: 1, minWidth: '200px' }}>
+                      <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.25rem', fontWeight: 600 }}>Reporter Contact</p>
+                      {selectedGrievance.citizen_uid ? (
+                        <p style={{ fontSize: '1rem' }}>Authenticated Citizen ({selectedGrievance.citizen_uid.slice(0, 8)}...)</p>
+                      ) : selectedGrievance.reporter_name ? (
+                        <p style={{ fontSize: '1rem' }}>{selectedGrievance.reporter_name} - {selectedGrievance.reporter_phone}</p>
+                      ) : (
+                        <p style={{ fontSize: '1rem', color: 'var(--text-muted)' }}>Anonymous</p>
+                      )}
+                    </div>
+                  </div>
+                  {selectedGrievance.extra_details && (
+                    <div style={{ marginBottom: '1rem', backgroundColor: 'var(--bg-main)', padding: '1rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' }}>
+                      <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.25rem', fontWeight: 600 }}>Extra Details</p>
+                      <p style={{ fontSize: '0.95rem' }}>{selectedGrievance.extra_details}</p>
+                    </div>
+                  )}
+                  <textarea 
+                    value={reviewNotes}
+                    onChange={(e) => setReviewNotes(e.target.value)}
+                    placeholder="Add documentation, contact info, or action taken..."
+                    style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', minHeight: '100px', resize: 'none', fontFamily: 'inherit' }}
+                  />
+                </>
               )}
             </div>
 

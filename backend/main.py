@@ -103,7 +103,11 @@ from fastapi import Form
 async def upload_audio(
     background_tasks: BackgroundTasks, 
     file: UploadFile = File(...),
-    user_id: Optional[str] = Form(None)
+    user_id: Optional[str] = Form(None),
+    reporter_name: Optional[str] = Form(None),
+    reporter_phone: Optional[str] = Form(None),
+    location: Optional[str] = Form(None),
+    extra_details: Optional[str] = Form(None)
 ):
     """
     Accepts audio, saves it locally, and queues the ML task in FastAPI BackgroundTasks.
@@ -118,9 +122,9 @@ async def upload_audio(
     task_tracker[task_id] = {"status": "processing"}
     
     # Define the background worker function
-    def run_ai_task(tid, fp, c_uid):
+    def run_ai_task(tid, fp, c_uid, r_name, r_phone, loc, extra):
         try:
-            result = process_audio_task(fp, c_uid)
+            result = process_audio_task(fp, c_uid, r_name, r_phone, loc, extra)
             task_tracker[tid] = {
                 "status": "success",
                 "ai_result": result
@@ -132,7 +136,7 @@ async def upload_audio(
             }
             
     # Dispatch native FastAPI background task
-    background_tasks.add_task(run_ai_task, task_id, file_path, user_id)
+    background_tasks.add_task(run_ai_task, task_id, file_path, user_id, reporter_name, reporter_phone, location, extra_details)
     
     return {"task_id": task_id, "status": "processing"}
 
