@@ -15,6 +15,7 @@ const CitizenPortal = () => {
   const [reporterPhone, setReporterPhone] = useState('');
   const [location, setLocation] = useState('');
   const [extraDetails, setExtraDetails] = useState('');
+  const [clarifyAnswer, setClarifyAnswer] = useState('');
 
   const mediaRecorderRef = useRef(null);
   const chunksRef = useRef([]);
@@ -89,10 +90,10 @@ const CitizenPortal = () => {
             if (statusData.status === 'success') {
               clearInterval(pollInterval);
               setResult(statusData.ai_result);
-              if (statusData.ai_result.confidence_level === 'High') {
-                setStatus('success');
-              } else {
+              if (statusData.ai_result.confidence_level === 'Medium') {
                 setStatus('clarification');
+              } else {
+                setStatus('success');
               }
             } else if (statusData.status === 'error') {
               clearInterval(pollInterval);
@@ -195,33 +196,70 @@ const CitizenPortal = () => {
             <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
           </div>
         ) : status === 'success' ? (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
             <CheckCircle size={72} style={{ marginBottom: '1.5rem', color: '#10B981' }} />
             <h2 style={{ color: 'var(--text-main)', marginBottom: '0.5rem' }}>Grievance Routed</h2>
-            <p style={{ color: 'var(--text-muted)' }}>Your issue has been automatically sent to the <strong>{result?.prediction_set || 'relevant department'}</strong>.</p>
+            {result?.confidence_level === 'Low' ? (
+              <p style={{ color: 'var(--text-muted)' }}>We were unable to confidently categorize your issue automatically. It has been sent directly to a <strong>Human Operator</strong> for manual review.</p>
+            ) : (
+              <p style={{ color: 'var(--text-muted)' }}>Your issue has been automatically sent to the <strong>{result?.prediction_set || 'relevant department'}</strong>.</p>
+            )}
             <button className="btn btn-outline" style={{ marginTop: '2rem' }} onClick={() => setStatus('idle')}>Report Another</button>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <AlertTriangle size={72} style={{ marginBottom: '1.5rem', color: '#F59E0B' }} />
-            <h2 style={{ color: 'var(--text-main)', marginBottom: '0.5rem' }}>
-              {result?.prediction_set === 'Error' ? 'Analysis Failed' : 'Clarification Needed'}
+            <h2 style={{ color: 'var(--text-main)', marginBottom: '0.5rem', textAlign: 'center' }}>
+              {result?.prediction_set === 'Error' ? 'Analysis Failed' : 'We Need More Info'}
             </h2>
             {result?.prediction_set === 'Error' ? (
               <p style={{ color: 'var(--text-muted)', textAlign: 'center' }}>
                 The AI encountered an error: <br/><strong style={{color: '#EF4444'}}>{result?.error || 'Unknown classification error'}</strong>
               </p>
             ) : (
-              <div style={{ textAlign: 'center', maxWidth: '400px' }}>
-                <p style={{ color: 'var(--text-muted)', marginBottom: '1rem' }}>
-                  We detected this might be about <strong>{result?.prediction_set || 'multiple departments'}</strong>, but we aren't 100% sure.
-                </p>
-                <p style={{ color: 'var(--text-muted)' }}>
-                  Please re-record your <strong>entire issue</strong> with more specific details so we can route it correctly.
-                </p>
+              <div style={{ width: '100%' }}>
+                <div style={{ padding: '1rem', backgroundColor: '#FEF3C7', borderRadius: 'var(--radius-sm)', color: '#92400E', marginBottom: '1.5rem' }}>
+                  <strong>Question from AI:</strong><br/>
+                  {result?.clarifying_question || "We detected multiple possible departments. Could you provide a bit more detail to help us route this correctly?"}
+                </div>
+                
+                <textarea 
+                  value={clarifyAnswer} 
+                  onChange={e => setClarifyAnswer(e.target.value)} 
+                  rows="3" 
+                  style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-main)', marginBottom: '1rem' }} 
+                  placeholder="Type your answer here..." 
+                />
+                
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                  <button className="btn btn-outline" style={{ flex: 1 }} onClick={() => setStatus('idle')}>Start Over</button>
+                  <button 
+                    className="btn btn-primary" 
+                    style={{ flex: 2 }} 
+                    onClick={async () => {
+                      if(!clarifyAnswer.trim()) return alert("Please enter an answer.");
+                      setStatus('processing');
+                      setStatusStep('Saving your answer...');
+                      try {
+                        await fetch(`https://samadhaan-ai.onrender.com/api/grievances/${result.id}/clarify`, {
+                          method: 'PATCH',
+                          headers: {'Content-Type': 'application/json'},
+                          body: JSON.stringify({answer: clarifyAnswer})
+                        });
+                        setStatus('success');
+                        setClarifyAnswer('');
+                      } catch(e) {
+                        console.error(e);
+                        alert("Failed to submit clarification");
+                        setStatus('clarification');
+                      }
+                    }}
+                  >
+                    Submit Answer
+                  </button>
+                </div>
               </div>
             )}
-            <button className="btn btn-primary" style={{ marginTop: '2rem' }} onClick={() => setStatus('idle')}>Re-record</button>
           </div>
         )}
         

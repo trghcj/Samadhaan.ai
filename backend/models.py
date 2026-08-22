@@ -16,6 +16,10 @@ class Grievance(Base):
     resolved_at = Column(DateTime, nullable=True)
     is_resolved = Column(Boolean, default=False)
     
+    # Uncertainty-Aware Routing Fields
+    clarifying_question = Column(String, nullable=True)
+    alternative_departments = Column(String, nullable=True)
+    
     # New Fields for Anonymous/Detailed Reporting
     reporter_name = Column(String, nullable=True)
     reporter_phone = Column(String, nullable=True)

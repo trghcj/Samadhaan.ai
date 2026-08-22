@@ -72,26 +72,49 @@ def process_audio_task(audio_file_path: str, user_id: str = None, reporter_name:
     try:
         prompt = f"""
         You are the router for CivicSense, a municipal grievance system.
-        Classify the following citizen grievance transcript into one of these departments:
+        Classify the following citizen grievance transcript into ONE of these specific departments:
         - Water
         - Electricity
+        - Roads
         - Sanitation
-        - Public Works
+        - Drainage
+        - Street Lights
+        - Unclear (if the problem doesn't fit any of the above)
         
-        If it's ambiguous or spans multiple departments, return a comma-separated list of departments.
         Provide a confidence score from 0.0 to 1.0.
         Assign a confidence level:
         High = 0.8 to 1.0 (Very clear)
         Medium = 0.5 to 0.79 (Ambiguous, might need clarification)
         Low = 0.0 to 0.49 (Unclear, noisy, or irrelevant)
         
+        CRITICAL INSTRUCTIONS BASED ON CONFIDENCE:
+        - If Medium: You MUST include a "clarifying_question" field in the JSON with ONE short question to ask the citizen to clear up the confusion.
+        - If Low: You MUST include an "alternative_departments" field containing a comma-separated string of the 2 or 3 most likely departments (e.g., "Water, Drainage").
+        
         Transcript: "{transcript}"
         
         Output ONLY valid JSON with no markdown blocks like ```json.
+        Example High:
         {{
-            "prediction_set": "Water, Electricity",
+            "prediction_set": "Water",
+            "confidence_level": "High",
+            "confidence_score": 0.95
+        }}
+        
+        Example Medium:
+        {{
+            "prediction_set": "Roads",
             "confidence_level": "Medium",
-            "confidence_score": 0.65
+            "confidence_score": 0.65,
+            "clarifying_question": "Is the issue a pothole on the main road, or a broken sidewalk?"
+        }}
+        
+        Example Low:
+        {{
+            "prediction_set": "Unclear",
+            "confidence_level": "Low",
+            "confidence_score": 0.30,
+            "alternative_departments": "Water, Drainage"
         }}
         """
         # Use REST API instead of heavy SDK to avoid gRPC OOM crashes
@@ -139,6 +162,8 @@ def process_audio_task(audio_file_path: str, user_id: str = None, reporter_name:
                 prediction=result_dict.get("prediction_set", "Error"),
                 confidence=result_dict.get("confidence_level", "Low"),
                 confidence_score=float(result_dict.get("confidence_score", 0.0)),
+                clarifying_question=result_dict.get("clarifying_question"),
+                alternative_departments=result_dict.get("alternative_departments"),
                 citizen_uid=user_id,
                 reporter_name=reporter_name,
                 reporter_phone=reporter_phone,
@@ -147,6 +172,8 @@ def process_audio_task(audio_file_path: str, user_id: str = None, reporter_name:
             )
             db.add(new_g)
             db.commit()
+            db.refresh(new_g)
+            result_dict["id"] = new_g.id
             db.close()
         except Exception as db_err:
             print(f"Database save error: {db_err}")

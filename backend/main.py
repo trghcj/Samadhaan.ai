@@ -85,6 +85,24 @@ def delete_grievance(g_id: int, db: Session = Depends(get_db)):
     db.commit()
     return {"status": "success"}
 
+class ClarifyRequest(BaseModel):
+    answer: str
+
+@app.patch("/api/grievances/{g_id}/clarify")
+def clarify_grievance(g_id: int, req: ClarifyRequest, db: Session = Depends(get_db)):
+    grievance = db.query(models.Grievance).filter(models.Grievance.id == g_id).first()
+    if not grievance:
+        return {"error": "Not found"}
+    
+    # Append the citizen's clarification to the main transcript so operators can see it
+    grievance.transcript = f"{grievance.transcript}\n\n[Citizen Clarification]: {req.answer}"
+    # Clear the question so it doesn't prompt again
+    grievance.clarifying_question = None 
+    # Bump confidence up since they clarified
+    grievance.confidence = "High"
+    
+    db.commit()
+    return {"status": "success"}
 class UserSyncRequest(BaseModel):
     uid: str
     email: str

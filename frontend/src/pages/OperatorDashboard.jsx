@@ -150,7 +150,7 @@ const OperatorDashboard = () => {
               </p>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
               <div>
                 <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Routed Department</label>
                 <div style={{ fontWeight: 500, fontSize: '1.1rem' }}>{selectedGrievance.prediction}</div>
@@ -160,6 +160,13 @@ const OperatorDashboard = () => {
                 <span className={`badge badge-${selectedGrievance.confidence?.toLowerCase()}`}>{selectedGrievance.confidence}</span>
               </div>
             </div>
+            
+            {selectedGrievance.alternative_departments && (
+              <div style={{ backgroundColor: '#FEF3C7', padding: '1rem', borderRadius: 'var(--radius-sm)', border: '1px solid #F59E0B', marginBottom: '1.5rem' }}>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 700, color: '#92400E', marginBottom: '0.25rem' }}>AI Suggested Alternatives (Low Confidence)</label>
+                <div style={{ color: '#92400E' }}>{selectedGrievance.alternative_departments}</div>
+              </div>
+            )}
 
             <div>
               <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Operator Resolution Notes</label>
