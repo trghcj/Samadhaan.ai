@@ -157,13 +157,23 @@ def process_audio_task(audio_file_path: str, user_id: str = None, reporter_name:
         if progress_callback: progress_callback("Saving grievance to database...")
         try:
             db = SessionLocal()
+            
+            # Ensure lists are converted to strings before saving to String columns
+            alt_deps = result_dict.get("alternative_departments")
+            if isinstance(alt_deps, list):
+                alt_deps = ", ".join(str(x) for x in alt_deps)
+                
+            clar_q = result_dict.get("clarifying_question")
+            if isinstance(clar_q, list):
+                clar_q = " ".join(str(x) for x in clar_q)
+                
             new_g = models.Grievance(
                 transcript=transcript,
                 prediction=result_dict.get("prediction_set", "Error"),
                 confidence=result_dict.get("confidence_level", "Low"),
                 confidence_score=float(result_dict.get("confidence_score", 0.0)),
-                clarifying_question=result_dict.get("clarifying_question"),
-                alternative_departments=result_dict.get("alternative_departments"),
+                clarifying_question=clar_q,
+                alternative_departments=alt_deps,
                 citizen_uid=user_id,
                 reporter_name=reporter_name,
                 reporter_phone=reporter_phone,
@@ -177,6 +187,13 @@ def process_audio_task(audio_file_path: str, user_id: str = None, reporter_name:
             db.close()
         except Exception as db_err:
             print(f"Database save error: {db_err}")
+            return {
+                "prediction_set": "Error",
+                "confidence_level": "Low",
+                "confidence_score": 0.0,
+                "transcript": transcript,
+                "error": f"Failed to save to database: {str(db_err)}"
+            }
         
         if os.path.exists(audio_file_path):
             os.remove(audio_file_path)
