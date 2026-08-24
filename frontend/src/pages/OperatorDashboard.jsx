@@ -5,6 +5,7 @@ const OperatorDashboard = () => {
   const [grievances, setGrievances] = useState([]);
   const [loading, setLoading] = useState(true);
   const [confidenceFilter, setConfidenceFilter] = useState('All');
+  const [departmentFilter, setDepartmentFilter] = useState('All');
   const [selectedGrievance, setSelectedGrievance] = useState(null);
   const [reviewNotes, setReviewNotes] = useState('');
   const [activeTab, setActiveTab] = useState('pending');
@@ -39,6 +40,10 @@ const OperatorDashboard = () => {
     displayGrievances = displayGrievances.filter(g => g.confidence === confidenceFilter);
   }
 
+  if (departmentFilter !== 'All') {
+    displayGrievances = displayGrievances.filter(g => g.prediction && g.prediction.includes(departmentFilter));
+  }
+
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3rem' }}>
@@ -71,6 +76,23 @@ const OperatorDashboard = () => {
               <option value="High">High Confidence</option>
               <option value="Medium">Medium Confidence</option>
               <option value="Low">Low Confidence</option>
+            </select>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: 'var(--bg-main)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '0.35rem 0.85rem' }}>
+            <Filter size={16} color="var(--text-muted)" />
+            <select 
+              value={departmentFilter}
+              onChange={(e) => setDepartmentFilter(e.target.value)}
+              style={{ background: 'none', border: 'none', outline: 'none', color: 'var(--text-main)', fontSize: '0.95rem', cursor: 'pointer', padding: '0.25rem' }}
+            >
+              <option value="All">All Departments</option>
+              <option value="Water">Water</option>
+              <option value="Electricity">Electricity</option>
+              <option value="Roads">Roads</option>
+              <option value="Sanitation">Sanitation</option>
+              <option value="Drainage">Drainage</option>
+              <option value="Street Lights">Street Lights</option>
+              <option value="Unclear">Unclear</option>
             </select>
           </div>
           <button 
