@@ -9,6 +9,7 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [userRole, setUserRole] = useState(null);
+  const [userDepartment, setUserDepartment] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -16,6 +17,8 @@ export const AuthProvider = ({ children }) => {
       if (user) {
         try {
           const roleToSync = localStorage.getItem('signupRole') || 'citizen';
+          const deptToSync = roleToSync === 'operator' ? localStorage.getItem('signupDepartment') : null;
+          
           const response = await fetch('https://samadhaan-ai.onrender.com/api/users/sync', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -23,16 +26,23 @@ export const AuthProvider = ({ children }) => {
               uid: user.uid,
               email: user.email || '',
               display_name: user.displayName || 'Unknown User',
-              role: roleToSync
+              role: roleToSync,
+              department: deptToSync
             })
           });
           const data = await response.json();
           setUserRole(data.role);
+          if (data.department) setUserDepartment(data.department);
+          
           localStorage.removeItem('signupRole');
+          localStorage.removeItem('signupDepartment');
         } catch (err) {
           console.error("Failed to sync user to database", err);
           setUserRole('citizen'); // fallback
         }
+      } else {
+        setUserRole(null);
+        setUserDepartment(null);
       }
       setCurrentUser(user);
       setLoading(false);
@@ -43,17 +53,14 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     await signOut(auth);
     setUserRole(null);
-  };
-
-  const toggleRoleForDemo = () => {
-    setUserRole(prev => prev === 'citizen' ? 'operator' : 'citizen');
+    setUserDepartment(null);
   };
 
   const value = {
     currentUser,
     userRole,
-    logout,
-    toggleRoleForDemo
+    userDepartment,
+    logout
   };
 
   return (

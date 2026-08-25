@@ -28,7 +28,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 
 // Header Component so we can use useAuth and useLocation safely inside Router
 const AppHeader = () => {
-  const { currentUser, userRole, logout, toggleRoleForDemo } = useAuth();
+  const { currentUser, userRole, logout } = useAuth();
   const location = useLocation();
 
   return (
@@ -40,9 +40,11 @@ const AppHeader = () => {
       </div>
 
       <div className="nav-links">
-        <Link to="/" className={`nav-item ${location.pathname === '/' ? 'active' : ''}`} style={{ textDecoration: 'none' }}>
-          Report Issue
-        </Link>
+        {userRole !== 'operator' && (
+          <Link to="/" className={`nav-item ${location.pathname === '/' ? 'active' : ''}`} style={{ textDecoration: 'none' }}>
+            Report Issue
+          </Link>
+        )}
         {currentUser && userRole === 'operator' && (
           <Link to="/operator" className={`nav-item ${location.pathname.startsWith('/operator') ? 'active' : ''}`} style={{ textDecoration: 'none' }}>
             Operator Dashboard
@@ -58,9 +60,6 @@ const AppHeader = () => {
       <div>
         {currentUser ? (
           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-            <button onClick={toggleRoleForDemo} className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', padding: '0.35rem 0.75rem', fontSize: '0.8rem', background: '#F3F4F6', color: '#374151', border: '1px solid #D1D5DB' }}>
-              Test Mode: {userRole === 'operator' ? 'Operator' : 'Citizen'}
-            </button>
             <button onClick={logout} className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.35rem 0.75rem', fontSize: '0.875rem' }}>
               <LogOut size={14} /> Logout
             </button>

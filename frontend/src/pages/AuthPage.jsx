@@ -13,6 +13,7 @@ const AuthPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('citizen');
+  const [department, setDepartment] = useState('All Departments');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   
@@ -24,6 +25,7 @@ const AuthPage = () => {
     setLoading(true);
     try {
       localStorage.setItem('signupRole', role);
+      if (role === 'operator') localStorage.setItem('signupDepartment', department);
       if (authMode === 'email_signup') {
         await createUserWithEmailAndPassword(auth, email, password);
       } else {
@@ -43,6 +45,7 @@ const AuthPage = () => {
     setLoading(true);
     try {
       localStorage.setItem('signupRole', role);
+      if (role === 'operator') localStorage.setItem('signupDepartment', department);
       await signInWithPopup(auth, googleProvider);
       navigate('/');
     } catch (err) {
@@ -73,13 +76,29 @@ const AuthPage = () => {
             <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-main)' }} />
           </div>
           {authMode === 'email_signup' && (
-            <div>
-              <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.25rem' }}>I am a...</label>
-              <select value={role} onChange={(e) => setRole(e.target.value)} style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-main)' }}>
-                <option value="citizen">Citizen (Report & Track Issues)</option>
-                <option value="operator">Department Operator (Manage Issues)</option>
-              </select>
-            </div>
+            <>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.25rem' }}>I am a...</label>
+                <select value={role} onChange={(e) => setRole(e.target.value)} style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-main)' }}>
+                  <option value="citizen">Citizen (Report & Track Issues)</option>
+                  <option value="operator">Government Operator (Manage Issues)</option>
+                </select>
+              </div>
+              {role === 'operator' && (
+                <div style={{ marginTop: '1rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Assigned Department</label>
+                  <select value={department} onChange={(e) => setDepartment(e.target.value)} style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-main)' }}>
+                    <option value="All Departments">Super Admin (All Departments)</option>
+                    <option value="Water">Water</option>
+                    <option value="Electricity">Electricity</option>
+                    <option value="Roads">Roads</option>
+                    <option value="Sanitation">Sanitation</option>
+                    <option value="Drainage">Drainage</option>
+                    <option value="Street Lights">Street Lights</option>
+                  </select>
+                </div>
+              )}
+            </>
           )}
           <button type="submit" className="btn btn-primary" disabled={loading} style={{ marginTop: '1.5rem', padding: '0.875rem' }}>
             {authMode === 'email_login' ? 'Sign In' : 'Sign Up'}

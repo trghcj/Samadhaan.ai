@@ -51,10 +51,18 @@ def reset_database():
         return {"error": str(e), "status": 500}
 
 @app.get("/api/grievances")
-def get_grievances(db: Session = Depends(get_db)):
-    """Fetch all grievances for the Operator Dashboard"""
+def get_grievances(uid: str | None = None, db: Session = Depends(get_db)):
+    """Fetch grievances for the Operator Dashboard with RBAC"""
     try:
-        grievances = db.query(models.Grievance).order_by(models.Grievance.created_at.desc()).all()
+        query = db.query(models.Grievance)
+        
+        # Enforce RBAC if uid is provided
+        if uid:
+            user = db.query(models.User).filter(models.User.uid == uid).first()
+            if user and user.role == "operator" and user.department and user.department != "All Departments":
+                query = query.filter(models.Grievance.prediction == user.department)
+                
+        grievances = query.order_by(models.Grievance.created_at.desc()).all()
         return grievances
     except Exception as e:
         return {"error": str(e), "status": 500}
@@ -110,6 +118,7 @@ class UserSyncRequest(BaseModel):
     email: str
     display_name: str | None = None
     role: str = "citizen"
+    department: str | None = None
 
 @app.post("/api/users/sync")
 def sync_user(req: UserSyncRequest, db: Session = Depends(get_db)):
@@ -120,17 +129,18 @@ def sync_user(req: UserSyncRequest, db: Session = Depends(get_db)):
             uid=req.uid,
             email=req.email,
             display_name=req.display_name,
-            role=req.role
+            role=req.role,
+            department=req.department
         )
         db.add(user)
     else:
-        # Update existing user on fresh login (don't overwrite role)
+        # Update existing user on fresh login (don't overwrite role/department)
         user.email = req.email
         user.display_name = req.display_name
         user.last_login = datetime.utcnow()
     
     db.commit()
-    return {"status": "success", "role": user.role}
+    return {"status": "success", "role": user.role, "department": user.department}
 
 @app.get("/api/grievances/me/{uid}")
 def get_my_grievances(uid: str, db: Session = Depends(get_db)):

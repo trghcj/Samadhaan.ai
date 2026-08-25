@@ -32,9 +32,10 @@ class Grievance(Base):
 class User(Base):
     __tablename__ = "users"
 
-    uid = Column(String, primary_key=True, index=True)
-    email = Column(String, index=True)
+    uid = Column(String, primary_key=True, unique=True, index=True)
+    email = Column(String, unique=True, index=True)
     display_name = Column(String, nullable=True)
-    role = Column(String, default="citizen") # 'citizen' or 'operator'
+    role = Column(String, default="citizen")
+    department = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     last_login = Column(DateTime, default=datetime.utcnow)
