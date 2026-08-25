@@ -25,6 +25,9 @@ class Grievance(Base):
     reporter_phone = Column(String, nullable=True)
     location = Column(String, nullable=True)
     extra_details = Column(String, nullable=True)
+    
+    before_photo_url = Column(String, nullable=True)
+    after_photo_url = Column(String, nullable=True)
 
 class User(Base):
     __tablename__ = "users"

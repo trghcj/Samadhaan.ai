@@ -8,6 +8,7 @@ const OperatorDashboard = () => {
   const [departmentFilter, setDepartmentFilter] = useState('All');
   const [selectedGrievance, setSelectedGrievance] = useState(null);
   const [reviewNotes, setReviewNotes] = useState('');
+  const [afterPhoto, setAfterPhoto] = useState(null);
   const [activeTab, setActiveTab] = useState('pending');
 
   const fetchGrievances = async () => {
@@ -190,6 +191,26 @@ const OperatorDashboard = () => {
               </div>
             )}
 
+            {(selectedGrievance.before_photo_url || selectedGrievance.after_photo_url) && (
+              <div style={{ marginBottom: '1.5rem' }}>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Attached Evidence</label>
+                <div style={{ display: 'flex', gap: '1rem', overflowX: 'auto' }}>
+                  {selectedGrievance.before_photo_url && (
+                    <div style={{ flex: 1 }}>
+                      <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.25rem', textAlign: 'center' }}>Before</p>
+                      <img src={selectedGrievance.before_photo_url} alt="Before" style={{ width: '100%', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' }} />
+                    </div>
+                  )}
+                  {selectedGrievance.after_photo_url && (
+                    <div style={{ flex: 1 }}>
+                      <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.25rem', textAlign: 'center' }}>After</p>
+                      <img src={selectedGrievance.after_photo_url} alt="After" style={{ width: '100%', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' }} />
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             <div>
               <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Operator Resolution Notes</label>
               {selectedGrievance.is_resolved ? (
@@ -224,8 +245,12 @@ const OperatorDashboard = () => {
                     value={reviewNotes}
                     onChange={(e) => setReviewNotes(e.target.value)}
                     placeholder="Add documentation, contact info, or action taken..."
-                    style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', minHeight: '100px', resize: 'none', fontFamily: 'inherit' }}
+                    style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', minHeight: '100px', resize: 'none', fontFamily: 'inherit', marginBottom: '1rem' }}
                   />
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Upload "After" Photo (Optional)</label>
+                    <input type="file" accept="image/*" onChange={(e) => setAfterPhoto(e.target.files[0])} style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-main)' }} />
+                  </div>
                 </>
               )}
             </div>
@@ -246,14 +271,33 @@ const OperatorDashboard = () => {
               <button className="btn btn-outline" onClick={() => setSelectedGrievance(null)}>Close</button>
               {!selectedGrievance.is_resolved && (
                 <button className="btn btn-primary" onClick={async () => {
+                  let uploadedUrl = null;
+                  if (afterPhoto) {
+                    const imgData = new FormData();
+                    imgData.append("file", afterPhoto);
+                    imgData.append("upload_preset", "samadhaan_uploads");
+                    imgData.append("cloud_name", "gd6ovrz6");
+                    try {
+                      const res = await fetch("https://api.cloudinary.com/v1_1/gd6ovrz6/image/upload", { method: "POST", body: imgData });
+                      const cloudData = await res.json();
+                      if (cloudData.secure_url) uploadedUrl = cloudData.secure_url;
+                    } catch (err) {
+                      console.error("After photo upload failed:", err);
+                    }
+                  }
+
                   try {
                     await fetch(`https://samadhaan-ai.onrender.com/api/grievances/${selectedGrievance.id}/resolve`, {
                       method: 'PATCH',
                       headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ notes: reviewNotes })
+                      body: JSON.stringify({ 
+                        resolution_notes: reviewNotes,
+                        after_photo_url: uploadedUrl
+                      })
                     });
                     setSelectedGrievance(null);
                     setReviewNotes('');
+                    setAfterPhoto(null);
                     fetchGrievances();
                   } catch(err) {
                     console.error(err);

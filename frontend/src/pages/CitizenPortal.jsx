@@ -16,6 +16,7 @@ const CitizenPortal = () => {
   const [location, setLocation] = useState('');
   const [extraDetails, setExtraDetails] = useState('');
   const [clarifyAnswer, setClarifyAnswer] = useState('');
+  const [beforePhoto, setBeforePhoto] = useState(null);
 
   const mediaRecorderRef = useRef(null);
   const chunksRef = useRef([]);
@@ -71,6 +72,27 @@ const CitizenPortal = () => {
     }
     formData.append('location', location);
     if (extraDetails) formData.append('extra_details', extraDetails);
+    
+    // Upload Before Photo to Cloudinary if selected
+    if (beforePhoto) {
+      setStatusStep('Uploading photo...');
+      const imgData = new FormData();
+      imgData.append("file", beforePhoto);
+      imgData.append("upload_preset", "samadhaan_uploads");
+      imgData.append("cloud_name", "gd6ovrz6");
+      try {
+        const res = await fetch("https://api.cloudinary.com/v1_1/gd6ovrz6/image/upload", {
+          method: "POST",
+          body: imgData,
+        });
+        const cloudData = await res.json();
+        if (cloudData.secure_url) {
+          formData.append('before_photo_url', cloudData.secure_url);
+        }
+      } catch (err) {
+        console.error("Photo upload failed:", err);
+      }
+    }
     
     try {
       const response = await fetch('https://samadhaan-ai.onrender.com/api/upload', {
@@ -178,9 +200,14 @@ const CitizenPortal = () => {
               <input type="text" value={location} onChange={e => setLocation(e.target.value)} required style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-main)' }} placeholder="E.g. Near main square, Palampur" />
             </div>
 
-            <div style={{ marginBottom: '2rem' }}>
+            <div style={{ marginBottom: '1.5rem' }}>
               <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.25rem', color: 'var(--text-muted)' }}>Extra Details (Optional)</label>
               <textarea value={extraDetails} onChange={e => setExtraDetails(e.target.value)} rows="3" style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-main)' }} placeholder="Any other context we should know?" />
+            </div>
+            
+            <div style={{ marginBottom: '2rem' }}>
+              <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.25rem', color: 'var(--text-muted)' }}>"Before" Photo (Optional)</label>
+              <input type="file" accept="image/*" onChange={(e) => setBeforePhoto(e.target.files[0])} style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-main)' }} />
             </div>
 
             <div style={{ display: 'flex', gap: '1rem' }}>

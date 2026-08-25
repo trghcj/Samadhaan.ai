@@ -178,7 +178,8 @@ def process_audio_task(audio_file_path: str, user_id: str = None, reporter_name:
                 reporter_name=reporter_name,
                 reporter_phone=reporter_phone,
                 location=location,
-                extra_details=extra_details
+                extra_details=extra_details,
+                before_photo_url=kwargs.get('before_photo_url')
             )
             db.add(new_g)
             db.commit()

@@ -61,7 +61,8 @@ def get_grievances(db: Session = Depends(get_db)):
 
 from pydantic import BaseModel
 class ResolveRequest(BaseModel):
-    notes: str
+    resolution_notes: str
+    after_photo_url: str | None = None
 
 @app.patch("/api/grievances/{g_id}/resolve")
 def resolve_grievance(g_id: int, req: ResolveRequest, db: Session = Depends(get_db)):
@@ -70,7 +71,8 @@ def resolve_grievance(g_id: int, req: ResolveRequest, db: Session = Depends(get_
         return {"error": "Not found"}
     from datetime import datetime
     grievance.is_resolved = True
-    grievance.resolution_notes = req.notes
+    grievance.resolution_notes = req.resolution_notes
+    grievance.after_photo_url = req.after_photo_url
     grievance.resolved_at = datetime.utcnow()
     db.commit()
     return {"status": "success"}
@@ -151,7 +153,8 @@ async def upload_audio(
     reporter_name: Optional[str] = Form(None),
     reporter_phone: Optional[str] = Form(None),
     location: Optional[str] = Form(None),
-    extra_details: Optional[str] = Form(None)
+    extra_details: Optional[str] = Form(None),
+    before_photo_url: Optional[str] = Form(None)
 ):
     """
     Accepts audio, saves it locally, and queues the ML task in FastAPI BackgroundTasks.
@@ -166,13 +169,13 @@ async def upload_audio(
     task_tracker[task_id] = {"status": "processing"}
     
     # Define the background worker function
-    def run_ai_task(tid, fp, c_uid, r_name, r_phone, loc, extra):
+    def run_ai_task(tid, fp, c_uid, r_name, r_phone, loc, extra, b_photo):
         def update_progress(msg):
             task_tracker[tid] = {"status": "processing", "step": msg}
             print(f"Task {tid} progress: {msg}")
             
         try:
-            result = process_audio_task(fp, c_uid, r_name, r_phone, loc, extra, progress_callback=update_progress)
+            result = process_audio_task(fp, c_uid, r_name, r_phone, loc, extra, progress_callback=update_progress, before_photo_url=b_photo)
             task_tracker[tid] = {
                 "status": "success",
                 "ai_result": result
@@ -184,7 +187,7 @@ async def upload_audio(
             }
             
     # Dispatch native FastAPI background task
-    background_tasks.add_task(run_ai_task, task_id, file_path, user_id, reporter_name, reporter_phone, location, extra_details)
+    background_tasks.add_task(run_ai_task, task_id, file_path, user_id, reporter_name, reporter_phone, location, extra_details, before_photo_url)
     
     return {"task_id": task_id, "status": "processing"}
 
