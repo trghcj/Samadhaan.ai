@@ -80,7 +80,6 @@ const OperatorDashboard = () => {
               <option value="Low">Low Confidence</option>
             </select>
           </div>
-          </div>
           <button 
             className="btn btn-primary" 
             style={{ padding: '0.5rem 1rem' }}
