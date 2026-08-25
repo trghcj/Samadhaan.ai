@@ -74,6 +74,18 @@ const AppHeader = () => {
   );
 };
 
+// Home Route Wrapper to redirect Operators away from the Citizen Portal
+const HomeRoute = () => {
+  const { currentUser, userRole, loading } = useAuth();
+  
+  if (loading) return <div>Loading...</div>;
+  if (currentUser && userRole === 'operator') {
+    return <Navigate to="/operator" />;
+  }
+  
+  return <CitizenPortal />;
+};
+
 function App() {
   return (
     <AuthProvider>
@@ -83,7 +95,7 @@ function App() {
           
           <main style={{ flex: 1 }}>
             <Routes>
-              <Route path="/" element={<CitizenPortal />} />
+              <Route path="/" element={<HomeRoute />} />
               <Route path="/auth" element={<AuthPage />} />
               <Route 
                 path="/operator" 
