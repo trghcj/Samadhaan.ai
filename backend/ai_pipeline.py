@@ -30,7 +30,7 @@ def get_whisper_model(progress_callback=None):
             print(f"Error loading whisper: {e}")
     return whisper_model
 
-def process_audio_task(audio_file_path: str, user_id: str = None, reporter_name: str = None, reporter_phone: str = None, location: str = None, extra_details: str = None, progress_callback=None):
+def process_audio_task(audio_file_path: str, user_id: str = None, reporter_name: str = None, reporter_phone: str = None, location: str = None, extra_details: str = None, progress_callback=None, before_photo_url: str = None):
     # 1. Transcription Phase
     transcript = ""
     model = get_whisper_model(progress_callback)
@@ -179,7 +179,7 @@ def process_audio_task(audio_file_path: str, user_id: str = None, reporter_name:
                 reporter_phone=reporter_phone,
                 location=location,
                 extra_details=extra_details,
-                before_photo_url=kwargs.get('before_photo_url')
+                before_photo_url=before_photo_url
             )
             db.add(new_g)
             db.commit()
