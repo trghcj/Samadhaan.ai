@@ -13,7 +13,7 @@ const AuthPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('citizen');
-  const [department, setDepartment] = useState('All Departments');
+  const [department, setDepartment] = useState('Water');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   
@@ -88,7 +88,6 @@ const AuthPage = () => {
                 <div style={{ marginTop: '1rem' }}>
                   <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Assigned Department</label>
                   <select value={department} onChange={(e) => setDepartment(e.target.value)} style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-main)' }}>
-                    <option value="All Departments">Super Admin (All Departments)</option>
                     <option value="Water">Water</option>
                     <option value="Electricity">Electricity</option>
                     <option value="Roads">Roads</option>
