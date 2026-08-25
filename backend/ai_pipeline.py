@@ -1,5 +1,6 @@
 import os
 import json
+from datetime import datetime, timedelta
 from faster_whisper import WhisperModel
 from dotenv import load_dotenv
 from database import SessionLocal
@@ -87,6 +88,11 @@ def process_audio_task(audio_file_path: str, user_id: str = None, reporter_name:
         Medium = 0.5 to 0.79 (Ambiguous, might need clarification)
         Low = 0.0 to 0.49 (Unclear, noisy, or irrelevant)
         
+        Also determine the priority level of the issue based on urgency and public safety:
+        High = Urgent safety risk (e.g. live wire, major leak, huge pothole)
+        Medium = Standard issue (e.g. street light out, standard pothole, garbage pile)
+        Low = Minor issue (e.g. slight crack in pavement, slow drainage)
+        
         CRITICAL INSTRUCTIONS BASED ON CONFIDENCE:
         - If Medium: You MUST include a "clarifying_question" field in the JSON with ONE short question to ask the citizen to clear up the confusion.
         - If Low: You MUST include an "alternative_departments" field containing a comma-separated string of the 2 or 3 most likely departments (e.g., "Water, Drainage").
@@ -98,7 +104,8 @@ def process_audio_task(audio_file_path: str, user_id: str = None, reporter_name:
         {{
             "prediction_set": "Water",
             "confidence_level": "High",
-            "confidence_score": 0.95
+            "confidence_score": 0.95,
+            "priority": "High"
         }}
         
         Example Medium:
@@ -106,6 +113,7 @@ def process_audio_task(audio_file_path: str, user_id: str = None, reporter_name:
             "prediction_set": "Roads",
             "confidence_level": "Medium",
             "confidence_score": 0.65,
+            "priority": "Medium",
             "clarifying_question": "Is the issue a pothole on the main road, or a broken sidewalk?"
         }}
         
@@ -114,6 +122,7 @@ def process_audio_task(audio_file_path: str, user_id: str = None, reporter_name:
             "prediction_set": "Unclear",
             "confidence_level": "Low",
             "confidence_score": 0.30,
+            "priority": "Low",
             "alternative_departments": "Water, Drainage"
         }}
         """
@@ -167,6 +176,10 @@ def process_audio_task(audio_file_path: str, user_id: str = None, reporter_name:
             if isinstance(clar_q, list):
                 clar_q = " ".join(str(x) for x in clar_q)
                 
+            priority = result_dict.get("priority", "Medium")
+            sla_days = 1 if priority == "High" else 7 if priority == "Medium" else 14
+            sla_deadline = datetime.utcnow() + timedelta(days=sla_days)
+                
             new_g = models.Grievance(
                 transcript=transcript,
                 prediction=result_dict.get("prediction_set", "Error"),
@@ -179,7 +192,10 @@ def process_audio_task(audio_file_path: str, user_id: str = None, reporter_name:
                 reporter_phone=reporter_phone,
                 location=location,
                 extra_details=extra_details,
-                before_photo_url=before_photo_url
+                before_photo_url=before_photo_url,
+                priority=priority,
+                sla_deadline=sla_deadline,
+                ai_verification_status="Pending"
             )
             db.add(new_g)
             db.commit()
@@ -209,3 +225,67 @@ def process_audio_task(audio_file_path: str, user_id: str = None, reporter_name:
             "transcript": transcript,
             "error": str(e)
         }
+
+import base64
+
+def verify_resolution(before_url: str, after_url: str) -> dict:
+    if not before_url or not after_url:
+        return {"valid": False, "reason": "Missing before or after photo for verification."}
+    
+    try:
+        # Download images
+        import requests
+        before_resp = requests.get(before_url, timeout=10)
+        after_resp = requests.get(after_url, timeout=10)
+        
+        if before_resp.status_code != 200 or after_resp.status_code != 200:
+            return {"valid": False, "reason": "Failed to download one or both images for verification."}
+            
+        b64_before = base64.b64encode(before_resp.content).decode("utf-8")
+        b64_after = base64.b64encode(after_resp.content).decode("utf-8")
+        
+        prompt = '''
+        You are an elite fraud detection AI for a government municipal system.
+        Look at Image 1 (The 'Before' photo of the civic issue).
+        Look at Image 2 (The 'After' photo uploaded by the government operator claiming it is resolved).
+        
+        Tasks:
+        1. Does Image 2 actually show the specific issue in Image 1 being repaired or fixed?
+        2. Is Image 2 a genuine, raw photograph? (Look out for stock photos, AI-generated images, or completely unrelated pictures).
+        
+        If it is a genuine repair of the exact issue, return valid: true.
+        If it is fraud, fake, AI-generated, or an unrelated photo, return valid: false and explain why in 'reason'.
+        
+        Output ONLY valid JSON. Example:
+        {
+            "valid": false,
+            "reason": "The after photo appears to be a generic stock image of a road and does not match the surroundings of the before photo."
+        }
+        '''
+        
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
+        payload = {
+            "contents": [{
+                "parts": [
+                    {"text": prompt},
+                    {"inline_data": {"mime_type": "image/jpeg", "data": b64_before}},
+                    {"inline_data": {"mime_type": "image/jpeg", "data": b64_after}}
+                ]
+            }]
+        }
+        
+        res = requests.post(url, json=payload, headers={"Content-Type": "application/json"}, timeout=30)
+        res.raise_for_status()
+        
+        data = res.json()
+        result_text = data['candidates'][0]['content']['parts'][0]['text'].strip()
+        
+        if result_text.startswith("```json"):
+            result_text = result_text[7:-3].strip()
+        elif result_text.startswith("```"):
+            result_text = result_text[3:-3].strip()
+            
+        return json.loads(result_text)
+    except Exception as e:
+        print(f"AI Verification Error: {str(e)}")
+        return {"valid": False, "reason": "AI Verification system temporarily unavailable."}

@@ -77,13 +77,29 @@ def resolve_grievance(g_id: int, req: ResolveRequest, db: Session = Depends(get_
     grievance = db.query(models.Grievance).filter(models.Grievance.id == g_id).first()
     if not grievance:
         return {"error": "Not found"}
+        
     from datetime import datetime
+    import ai_pipeline
+    
+    if req.after_photo_url:
+        verification = ai_pipeline.verify_resolution(grievance.before_photo_url, req.after_photo_url)
+        
+        if not verification.get("valid", False):
+            # Fraud or invalid resolution detected
+            grievance.ai_verification_status = "Rejected"
+            grievance.ai_verification_notes = verification.get("reason", "Unknown AI rejection.")
+            db.commit()
+            return {"status": "error", "message": "Resolution Rejected by AI", "reason": grievance.ai_verification_notes}
+        else:
+            grievance.ai_verification_status = "Verified"
+            grievance.ai_verification_notes = "AI Confirmed Issue Repaired"
+
     grievance.is_resolved = True
     grievance.resolution_notes = req.resolution_notes
     grievance.after_photo_url = req.after_photo_url
     grievance.resolved_at = datetime.utcnow()
     db.commit()
-    return {"status": "success"}
+    return {"status": "success", "ai_verification": grievance.ai_verification_status}
 
 @app.delete("/api/grievances/{g_id}")
 def delete_grievance(g_id: int, db: Session = Depends(get_db)):

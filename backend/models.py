@@ -29,6 +29,14 @@ class Grievance(Base):
     before_photo_url = Column(String, nullable=True)
     after_photo_url = Column(String, nullable=True)
 
+    # SLA & Priority
+    priority = Column(String, default="Medium") # High, Medium, Low
+    sla_deadline = Column(DateTime, nullable=True)
+    
+    # Verification
+    ai_verification_status = Column(String, default="Pending") # Pending, Verified, Rejected
+    ai_verification_notes = Column(String, nullable=True)
+
 class User(Base):
     __tablename__ = "users"
 
