@@ -123,9 +123,10 @@ const OperatorDashboard = () => {
     a.click();
   };
 
-  // Process data for columns
   const processedData = useMemo(() => {
     let filtered = grievances;
+    
+    // 1. Search text filter (AND)
     if (searchTerm) {
       const q = searchTerm.toLowerCase();
       filtered = filtered.filter(g => 
@@ -134,9 +135,17 @@ const OperatorDashboard = () => {
         (g.location||'').toLowerCase().includes(q)
       );
     }
-    if (activeFilters.includes('High Priority')) filtered = filtered.filter(g => g.priority === 'High' || g.priority === 'Critical');
-    if (activeFilters.includes('Fraud Alert')) filtered = filtered.filter(g => g.ai_verification_status === 'Rejected');
-    if (activeFilters.includes('High Confidence')) filtered = filtered.filter(g => g.confidence === 'High');
+    
+    // 2. Chip filters (OR logic between active chips to allow cumulative filtering)
+    if (activeFilters.length > 0) {
+      filtered = filtered.filter(g => {
+        let match = false;
+        if (activeFilters.includes('High Priority') && (g.priority === 'High' || g.priority === 'Critical')) match = true;
+        if (activeFilters.includes('Fraud Alert') && g.ai_verification_status === 'Rejected') match = true;
+        if (activeFilters.includes('High Confidence') && g.confidence === 'High') match = true;
+        return match;
+      });
+    }
 
     const toReview = [];
     const inProgress = [];
@@ -155,7 +164,7 @@ const OperatorDashboard = () => {
       }
     });
 
-    return { toReview, inProgress, flagged, resolved, total: grievances.length, resolvedToday: resolved.length };
+    return { toReview, inProgress, flagged, resolved, total: filtered.length, resolvedToday: resolved.length };
   }, [grievances, searchTerm, activeFilters, inProgressIds]);
 
   const toggleFilter = (f) => {
