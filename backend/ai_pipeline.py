@@ -44,12 +44,7 @@ def process_audio_task(audio_file_path: str, user_id: str = None, reporter_name:
             print(f"Transcription error: {e}")
             
     if not transcript:
-        return {
-            "prediction_set": "Unknown (Empty Audio)",
-            "confidence_level": "Low",
-            "confidence_score": 0.0,
-            "transcript": ""
-        }
+        transcript = "[Inaudible / Empty Audio]"
 
     # 2. Classification & Uncertainty Phase
     if not GEMINI_API_KEY or GEMINI_API_KEY == "PASTE_YOUR_API_KEY_HERE":
