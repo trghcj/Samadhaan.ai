@@ -46,27 +46,18 @@ def process_audio_task(audio_file_path: str, user_id: str = None, reporter_name:
     if not transcript:
         transcript = "[Inaudible / Empty Audio]"
 
+    result_dict = None
+    
     # 2. Classification & Uncertainty Phase
-    if not GEMINI_API_KEY or GEMINI_API_KEY == "PASTE_YOUR_API_KEY_HERE":
-        return {
+    if not GEMINI_API_KEY or GEMINI_API_KEY == "PASTE_YOUR_API_KEY_HERE" or GEMINI_API_KEY == "":
+        result_dict = {
             "prediction_set": "Water Department (Mock)",
             "confidence_level": "Medium",
             "confidence_score": 0.5,
-            "transcript": transcript,
             "error": "Gemini API key missing. Mock classification used."
         }
-        
-    if GEMINI_API_KEY == "":
-        return {
-            "prediction_set": "Error",
-            "confidence_level": "Low",
-            "confidence_score": 0.0,
-            "transcript": transcript,
-            "error": "Missing GEMINI_API_KEY"
-        }
-
-    try:
-        prompt = f"""
+    else:
+        prompt = f'''
         You are the router for CivicSense, a municipal grievance system.
         Classify the following citizen grievance transcript into ONE of these specific departments:
         - Water
@@ -94,34 +85,15 @@ def process_audio_task(audio_file_path: str, user_id: str = None, reporter_name:
         
         Transcript: "{transcript}"
         
-        Output ONLY valid JSON with no markdown blocks like ```json.
-        Example High:
+        Return ONLY valid JSON. Do not include markdown code blocks.
+        Format must be:
         {{
-            "prediction_set": "Water",
-            "confidence_level": "High",
+            "prediction_set": "Department Name",
+            "confidence_level": "High/Medium/Low",
             "confidence_score": 0.95,
-            "priority": "High"
+            "priority": "High/Medium/Low"
         }}
-        
-        Example Medium:
-        {{
-            "prediction_set": "Roads",
-            "confidence_level": "Medium",
-            "confidence_score": 0.65,
-            "priority": "Medium",
-            "clarifying_question": "Is the issue a pothole on the main road, or a broken sidewalk?"
-        }}
-        
-        Example Low:
-        {{
-            "prediction_set": "Unclear",
-            "confidence_level": "Low",
-            "confidence_score": 0.30,
-            "priority": "Low",
-            "alternative_departments": "Water, Drainage"
-        }}
-        """
-        # Use REST API instead of heavy SDK to avoid gRPC OOM crashes
+        '''
         if progress_callback: progress_callback("Analyzing transcript with AI...")
         url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key={GEMINI_API_KEY}"
         payload = {
@@ -135,93 +107,79 @@ def process_audio_task(audio_file_path: str, user_id: str = None, reporter_name:
             response.raise_for_status()
             data = response.json()
             result_text = data['candidates'][0]['content']['parts'][0]['text'].strip()
+            
+            if result_text.startswith("```json"):
+                result_text = result_text[7:-3].strip()
+            elif result_text.startswith("```"):
+                result_text = result_text[3:-3].strip()
+                
+            result_dict = json.loads(result_text)
+            
         except Exception as e:
             err_msg = str(e)
             if hasattr(e, 'response') and e.response is not None:
                 try: err_msg += f" - Response: {e.response.text}"
                 except: pass
             print(f"Gemini API REST Error: {err_msg}")
-            return {
+            result_dict = {
                 "prediction_set": "Error",
                 "confidence_level": "Low",
                 "confidence_score": 0.0,
-                "transcript": transcript,
                 "error": f"API Error: {err_msg}"
             }
             
-        if result_text.startswith("```json"):
-            result_text = result_text[7:-3].strip()
-        elif result_text.startswith("```"):
-            result_text = result_text[3:-3].strip()
-            
-        result_dict = json.loads(result_text)
-        result_dict["transcript"] = transcript
+    result_dict["transcript"] = transcript
+    
+    # Save the result to PostgreSQL
+    if progress_callback: progress_callback("Saving grievance to database...")
+    try:
+        db = SessionLocal()
         
-        # Save the result to PostgreSQL
-        if progress_callback: progress_callback("Saving grievance to database...")
-        try:
-            db = SessionLocal()
+        alt_deps = result_dict.get("alternative_departments")
+        if isinstance(alt_deps, list):
+            alt_deps = ", ".join(str(x) for x in alt_deps)
             
-            # Ensure lists are converted to strings before saving to String columns
-            alt_deps = result_dict.get("alternative_departments")
-            if isinstance(alt_deps, list):
-                alt_deps = ", ".join(str(x) for x in alt_deps)
-                
-            clar_q = result_dict.get("clarifying_question")
-            if isinstance(clar_q, list):
-                clar_q = " ".join(str(x) for x in clar_q)
-                
-            priority = result_dict.get("priority", "Medium")
-            sla_days = 1 if priority == "High" else 7 if priority == "Medium" else 14
-            sla_deadline = datetime.utcnow() + timedelta(days=sla_days)
-                
-            new_g = models.Grievance(
-                transcript=transcript,
-                prediction=result_dict.get("prediction_set", "Error"),
-                confidence=result_dict.get("confidence_level", "Low"),
-                confidence_score=float(result_dict.get("confidence_score", 0.0)),
-                clarifying_question=clar_q,
-                alternative_departments=alt_deps,
-                citizen_uid=user_id,
-                reporter_name=reporter_name,
-                reporter_phone=reporter_phone,
-                location=location,
-                extra_details=extra_details,
-                before_photo_url=before_photo_url,
-                priority=priority,
-                sla_deadline=sla_deadline,
-                ai_verification_status="Pending"
-            )
-            db.add(new_g)
-            db.commit()
-            db.refresh(new_g)
-            result_dict["id"] = new_g.id
-            db.close()
-        except Exception as db_err:
-            print(f"Database save error: {db_err}")
-            return {
-                "prediction_set": "Error",
-                "confidence_level": "Low",
-                "confidence_score": 0.0,
-                "transcript": transcript,
-                "error": f"Failed to save to database: {str(db_err)}"
-            }
-        
-        if os.path.exists(audio_file_path):
-            os.remove(audio_file_path)
+        clar_q = result_dict.get("clarifying_question")
+        if isinstance(clar_q, list):
+            clar_q = " ".join(str(x) for x in clar_q)
             
-        return result_dict
-        
-    except Exception as e:
-        return {
+        priority = result_dict.get("priority", "Medium")
+        sla_days = 1 if priority == "High" else 7 if priority == "Medium" else 14
+        sla_deadline = datetime.utcnow() + timedelta(days=sla_days)
+            
+        new_g = models.Grievance(
+            transcript=transcript,
+            prediction=result_dict.get("prediction_set", "Error"),
+            confidence=result_dict.get("confidence_level", "Low"),
+            confidence_score=float(result_dict.get("confidence_score", 0.0)),
+            clarifying_question=clar_q,
+            alternative_departments=alt_deps,
+            citizen_uid=user_id,
+            reporter_name=reporter_name,
+            reporter_phone=reporter_phone,
+            location=location,
+            extra_details=extra_details,
+            before_photo_url=before_photo_url,
+            priority=priority,
+            sla_deadline=sla_deadline,
+            ai_verification_status="Pending"
+        )
+        db.add(new_g)
+        db.commit()
+        db.refresh(new_g)
+        result_dict["id"] = new_g.id
+        db.close()
+    except Exception as db_err:
+        print(f"Database save error: {db_err}")
+        result_dict = {
             "prediction_set": "Error",
             "confidence_level": "Low",
             "confidence_score": 0.0,
             "transcript": transcript,
-            "error": str(e)
+            "error": "Failed to save to database."
         }
-
-import base64
+        
+    return result_dict
 
 def verify_resolution(before_url: str, after_url: str) -> dict:
     if not before_url or not after_url:
