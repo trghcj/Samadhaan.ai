@@ -97,6 +97,32 @@ const OperatorDashboard = () => {
     setResolving(false);
   };
 
+  const handleExport = () => {
+    if (grievances.length === 0) return alert("No data to export");
+    const headers = ['ID', 'Transcript', 'Prediction', 'Confidence', 'Priority', 'SLA Deadline', 'Status', 'Location', 'Submitted Date'];
+    const csvRows = [headers.join(',')];
+    grievances.forEach(g => {
+      const row = [
+        g.id,
+        `"${(g.transcript || '').replace(/"/g, '""')}"`,
+        g.prediction,
+        g.confidence,
+        g.priority,
+        g.sla_deadline,
+        g.is_resolved ? 'Resolved' : (g.ai_verification_status === 'Rejected' ? 'AI Flagged' : 'Pending'),
+        `"${(g.location || '').replace(/"/g, '""')}"`,
+        new Date(g.created_at).toISOString()
+      ];
+      csvRows.push(row.join(','));
+    });
+    const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.setAttribute('href', url);
+    a.setAttribute('download', `complaints_export_${new Date().toISOString().slice(0,10)}.csv`);
+    a.click();
+  };
+
   // Process data for columns
   const processedData = useMemo(() => {
     let filtered = grievances;
@@ -319,9 +345,9 @@ const OperatorDashboard = () => {
               ))}
             </div>
             <button onClick={fetchGrievances} style={{ backgroundColor: '#fff', border: '1px solid #D1D5DB', padding: '0.6rem', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', color: '#4B5563', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
-              <RefreshCw size={16} />
+              <RefreshCw size={16} className={loading ? 'spin-anim' : ''} />
             </button>
-            <button style={{ backgroundColor: '#fff', border: '1px solid #D1D5DB', padding: '0.5rem 1rem', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#4B5563', fontSize: '0.875rem', fontWeight: 600, boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+            <button onClick={handleExport} style={{ backgroundColor: '#fff', border: '1px solid #D1D5DB', padding: '0.5rem 1rem', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#4B5563', fontSize: '0.875rem', fontWeight: 600, boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
               <Download size={16} /> Export
             </button>
           </div>
@@ -510,6 +536,13 @@ const OperatorDashboard = () => {
         @keyframes slideIn {
           from { transform: translateX(100%); }
           to { transform: translateX(0); }
+        }
+        @keyframes spinAnim {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        .spin-anim {
+          animation: spinAnim 1s linear infinite;
         }
       `}</style>
     </div>
