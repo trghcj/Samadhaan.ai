@@ -1,5 +1,5 @@
 # Samadhaan.ai 🎙️🏛️
-*(Project Title: CivicSense: An Uncertainty-Aware Multilingual System for Reliable Civic Grievance Routing)*
+*(Project Title: Samadhaan.ai: An Uncertainty-Aware Multilingual System for Reliable Civic Grievance Routing)*
 
 **Samadhaan.ai** is an AI-powered municipal grievance routing system designed to bridge the gap between citizens and local government. 
 
