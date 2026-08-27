@@ -1,37 +1,48 @@
 # Samadhaan.ai 🎙️🏛️
+*(Project Title: CivicSense: An Uncertainty-Aware Multilingual System for Reliable Civic Grievance Routing)*
 
-**Samadhaan.ai** is an AI-powered municipal grievance routing system designed to bridge the gap between citizens and local government. By simply speaking into their device, citizens can report issues (like potholes, water leaks, or broken streetlights). Our AI pipeline automatically transcribes the audio, analyzes the context, and routes the issue to the correct municipal department with a confidence score.
+**Samadhaan.ai** is an AI-powered municipal grievance routing system designed to bridge the gap between citizens and local government. 
+
+### 🚨 The Problem
+When a citizen has a civic complaint such as a broken water pipe, a broken street light, or uncollected garbage, they are typically expected to fill out a complex online form. These forms are usually in English, and ask the citizen to manually determine the correct government department. Many people in India cannot do this—they may not read English well, may not know which department handles which problem, and may not be comfortable navigating formal government websites.
+
+### 💡 Our Solution
+A more natural approach is to let citizens simply speak their complaints in their own language. Samadhaan.ai uses speech-to-text to capture the issue, but goes a step further: it tackles the **uncertainty** of vague complaints, enforces **Service Level Agreements (SLAs)**, and uses **AI Vision to prevent operator fraud**.
 
 ---
 
-## ✨ Features
+## ✨ Key Features
 
-*   **🗣️ Voice-First Citizen Portal:** Citizens report issues naturally using their voice. No complex forms to fill out.
-*   **🤖 AI-Powered Analysis:**
-    *   **Transcription:** Uses `faster-whisper` for fast, offline, and accurate speech-to-text.
-    *   **Classification:** Uses Google Gemini AI to analyze the transcript and route the grievance to the correct municipal department (e.g., "Roads & Highways", "Water Supply", "Sanitation").
-*   **👮 Operator Dashboard:** A secure portal for municipal operators to review incoming grievances, see AI confidence scores, read transcripts, and mark issues as resolved.
-*   **🔐 Secure Authentication:** Powered by Firebase Authentication (Email/Password & Google OAuth).
-*   **💰 100% Free Deployment Architecture:** Engineered to run entirely on free tiers (Vercel + Render + Supabase) using native FastAPI Background Tasks instead of expensive message brokers.
+*   **🗣️ Voice-First Citizen Portal:** Citizens report issues naturally using their voice or by uploading audio. No complex drop-downs or forms.
+*   **📊 Modern Citizen Dashboard:** A polished, SaaS-style dashboard for citizens to track their reported issues, filter by status, search past reports, and view detailed timelines of their resolution.
+*   **🧠 Uncertainty-Aware AI Routing:**
+    *   Uses Google Gemini AI to analyze the transcript and route the grievance to the correct municipal department (e.g., "Water", "Roads", "Sanitation").
+    *   Generates a **Confidence Score** (High/Medium/Low). If the audio is vague (Low Confidence), the AI suggests multiple alternative departments and flags it for human review.
+*   **⏱️ Dynamic SLA Tracking:** The AI determines the **Priority Level** of the civic issue (e.g., High for live wires, Low for minor cracks) and automatically calculates a strict SLA deadline (1 day, 7 days, or 14 days).
+*   **🛡️ AI Anti-Fraud Photo Verification:** 
+    *   Operators cannot simply click "Resolved" to close a ticket. They must upload an "After" photo of the repaired site.
+    *   Our **AI Vision pipeline** compares the citizen's original "Before" photo with the operator's "After" photo. If the operator uploads a fake, unrelated, or stock image, the AI rejects the resolution and flags it as Fraud.
+*   **📋 Operator Kanban Board:** A dedicated workspace where municipal operators (strictly isolated to their own departments) can drag and drop issues from *To Do* → *Pending AI Verification* → *Resolved*.
+*   **☁️ Fault-Tolerant Architecture:** Gracefully handles empty audio blobs, missing microphone permissions, and cloud API rate-limits without silently failing.
 
 ## 🛠️ Tech Stack
 
 **Frontend:**
 *   React.js (Vite)
 *   React Router DOM
-*   Firebase Authentication
-*   Vanilla CSS (Modern glassmorphism & gradients)
+*   Firebase Authentication (Role-based access control for Citizens vs. Operators)
+*   Vanilla CSS (Clean, accessible, SaaS-style civic tech UI)
 *   Hosted on [Vercel](https://vercel.com)
 
 **Backend & AI:**
 *   Python / FastAPI
 *   `faster-whisper` (Speech-to-Text)
-*   Google Generative AI (Gemini API)
-*   SQLAlchemy & PostgreSQL
+*   Google Generative AI (Gemini 1.5 Flash & Vision API)
+*   Cloudinary (Image hosting for Evidence Photos)
 *   Hosted on [Render](https://render.com) (Free Web Service)
 
 **Database:**
-*   PostgreSQL hosted on [Supabase](https://supabase.com)
+*   PostgreSQL & SQLAlchemy (Hosted on [Supabase](https://supabase.com))
 
 ---
 
@@ -62,7 +73,7 @@ pip install -r requirements.txt
 # Run the FastAPI server
 uvicorn main:app --reload
 ```
-*The backend runs on `http://localhost:8000`. On first run, it will automatically build your database tables.*
+*The backend runs on `http://localhost:8000`. If you make changes to `models.py`, use the `/api/reset-db` endpoint to rebuild the schema.*
 
 ### 3. Frontend Setup
 ```bash
@@ -84,5 +95,6 @@ npm run dev
 ## 🌍 Deployment Notes
 
 This project is optimized for cost-free cloud hosting:
-*   **Frontend (Vercel):** Ensure you add `samadhaan-ai.vercel.app` to your Firebase Authentication Authorized Domains. The `vercel.json` file handles React routing fallbacks and COOP/COEP security headers for Google OAuth popups.
-*   **Backend (Render):** Uses FastAPI's `BackgroundTasks` instead of Celery/Redis to allow long-running AI models (like `faster-whisper`) to run without blocking the main server thread on a single free instance. Note: Render free instances sleep after 15 minutes of inactivity, resulting in a 60-90 second "cold start" delay for the first audio uploaded.
+*   **Frontend (Vercel):** Ensure you add `samadhaan-ai.vercel.app` to your Firebase Authentication Authorized Domains. The `vercel.json` file handles React routing fallbacks.
+*   **Backend (Render):** Uses FastAPI's `BackgroundTasks` instead of Celery/Redis to allow long-running AI models (like `faster-whisper` and Gemini Vision) to run without blocking the main server thread on a single free instance. 
+*   **Image Handling:** Evidence photos are routed directly to Cloudinary via unsigned upload presets to save backend bandwidth, with only the Secure URLs saved to the PostgreSQL database.
