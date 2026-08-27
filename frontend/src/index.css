@@ -49,14 +49,40 @@ body {
 }
 
 .nav-item {
-  color: var(--text-main);
-  font-weight: 600;
+  color: #6b7280;
+  font-weight: 500;
   text-decoration: none;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.nav-item::before {
+  content: '';
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background-color: #9ca3af;
+  transition: all 0.2s ease;
+}
+
+.nav-item:hover {
+  color: #374151;
 }
 
 .nav-item.active {
-  color: var(--accent);
+  color: #111827;
+  background-color: #e5e5e5; /* Warm gray background matching the image */
+}
+
+.nav-item.active::before {
+  background-color: #111827;
+  transform: scale(1.4); /* Make the active dot slightly larger */
 }
 
 .section-dark {
