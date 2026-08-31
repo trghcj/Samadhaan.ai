@@ -23,16 +23,20 @@ A more natural approach is to let citizens simply speak their complaints in thei
     *   Operators cannot simply click "Resolved" to close a ticket. They must upload an "After" photo of the repaired site.
     *   Our **AI Vision pipeline** compares the citizen's original "Before" photo with the operator's "After" photo. If the operator uploads a fake, unrelated, or stock image, the AI rejects the resolution and flags it as Fraud.
 *   **📋 Operator Kanban Board:** A dedicated workspace where municipal operators (strictly isolated to their own departments) can drag and drop issues from *To Do* → *Pending AI Verification* → *Resolved*.
-*   **☁️ Fault-Tolerant Architecture:** Gracefully handles empty audio blobs, missing microphone permissions, and cloud API rate-limits without silently failing.
+*   **🔍 Stackable Dashboard Filters:** Operators can filter complaints by "High Priority", "High Confidence", or "Fraud Alert" using inclusive OR-logic, instantly updating the global dashboard analytics.
+*   **🌍 Multi-Language UI (i18n):** Native support for 8 languages (English, Hindi, Bengali, Telugu, Tamil, Marathi, Spanish, French) using `react-i18next` with a seamless dropdown switcher to bridge the digital divide.
+*   **📱 Custom UI Components:** Replaced abrasive browser alerts with accessible, state-driven React modals for destructive actions (like deleting reports) to ensure a modern SaaS-like user experience.
+*   **☁️ Fault-Tolerant Architecture:** Gracefully handles empty audio blobs, missing microphone permissions, strict Vercel COOP (Cross-Origin-Opener-Policy) OAuth popup restrictions, and cloud API rate-limits without silently failing.
 
 ## 🛠️ Tech Stack
 
 **Frontend:**
 *   React.js (Vite)
 *   React Router DOM
+*   `react-i18next` (Internationalization Engine)
 *   Firebase Authentication (Role-based access control for Citizens vs. Operators)
 *   Vanilla CSS (Clean, accessible, SaaS-style civic tech UI)
-*   Hosted on [Vercel](https://vercel.com)
+*   Hosted on [Vercel](https://vercel.com) (with custom `vercel.json` headers for secure OAuth)
 
 **Backend & AI:**
 *   Python / FastAPI
