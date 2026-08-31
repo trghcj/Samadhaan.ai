@@ -16,16 +16,17 @@ const getCategoryInfo = (prediction) => {
   return { icon: '📄', label: prediction || 'Reported Issue' };
 };
 
-const getStatusInfo = (g) => {
-  if (g.is_resolved) return { id: 'resolved', label: t("Resolved"), color: '#10B981', bg: '#D1FAE5', icon: <CheckCircle size={14} /> };
-  if (g.ai_verification_status === 'Rejected') return { id: 'rejected', label: t("Rejected"), color: '#EF4444', bg: '#FEE2E2', icon: <AlertTriangle size={14} /> };
-  if (g.ai_verification_status === 'Verified') return { id: 'resolved', label: t("Resolved"), color: '#10B981', bg: '#D1FAE5', icon: <CheckCircle size={14} /> }; // fallback
-  return { id: 'pending', label: t("Pending") + " Review", color: '#F59E0B', bg: '#FEF3C7', icon: <Clock size={14} /> };
-};
 
 const CitizenDashboard = () => {
   const { t } = useTranslation();
-  const [grievances, setGrievances] = useState([]);
+
+  const getStatusInfo = (g) => {
+    if (g.is_resolved) return { id: 'resolved', label: t("Resolved"), color: '#10B981', bg: '#D1FAE5', icon: <CheckCircle size={14} /> };
+    if (g.ai_verification_status === 'Rejected') return { id: 'rejected', label: t("Rejected"), color: '#EF4444', bg: '#FEE2E2', icon: <AlertTriangle size={14} /> };
+    if (g.ai_verification_status === 'Verified') return { id: 'resolved', label: t("Resolved"), color: '#10B981', bg: '#D1FAE5', icon: <CheckCircle size={14} /> }; // fallback
+    return { id: 'pending', label: t("Pending") + " Review", color: '#F59E0B', bg: '#FEF3C7', icon: <Clock size={14} /> };
+  };
+    const [grievances, setGrievances] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState('all'); // all, pending, resolved
