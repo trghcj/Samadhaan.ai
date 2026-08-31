@@ -4,7 +4,7 @@ import { auth, googleProvider } from '../firebase';
 import { 
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword, 
-  signInWithRedirect 
+  signInWithPopup 
 } from 'firebase/auth';
 import { LogIn } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
@@ -54,11 +54,12 @@ const AuthPage = () => {
     try {
       localStorage.setItem('signupRole', role);
       if (role === 'operator') localStorage.setItem('signupDepartment', department);
-      await signInWithRedirect(auth, googleProvider);
+      await signInWithPopup(auth, googleProvider);
+      navigate('/');
     } catch (err) {
       setError(err.message);
-      setLoading(false);
     }
+    setLoading(false);
   };
 
   return (

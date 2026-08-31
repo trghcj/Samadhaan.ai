@@ -13,37 +13,41 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
-        try {
-          const roleToSync = localStorage.getItem('signupRole') || 'citizen';
-          const deptToSync = roleToSync === 'operator' ? localStorage.getItem('signupDepartment') : null;
-          
-          const response = await fetch('https://samadhaan-ai.onrender.com/api/users/sync', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              uid: user.uid,
-              email: user.email || '',
-              display_name: user.displayName || 'Unknown User',
-              role: roleToSync,
-              department: deptToSync
-            })
-          });
-          const data = await response.json();
+        const roleToSync = localStorage.getItem('signupRole') || 'citizen';
+        const deptToSync = roleToSync === 'operator' ? localStorage.getItem('signupDepartment') : null;
+        
+        // Non-blocking sync so UI doesn't freeze while Render cold-starts
+        fetch('https://samadhaan-ai.onrender.com/api/users/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            uid: user.uid,
+            email: user.email || '',
+            display_name: user.displayName || 'Unknown User',
+            role: roleToSync,
+            department: deptToSync
+          })
+        })
+        .then(res => res.json())
+        .then(data => {
           setUserRole(data.role);
           if (data.department) setUserDepartment(data.department);
-          
-          localStorage.removeItem('signupRole');
-          localStorage.removeItem('signupDepartment');
-        } catch (err) {
+        })
+        .catch(err => {
           console.error("Failed to sync user to database", err);
           setUserRole('citizen'); // fallback
-        }
+        })
+        .finally(() => {
+          localStorage.removeItem('signupRole');
+          localStorage.removeItem('signupDepartment');
+        });
       } else {
         setUserRole(null);
         setUserDepartment(null);
       }
+      
       setCurrentUser(user);
       setLoading(false);
     });
