@@ -1,9 +1,11 @@
 import React, { useState, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Mic, Square, CheckCircle, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 const CitizenPortal = () => {
+  const { t } = useTranslation();
   const [isRecording, setIsRecording] = useState(false);
   const [audioData, setAudioData] = useState(null);
   const [status, setStatus] = useState('idle'); // idle, recording, form, processing, success, clarification
@@ -143,6 +145,7 @@ const CitizenPortal = () => {
   };
 
   const stopRecording = () => {
+  const { t } = useTranslation();
     if (mediaRecorderRef.current) {
       mediaRecorderRef.current.stop();
       mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
@@ -155,10 +158,10 @@ const CitizenPortal = () => {
       {/* Dark Hero Section like TestFit */}
       <div className="section-dark">
         <h1 style={{ fontSize: '3rem', fontWeight: 800, marginBottom: '1rem' }}>
-          Communicate with your city, starting from an AI-generated grievance plan.
+          {t("Communicate with your city, starting from an AI-generated grievance plan.")}
         </h1>
         <p style={{ color: '#a1a1aa', fontSize: '1.125rem', maxWidth: '600px', margin: '0 auto 2rem auto' }}>
-          Report a municipal issue simply by using your voice. Speak naturally in your native language and let Samadhaan.ai route it instantly.
+          {t("Report a municipal issue simply by using your voice. Speak naturally in your native language and let Samadhaan.ai route it instantly.")}
         </p>
       </div>
 
@@ -185,53 +188,53 @@ const CitizenPortal = () => {
             {!currentUser && (
               <>
                 <div style={{ marginBottom: '1rem' }}>
-                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.25rem', color: 'var(--text-muted)' }}>Full Name *</label>
+                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.25rem', color: 'var(--text-muted)' }}>{t("Full Name *")}</label>
                   <input type="text" value={reporterName} onChange={e => setReporterName(e.target.value)} required style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-main)' }} placeholder="E.g. Ramesh Kumar" />
                 </div>
                 <div style={{ marginBottom: '1rem' }}>
-                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.25rem', color: 'var(--text-muted)' }}>Phone Number *</label>
+                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.25rem', color: 'var(--text-muted)' }}>{t("Phone Number *")}</label>
                   <input type="tel" value={reporterPhone} onChange={e => setReporterPhone(e.target.value)} required style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-main)' }} placeholder="E.g. +91 98765 43210" />
                 </div>
               </>
             )}
             
             <div style={{ marginBottom: '1rem' }}>
-              <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.25rem', color: 'var(--text-muted)' }}>Location / Village *</label>
+              <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.25rem', color: 'var(--text-muted)' }}>{t("Location / Village *")}</label>
               <input type="text" value={location} onChange={e => setLocation(e.target.value)} required style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-main)' }} placeholder="E.g. Near main square, Palampur" />
             </div>
 
             <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.25rem', color: 'var(--text-muted)' }}>Extra Details (Optional)</label>
+              <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.25rem', color: 'var(--text-muted)' }}>{t("Extra Details (Optional)")}</label>
               <textarea value={extraDetails} onChange={e => setExtraDetails(e.target.value)} rows="3" style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-main)' }} placeholder="Any other context we should know?" />
             </div>
             
             <div style={{ marginBottom: '2rem' }}>
-              <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.25rem', color: 'var(--text-muted)' }}>"Before" Photo (Optional)</label>
+              <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.25rem', color: 'var(--text-muted)' }}>{t('"Before" Photo (Optional)')}</label>
               <input type="file" accept="image/*" onChange={(e) => setBeforePhoto(e.target.files[0])} style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-main)' }} />
             </div>
 
             <div style={{ display: 'flex', gap: '1rem' }}>
-              <button type="button" className="btn btn-outline" style={{ flex: 1, padding: '1rem' }} onClick={() => setStatus('idle')}>Cancel</button>
-              <button type="submit" className="btn btn-primary" style={{ flex: 2, padding: '1rem' }}>Submit Grievance</button>
+              <button type="button" className="btn btn-outline" style={{ flex: 1, padding: '1rem' }} onClick={() => setStatus('idle')}>{t("Cancel")}</button>
+              <button type="submit" className="btn btn-primary" style={{ flex: 2, padding: '1rem' }}>{t("Submit Grievance")}</button>
             </div>
           </form>
         ) : status === 'processing' ? (
           <div style={{ padding: '2rem', textAlign: 'center' }}>
             {/* simple inline spinner style */}
             <div style={{ border: '4px solid #E2E8F0', borderTop: '4px solid var(--color-primary)', borderRadius: '50%', width: '50px', height: '50px', animation: 'spin 1s linear infinite', margin: '0 auto 1.5rem' }} />
-            <p style={{ fontSize: '1.125rem', fontWeight: 500 }}>{statusStep || 'Analyzing grievance...'}</p>
+            <p style={{ fontSize: '1.125rem', fontWeight: 500 }}>{statusStep || '{t("Analyzing grievance...")}'}</p>
             <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
           </div>
         ) : status === 'success' ? (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
             <CheckCircle size={72} style={{ marginBottom: '1.5rem', color: '#10B981' }} />
-            <h2 style={{ color: 'var(--text-main)', marginBottom: '0.5rem' }}>Grievance Routed</h2>
+            <h2 style={{ color: 'var(--text-main)', marginBottom: '0.5rem' }}>{t("Grievance Routed")}</h2>
             {result?.confidence_level === 'Low' ? (
-              <p style={{ color: 'var(--text-muted)' }}>We were unable to confidently categorize your issue automatically. It has been sent directly to a <strong>Human Operator</strong> for manual review.</p>
+              <p style={{ color: 'var(--text-muted)' }}>{t("We were unable to confidently categorize your issue automatically. It has been sent directly to a Human Operator for manual review.")}</p>
             ) : (
               <p style={{ color: 'var(--text-muted)' }}>Your issue has been automatically sent to the <strong>{result?.prediction_set || 'relevant department'}</strong>.</p>
             )}
-            <button className="btn btn-outline" style={{ marginTop: '2rem' }} onClick={() => setStatus('idle')}>Report Another</button>
+            <button className="btn btn-outline" style={{ marginTop: '2rem' }} onClick={() => setStatus('idle')}>{t("Report Another")}</button>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -241,12 +244,12 @@ const CitizenPortal = () => {
             </h2>
             {result?.prediction_set === 'Error' ? (
               <p style={{ color: 'var(--text-muted)', textAlign: 'center' }}>
-                The AI encountered an error: <br/><strong style={{color: '#EF4444'}}>{result?.error || 'Unknown classification error'}</strong>
+                {t("The AI encountered an error:")} <br/><strong style={{color: '#EF4444'}}>{result?.error || 'Unknown classification error'}</strong>
               </p>
             ) : (
               <div style={{ width: '100%' }}>
                 <div style={{ padding: '1rem', backgroundColor: '#FEF3C7', borderRadius: 'var(--radius-sm)', color: '#92400E', marginBottom: '1.5rem' }}>
-                  <strong>Question from AI:</strong><br/>
+                  <strong>{t("Question from AI:")}</strong><br/>
                   {result?.clarifying_question || "We detected multiple possible departments. Could you provide a bit more detail to help us route this correctly?"}
                 </div>
                 
@@ -259,7 +262,7 @@ const CitizenPortal = () => {
                 />
                 
                 <div style={{ display: 'flex', gap: '1rem' }}>
-                  <button className="btn btn-outline" style={{ flex: 1 }} onClick={() => setStatus('idle')}>Start Over</button>
+                  <button className="btn btn-outline" style={{ flex: 1 }} onClick={() => setStatus('idle')}>{t("Start Over")}</button>
                   <button 
                     className="btn btn-primary" 
                     style={{ flex: 2 }} 
@@ -282,7 +285,7 @@ const CitizenPortal = () => {
                       }
                     }}
                   >
-                    Submit Answer
+                    {t("Submit Answer")}
                   </button>
                 </div>
               </div>

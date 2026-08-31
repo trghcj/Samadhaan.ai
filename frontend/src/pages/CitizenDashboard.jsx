@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { Clock, CheckCircle, Navigation, Trash2, Search, X, AlertTriangle, ChevronDown, Calendar, MapPin, Tag, FileText, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -16,13 +17,14 @@ const getCategoryInfo = (prediction) => {
 };
 
 const getStatusInfo = (g) => {
-  if (g.is_resolved) return { id: 'resolved', label: 'Resolved', color: '#10B981', bg: '#D1FAE5', icon: <CheckCircle size={14} /> };
-  if (g.ai_verification_status === 'Rejected') return { id: 'rejected', label: 'Rejected', color: '#EF4444', bg: '#FEE2E2', icon: <AlertTriangle size={14} /> };
-  if (g.ai_verification_status === 'Verified') return { id: 'resolved', label: 'Resolved', color: '#10B981', bg: '#D1FAE5', icon: <CheckCircle size={14} /> }; // fallback
-  return { id: 'pending', label: 'Pending Review', color: '#F59E0B', bg: '#FEF3C7', icon: <Clock size={14} /> };
+  if (g.is_resolved) return { id: 'resolved', label: '{t("Resolved")}', color: '#10B981', bg: '#D1FAE5', icon: <CheckCircle size={14} /> };
+  if (g.ai_verification_status === '{t("Rejected")}') return { id: 'rejected', label: '{t("Rejected")}', color: '#EF4444', bg: '#FEE2E2', icon: <AlertTriangle size={14} /> };
+  if (g.ai_verification_status === 'Verified') return { id: 'resolved', label: '{t("Resolved")}', color: '#10B981', bg: '#D1FAE5', icon: <CheckCircle size={14} /> }; // fallback
+  return { id: 'pending', label: '{t("Pending")} Review', color: '#F59E0B', bg: '#FEF3C7', icon: <Clock size={14} /> };
 };
 
 const CitizenDashboard = () => {
+  const { t } = useTranslation();
   const [grievances, setGrievances] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -125,10 +127,10 @@ const CitizenDashboard = () => {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
             <h1 style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '0.25rem' }}>
-              My Dashboard
+              {t("My Dashboard")}
             </h1>
             <p style={{ color: 'var(--text-muted)', fontSize: '1rem' }}>
-              Track and manage the civic issues you've reported.
+              {t("Track and manage the civic issues you've reported.")}
             </p>
           </div>
           <button 
@@ -137,7 +139,7 @@ const CitizenDashboard = () => {
             style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', borderRadius: '12px', padding: '0.875rem 1.5rem' }}
           >
             <Navigation size={18} />
-            Report New Issue
+            {t("Report New Issue")}
           </button>
         </div>
       </div>
@@ -146,10 +148,10 @@ const CitizenDashboard = () => {
       {!loading && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '2.5rem' }}>
           {[
-            { label: 'Total Reports', value: stats.total },
-            { label: 'Pending', value: stats.pending, color: '#F59E0B' },
-            { label: 'Resolved', value: stats.resolved, color: '#10B981' },
-            ...(stats.rejected > 0 ? [{ label: 'Rejected', value: stats.rejected, color: '#EF4444' }] : [])
+            { label: '{t("Total Reports")}', value: stats.total },
+            { label: '{t("Pending")}', value: stats.pending, color: '#F59E0B' },
+            { label: '{t("Resolved")}', value: stats.resolved, color: '#10B981' },
+            ...(stats.rejected > 0 ? [{ label: '{t("Rejected")}', value: stats.rejected, color: '#EF4444' }] : [])
           ].map((stat, idx) => (
             <div key={idx} style={{ backgroundColor: '#ffffff', border: '1px solid var(--border)', borderRadius: '12px', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', boxShadow: 'var(--shadow-sm)' }}>
               <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)', fontWeight: 600 }}>{stat.label}</span>
@@ -165,7 +167,7 @@ const CitizenDashboard = () => {
           <Search size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
           <input 
             type="text" 
-            placeholder="Search my reports..." 
+            placeholder="{t("Search my reports...")}" 
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
             style={{ width: '100%', padding: '0.75rem 1rem 0.75rem 2.75rem', borderRadius: '12px', border: '1px solid var(--border)', outline: 'none', fontSize: '0.95rem' }}
@@ -198,8 +200,8 @@ const CitizenDashboard = () => {
             onChange={e => setSortOrder(e.target.value)}
             style={{ padding: '0.5rem 1rem', borderRadius: '20px', border: '1px solid var(--border)', backgroundColor: 'transparent', color: 'var(--text-main)', fontWeight: 600, fontSize: '0.875rem', cursor: 'pointer', outline: 'none' }}
           >
-            <option value="newest">Newest First</option>
-            <option value="oldest">Oldest First</option>
+            <option value="newest">{t("Newest First")}</option>
+            <option value="oldest">{t("Oldest First")}</option>
           </select>
         </div>
       </div>
@@ -278,7 +280,7 @@ const CitizenDashboard = () => {
                   
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                     <span style={{ color: 'var(--accent)', fontWeight: 600, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                      View Details <ArrowRight size={14} />
+                      {t("View Details")} <ArrowRight size={14} />
                     </span>
                     <button 
                       onClick={(e) => handleDeleteClick(e, g.id)}
@@ -380,7 +382,7 @@ const CitizenDashboard = () => {
                 )}
               </div>
 
-              {/* Resolution Notes (If Resolved) */}
+              {/* Resolution Notes (If {t("Resolved")}) */}
               {selectedIssue.is_resolved && selectedIssue.resolution_notes && (
                 <div>
                   <h4 style={{ fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '1px', color: '#065F46', fontWeight: 700, marginBottom: '0.75rem' }}>Official Resolution Notes</h4>
@@ -405,7 +407,7 @@ const CitizenDashboard = () => {
                     )}
                     {selectedIssue.after_photo_url && (
                       <div style={{ flex: '0 0 auto', width: '200px' }}>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.25rem', fontWeight: 600 }}>After (Resolved)</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.25rem', fontWeight: 600 }}>After ({t("Resolved")})</div>
                         <img src={selectedIssue.after_photo_url} alt="After" style={{ width: '100%', height: '140px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--border)' }} />
                       </div>
                     )}
@@ -428,9 +430,9 @@ const CitizenDashboard = () => {
             <div style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: '#FEE2E2', color: '#EF4444', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem auto' }}>
               <Trash2 size={24} />
             </div>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '0.5rem' }}>Delete Report</h3>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '0.5rem' }}>{t("Delete")} Report</h3>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginBottom: '2rem', lineHeight: 1.5 }}>
-              Are you sure you want to permanently delete this report? This action cannot be undone.
+              {t("Are you sure you want to permanently delete this report?")} This action cannot be undone.
             </p>
             <div style={{ display: 'flex', gap: '1rem' }}>
               <button 
