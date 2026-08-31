@@ -5,7 +5,8 @@ import OperatorDashboard from './pages/OperatorDashboard';
 import CitizenDashboard from './pages/CitizenDashboard';
 import AuthPage from './pages/AuthPage';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { LogOut } from 'lucide-react';
+import { LogOut, Globe } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import './index.css';
 
 // Protected Route Wrapper
@@ -30,6 +31,11 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 const AppHeader = () => {
   const { currentUser, userRole, logout } = useAuth();
   const location = useLocation();
+  const { t, i18n } = useTranslation();
+
+  const handleLanguageChange = (e) => {
+    i18n.changeLanguage(e.target.value);
+  };
 
   return (
     <header className="header-nav">
@@ -42,22 +48,40 @@ const AppHeader = () => {
       <div className="nav-links">
         {userRole !== 'operator' && (
           <Link to="/" className={`nav-item ${location.pathname === '/' ? 'active' : ''}`} style={{ textDecoration: 'none' }}>
-            Report Issue
+            {t("Report Issue")}
           </Link>
         )}
         {currentUser && userRole === 'operator' && (
           <Link to="/operator" className={`nav-item ${location.pathname.startsWith('/operator') ? 'active' : ''}`} style={{ textDecoration: 'none' }}>
-            Operator Dashboard
+            {t("Operator Dashboard")}
           </Link>
         )}
         {currentUser && userRole === 'citizen' && (
           <Link to="/dashboard" className={`nav-item ${location.pathname.startsWith('/dashboard') ? 'active' : ''}`} style={{ textDecoration: 'none' }}>
-            My Dashboard
+            {t("My Dashboard")}
           </Link>
         )}
       </div>
 
-      <div>
+      <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', backgroundColor: '#f1f5f9', padding: '0.4rem 0.75rem', borderRadius: '8px' }}>
+          <Globe size={16} color="var(--text-muted)" />
+          <select 
+            onChange={handleLanguageChange} 
+            value={i18n.resolvedLanguage || 'en'}
+            style={{ background: 'transparent', border: 'none', fontSize: '0.85rem', color: 'var(--text-main)', fontWeight: 600, outline: 'none', cursor: 'pointer' }}
+          >
+            <option value="en">English</option>
+            <option value="hi">हिंदी (Hindi)</option>
+            <option value="bn">বাংলা (Bengali)</option>
+            <option value="te">తెలుగు (Telugu)</option>
+            <option value="ta">தமிழ் (Tamil)</option>
+            <option value="mr">मराठी (Marathi)</option>
+            <option value="es">Español</option>
+            <option value="fr">Français</option>
+          </select>
+        </div>
+
         {currentUser ? (
           <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
             <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)', fontWeight: 500 }}>
@@ -69,12 +93,12 @@ const AppHeader = () => {
               onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f1f5f9'}
               onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
             >
-              <LogOut size={16} /> Logout
+              <LogOut size={16} /> {t("Logout")}
             </button>
           </div>
         ) : (
           <Link to="/auth" className="btn btn-primary" style={{ textDecoration: 'none', padding: '0.4rem 1rem', fontSize: '0.875rem', fontWeight: 600 }}>
-            Login / Register
+            {t("Login / Register")}
           </Link>
         )}
       </div>
