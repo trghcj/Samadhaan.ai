@@ -29,6 +29,8 @@ const CitizenDashboard = () => {
   const [filter, setFilter] = useState('all'); // all, pending, resolved
   const [sortOrder, setSortOrder] = useState('newest'); // newest, oldest
   const [selectedIssue, setSelectedIssue] = useState(null);
+  const [itemToDelete, setItemToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const { currentUser } = useAuth();
   const navigate = useNavigate();
 
@@ -51,18 +53,24 @@ const CitizenDashboard = () => {
     fetchGrievances();
   }, [currentUser]);
 
-  const handleDelete = async (e, id) => {
+  const handleDeleteClick = (e, id) => {
     e.stopPropagation(); // prevent modal opening
-    if (window.confirm('Are you sure you want to permanently delete this report?')) {
-      try {
-        await fetch(`https://samadhaan-ai.onrender.com/api/grievances/${id}`, { method: 'DELETE' });
-        setGrievances(prev => prev.filter(item => item.id !== id));
-        if (selectedIssue && selectedIssue.id === id) setSelectedIssue(null);
-      } catch(err) {
-        console.error(err);
-        alert("Failed to delete grievance");
-      }
+    setItemToDelete(id);
+  };
+
+  const confirmDelete = async () => {
+    if (!itemToDelete) return;
+    setIsDeleting(true);
+    try {
+      await fetch(`https://samadhaan-ai.onrender.com/api/grievances/${itemToDelete}`, { method: 'DELETE' });
+      setGrievances(prev => prev.filter(item => item.id !== itemToDelete));
+      if (selectedIssue && selectedIssue.id === itemToDelete) setSelectedIssue(null);
+      setItemToDelete(null);
+    } catch(err) {
+      console.error(err);
+      alert("Failed to delete grievance");
     }
+    setIsDeleting(false);
   };
 
   const filteredAndSorted = useMemo(() => {
@@ -273,7 +281,7 @@ const CitizenDashboard = () => {
                       View Details <ArrowRight size={14} />
                     </span>
                     <button 
-                      onClick={(e) => handleDelete(e, g.id)}
+                      onClick={(e) => handleDeleteClick(e, g.id)}
                       style={{ background: 'none', border: 'none', color: '#cbd5e1', cursor: 'pointer', padding: '0.25rem', transition: 'color 0.2s' }} 
                       onMouseOver={(e) => e.currentTarget.style.color = '#EF4444'}
                       onMouseOut={(e) => e.currentTarget.style.color = '#cbd5e1'}
@@ -405,6 +413,42 @@ const CitizenDashboard = () => {
                 </div>
               )}
 
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {itemToDelete && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', backdropFilter: 'blur(4px)' }} onClick={() => setItemToDelete(null)}>
+          <div 
+            onClick={e => e.stopPropagation()} 
+            style={{ backgroundColor: '#fff', borderRadius: '16px', width: '100%', maxWidth: '400px', padding: '2rem', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', textAlign: 'center' }}
+          >
+            <div style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: '#FEE2E2', color: '#EF4444', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem auto' }}>
+              <Trash2 size={24} />
+            </div>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '0.5rem' }}>Delete Report</h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginBottom: '2rem', lineHeight: 1.5 }}>
+              Are you sure you want to permanently delete this report? This action cannot be undone.
+            </p>
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <button 
+                onClick={() => setItemToDelete(null)}
+                disabled={isDeleting}
+                style={{ flex: 1, padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border)', backgroundColor: '#fff', color: 'var(--text-main)', fontWeight: 600, cursor: isDeleting ? 'not-allowed' : 'pointer' }}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={confirmDelete}
+                disabled={isDeleting}
+                style={{ flex: 1, padding: '0.75rem', borderRadius: '8px', border: 'none', backgroundColor: '#EF4444', color: '#fff', fontWeight: 600, cursor: isDeleting ? 'not-allowed' : 'pointer', transition: 'background-color 0.2s' }}
+                onMouseOver={(e) => !isDeleting && (e.currentTarget.style.backgroundColor = '#DC2626')}
+                onMouseOut={(e) => !isDeleting && (e.currentTarget.style.backgroundColor = '#EF4444')}
+              >
+                {isDeleting ? 'Deleting...' : 'Yes, Delete'}
+              </button>
             </div>
           </div>
         </div>
