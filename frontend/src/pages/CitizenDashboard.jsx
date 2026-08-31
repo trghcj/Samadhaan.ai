@@ -17,10 +17,10 @@ const getCategoryInfo = (prediction) => {
 };
 
 const getStatusInfo = (g) => {
-  if (g.is_resolved) return { id: 'resolved', label: '{t("Resolved")}', color: '#10B981', bg: '#D1FAE5', icon: <CheckCircle size={14} /> };
-  if (g.ai_verification_status === '{t("Rejected")}') return { id: 'rejected', label: '{t("Rejected")}', color: '#EF4444', bg: '#FEE2E2', icon: <AlertTriangle size={14} /> };
-  if (g.ai_verification_status === 'Verified') return { id: 'resolved', label: '{t("Resolved")}', color: '#10B981', bg: '#D1FAE5', icon: <CheckCircle size={14} /> }; // fallback
-  return { id: 'pending', label: '{t("Pending")} Review', color: '#F59E0B', bg: '#FEF3C7', icon: <Clock size={14} /> };
+  if (g.is_resolved) return { id: 'resolved', label: t("Resolved"), color: '#10B981', bg: '#D1FAE5', icon: <CheckCircle size={14} /> };
+  if (g.ai_verification_status === 'Rejected') return { id: 'rejected', label: t("Rejected"), color: '#EF4444', bg: '#FEE2E2', icon: <AlertTriangle size={14} /> };
+  if (g.ai_verification_status === 'Verified') return { id: 'resolved', label: t("Resolved"), color: '#10B981', bg: '#D1FAE5', icon: <CheckCircle size={14} /> }; // fallback
+  return { id: 'pending', label: t("Pending") + " Review", color: '#F59E0B', bg: '#FEF3C7', icon: <Clock size={14} /> };
 };
 
 const CitizenDashboard = () => {
@@ -148,10 +148,10 @@ const CitizenDashboard = () => {
       {!loading && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '2.5rem' }}>
           {[
-            { label: '{t("Total Reports")}', value: stats.total },
-            { label: '{t("Pending")}', value: stats.pending, color: '#F59E0B' },
-            { label: '{t("Resolved")}', value: stats.resolved, color: '#10B981' },
-            ...(stats.rejected > 0 ? [{ label: '{t("Rejected")}', value: stats.rejected, color: '#EF4444' }] : [])
+            { label: t("Total Reports"), value: stats.total },
+            { label: t("Pending"), value: stats.pending, color: '#F59E0B' },
+            { label: t("Resolved"), value: stats.resolved, color: '#10B981' },
+            ...(stats.rejected > 0 ? [{ label: t("Rejected"), value: stats.rejected, color: '#EF4444' }] : [])
           ].map((stat, idx) => (
             <div key={idx} style={{ backgroundColor: '#ffffff', border: '1px solid var(--border)', borderRadius: '12px', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', boxShadow: 'var(--shadow-sm)' }}>
               <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)', fontWeight: 600 }}>{stat.label}</span>
@@ -191,7 +191,7 @@ const CitizenDashboard = () => {
                 transition: 'all 0.2s'
               }}
             >
-              {f.charAt(0).toUpperCase() + f.slice(1)}
+              {t(f.charAt(0).toUpperCase() + f.slice(1))}
             </button>
           ))}
           
