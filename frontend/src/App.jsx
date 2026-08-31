@@ -64,7 +64,7 @@ const AppHeader = () => {
       </div>
 
       <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', backgroundColor: '#f1f5f9', padding: '0.4rem 0.75rem', borderRadius: '8px' }}>
+        <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '0.35rem', backgroundColor: '#f1f5f9', padding: '0.4rem 0.75rem', borderRadius: '8px' }}>
           <Globe size={16} color="var(--text-muted)" />
           <select 
             onChange={handleLanguageChange} 
@@ -80,6 +80,42 @@ const AppHeader = () => {
             <option value="es">Español</option>
             <option value="fr">Français</option>
           </select>
+          
+          {location.pathname === '/auth' && (
+            <div style={{
+              position: 'absolute',
+              top: 'calc(100% + 12px)',
+              right: '0',
+              backgroundColor: '#4F46E5',
+              color: 'white',
+              padding: '0.75rem 1rem',
+              borderRadius: '8px',
+              fontSize: '0.85rem',
+              fontWeight: '600',
+              boxShadow: '0 4px 10px rgba(0, 0, 0, 0.15)',
+              whiteSpace: 'nowrap',
+              zIndex: 50,
+              animation: 'bounce 2s infinite'
+            }}>
+              <div style={{
+                position: 'absolute',
+                top: '-6px',
+                right: '24px',
+                width: 0,
+                height: 0,
+                borderLeft: '6px solid transparent',
+                borderRight: '6px solid transparent',
+                borderBottom: '6px solid #4F46E5'
+              }}></div>
+              🌍 Choose your language here!
+              <style>{`
+                @keyframes bounce {
+                  0%, 100% { transform: translateY(0); }
+                  50% { transform: translateY(-5px); }
+                }
+              `}</style>
+            </div>
+          )}
         </div>
 
         {currentUser ? (
