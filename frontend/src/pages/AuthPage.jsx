@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth, googleProvider } from '../firebase';
 import { 
@@ -7,6 +7,7 @@ import {
   signInWithRedirect 
 } from 'firebase/auth';
 import { LogIn } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 const AuthPage = () => {
   const [authMode, setAuthMode] = useState('email_login'); // email_login, email_signup
@@ -18,6 +19,13 @@ const AuthPage = () => {
   const [loading, setLoading] = useState(false);
   
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
+
+  useEffect(() => {
+    if (currentUser) {
+      navigate('/');
+    }
+  }, [currentUser, navigate]);
 
   const handleEmailAuth = async (e) => {
     e.preventDefault();
