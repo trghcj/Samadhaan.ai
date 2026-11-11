@@ -1,0 +1,16 @@
+{
+  "model": "google/muril-base-cased",
+  "epochs": 20,
+  "lr": 5e-05,
+  "seed": 42,
+  "calibration": {
+    "n": 126,
+    "accuracy": 0.8492063492063492,
+    "macro_f1": 0.8452352306463391
+  },
+  "test": {
+    "n": 126,
+    "accuracy": 0.8174603174603174,
+    "macro_f1": 0.8134666613837906
+  }
+}

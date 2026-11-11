@@ -2,6 +2,10 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import os
+from dotenv import load_dotenv
+
+# Load backend/.env before reading DATABASE_URL (ai_pipeline.py imports this module before it loads .env itself)
+load_dotenv()
 
 # Using a standard PostgreSQL local connection string
 # In a real setup, you would create this database via psql or pgAdmin

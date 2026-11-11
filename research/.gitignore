@@ -1,0 +1,2 @@
+# model weights are large; keep the small probs_*.csv and metrics.json
+outputs/*/model/

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { auth } from '../firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { API_BASE } from '../api';
 
 const AuthContext = createContext();
 
@@ -19,7 +20,7 @@ export const AuthProvider = ({ children }) => {
         const deptToSync = roleToSync === 'operator' ? localStorage.getItem('signupDepartment') : null;
         
         // Non-blocking sync so UI doesn't freeze while Render cold-starts
-        fetch('https://samadhaan-ai.onrender.com/api/users/sync', {
+        fetch(`${API_BASE}/api/users/sync`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

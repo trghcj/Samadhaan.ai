@@ -3,6 +3,35 @@ import { useTranslation } from 'react-i18next';
 import { Mic, Square, CheckCircle, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { API_BASE } from '../api';
+
+// TEMPORARY (mentor demo): shows what the classifier saw. Remove this component and its
+// two usages below once the review is over.
+const ConfidenceDebug = ({ result }) => {
+  if (!result || (result.raw_confidence === undefined && result.confidence_score === undefined)) return null;
+  const pct = (x) => `${(x * 100).toFixed(1)}%`;
+  const row = { display: 'flex', justifyContent: 'space-between', gap: '1rem', padding: '0.15rem 0' };
+  return (
+    <div style={{ width: '100%', marginTop: '1.5rem', padding: '1rem', border: '1px dashed #94A3B8', borderRadius: '8px', background: '#F8FAFC', fontSize: '0.85rem', textAlign: 'left', color: '#334155' }}>
+      <div style={{ fontWeight: 700, marginBottom: '0.5rem' }}>Confidence details (temporary, for review)</div>
+      {result.transcript && <div style={row}><span>Heard</span><span style={{ textAlign: 'right' }}>{result.transcript}</span></div>}
+      <div style={row}><span>Classifier</span><span>{result.classifier || 'gemini'}</span></div>
+      <div style={row}><span>Level</span><strong>{result.confidence_level}</strong></div>
+      {result.raw_confidence !== undefined && <div style={row}><span>Model's top probability</span><strong>{pct(result.raw_confidence)}</strong></div>}
+      {result.t_high !== undefined && (
+        <div style={row}><span>Lines (Low / Medium / High)</span><span>below {pct(result.t_low)} / {pct(result.t_low)}–{pct(result.t_high)} / {pct(result.t_high)}+</span></div>
+      )}
+      {result.confidence_score !== undefined && <div style={row}><span>Estimated chance this is right</span><strong>{pct(result.confidence_score)}</strong></div>}
+      {Array.isArray(result.top3) && (
+        <div style={{ marginTop: '0.5rem' }}>
+          {result.top3.map((d, i) => (
+            <div key={d.department} style={row}><span>{i + 1}. {d.department}</span><span>{pct(d.probability)}</span></div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 const CitizenPortal = () => {
   const { t } = useTranslation();
@@ -35,8 +64,12 @@ const CitizenPortal = () => {
       }
     }
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorderRef.current = new MediaRecorder(stream);
+      // Browser noise suppression / echo cancellation can smear speech and hurt Whisper; keep automatic gain
+      // so a quiet laptop mic is boosted, and use a higher bitrate for the recording.
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: { channelCount: 1, echoCancellation: false, noiseSuppression: false, autoGainControl: true },
+      });
+      mediaRecorderRef.current = new MediaRecorder(stream, { audioBitsPerSecond: 128000 });
       
       mediaRecorderRef.current.ondataavailable = (e) => {
         chunksRef.current.push(e.data);
@@ -97,7 +130,7 @@ const CitizenPortal = () => {
     }
     
     try {
-      const response = await fetch('https://samadhaan-ai.onrender.com/api/upload', {
+      const response = await fetch(`${API_BASE}/api/upload`, {
         method: 'POST',
         body: formData,
       });
@@ -108,7 +141,7 @@ const CitizenPortal = () => {
         // Start polling the status endpoint every 2 seconds
         const pollInterval = setInterval(async () => {
           try {
-            const statusRes = await fetch(`https://samadhaan-ai.onrender.com/api/status/${data.task_id}`);
+            const statusRes = await fetch(`${API_BASE}/api/status/${data.task_id}`);
             const statusData = await statusRes.json();
             
             if (statusData.status === 'success') {
@@ -136,16 +169,14 @@ const CitizenPortal = () => {
         }, 2000);
       }
     } catch (err) {
-      console.error("Backend error, mock fallback:", err);
-      setTimeout(() => {
-        const mockResult = Math.random() > 0.5 ? 'success' : 'clarification';
-        setStatus(mockResult);
-      }, 2000);
+      // Do not fake a result: a failed request must be visible, not shown as a routed complaint.
+      console.error("Could not reach the backend:", err);
+      alert(`Could not reach the server at ${API_BASE}. Is the backend running?`);
+      setStatus('idle');
     }
   };
 
   const stopRecording = () => {
-  const { t } = useTranslation();
     if (mediaRecorderRef.current) {
       mediaRecorderRef.current.stop();
       mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
@@ -231,9 +262,15 @@ const CitizenPortal = () => {
             <h2 style={{ color: 'var(--text-main)', marginBottom: '0.5rem' }}>{t("Grievance Routed")}</h2>
             {result?.confidence_level === 'Low' ? (
               <p style={{ color: 'var(--text-muted)' }}>{t("We were unable to confidently categorize your issue automatically. It has been sent directly to a Human Operator for manual review.")}</p>
+            ) : result?.prediction_set === 'Unclear' ? (
+              <p style={{ color: 'var(--text-muted)' }}>{t("We were unable to confidently categorize your issue automatically. It has been sent directly to a Human Operator for manual review.")}</p>
             ) : (
-              <p style={{ color: 'var(--text-muted)' }}>Your issue has been automatically sent to the <strong>{result?.prediction_set || 'relevant department'}</strong>.</p>
+              <p style={{ color: 'var(--text-muted)' }}>
+                {t("Your issue has been automatically sent to the")}{' '}
+                <strong>{result?.prediction_set ? t(`${result.prediction_set} Dept.`, { defaultValue: `${result.prediction_set} Department` }) : 'relevant department'}</strong>.
+              </p>
             )}
+            <ConfidenceDebug result={result} />
             <button className="btn btn-outline" style={{ marginTop: '2rem' }} onClick={() => setStatus('idle')}>{t("Report Another")}</button>
           </div>
         ) : (
@@ -252,7 +289,8 @@ const CitizenPortal = () => {
                   <strong>{t("Question from AI:")}</strong><br/>
                   {result?.clarifying_question || "We detected multiple possible departments. Could you provide a bit more detail to help us route this correctly?"}
                 </div>
-                
+                <ConfidenceDebug result={result} />
+
                 <textarea 
                   value={clarifyAnswer} 
                   onChange={e => setClarifyAnswer(e.target.value)} 
@@ -271,7 +309,7 @@ const CitizenPortal = () => {
                       setStatus('processing');
                       setStatusStep('Saving your answer...');
                       try {
-                        await fetch(`https://samadhaan-ai.onrender.com/api/grievances/${result.id}/clarify`, {
+                        await fetch(`${API_BASE}/api/grievances/${result.id}/clarify`, {
                           method: 'PATCH',
                           headers: {'Content-Type': 'application/json'},
                           body: JSON.stringify({answer: clarifyAnswer})

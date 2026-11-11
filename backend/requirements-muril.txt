@@ -1,0 +1,7 @@
+# Extra dependencies for the MuRIL classifier (backend/muril_classifier.py).
+# Not in requirements.txt on purpose: torch + MuRIL are too big for a free Render instance.
+# Install on a machine that runs the backend locally:  pip install -r requirements-muril.txt
+torch
+transformers
+sentencepiece
+numpy

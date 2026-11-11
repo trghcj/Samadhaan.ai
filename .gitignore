@@ -19,3 +19,10 @@ backend/temp_audio/
 # Misc
 .DS_Store
 .env
+
+.demo-logs/
+
+# Python caches (any folder)
+__pycache__/
+*.pyc
+.pytest_cache/

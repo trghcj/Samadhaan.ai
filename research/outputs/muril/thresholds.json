@@ -1,0 +1,29 @@
+{
+  "t_high": 0.354948,
+  "t_low": 0.324515,
+  "target_silent_error": 0.05,
+  "calibrated_on": "calibration split",
+  "ece_calibration": 0.4812673650793651,
+  "score_map": [
+    {
+      "max_conf": 0.34171,
+      "est_accuracy": 0.7142857142857143
+    },
+    {
+      "max_conf": 0.362742,
+      "est_accuracy": 0.7407407407407407
+    },
+    {
+      "max_conf": 0.380047,
+      "est_accuracy": 0.8148148148148148
+    },
+    {
+      "max_conf": 0.396403,
+      "est_accuracy": 0.8888888888888888
+    },
+    {
+      "max_conf": 0.424125,
+      "est_accuracy": 0.9629629629629629
+    }
+  ]
+}

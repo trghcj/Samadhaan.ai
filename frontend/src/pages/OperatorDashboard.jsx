@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Filter, Clock, AlertTriangle, CheckCircle, Search, X, ShieldAlert, ShieldCheck, Activity, Calendar, MapPin, Download, RefreshCw, LayoutDashboard } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { API_BASE } from '../api';
 
 // Helper for category icons
 const getCategoryIcon = (prediction) => {
@@ -38,7 +39,7 @@ const OperatorDashboard = () => {
   const fetchGrievances = async () => {
     setLoading(true);
     try {
-      const url = currentUser ? `https://samadhaan-ai.onrender.com/api/grievances?uid=${currentUser.uid}` : 'https://samadhaan-ai.onrender.com/api/grievances';
+      const url = currentUser ? `${API_BASE}/api/grievances?uid=${currentUser.uid}` : `${API_BASE}/api/grievances`;
       const response = await fetch(url);
       const data = await response.json();
       if (Array.isArray(data)) setGrievances(data);
@@ -74,7 +75,7 @@ const OperatorDashboard = () => {
     }
 
     try {
-      const response = await fetch(`https://samadhaan-ai.onrender.com/api/grievances/${selectedGrievance.id}/resolve`, {
+      const response = await fetch(`${API_BASE}/api/grievances/${selectedGrievance.id}/resolve`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ resolution_notes: reviewNotes, after_photo_url: uploadedUrl })

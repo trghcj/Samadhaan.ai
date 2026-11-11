@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { Clock, CheckCircle, Navigation, Trash2, Search, X, AlertTriangle, ChevronDown, Calendar, MapPin, Tag, FileText, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { API_BASE } from '../api';
 
 const getCategoryInfo = (prediction) => {
   const pred = (prediction || '').toLowerCase();
@@ -41,7 +42,7 @@ const CitizenDashboard = () => {
     const fetchGrievances = async () => {
       if (!currentUser) return;
       try {
-        const res = await fetch(`https://samadhaan-ai.onrender.com/api/grievances/me/${currentUser.uid}`);
+        const res = await fetch(`${API_BASE}/api/grievances/me/${currentUser.uid}`);
         const data = await res.json();
         if (Array.isArray(data)) {
           setGrievances(data);
@@ -65,7 +66,7 @@ const CitizenDashboard = () => {
     if (!itemToDelete) return;
     setIsDeleting(true);
     try {
-      await fetch(`https://samadhaan-ai.onrender.com/api/grievances/${itemToDelete}`, { method: 'DELETE' });
+      await fetch(`${API_BASE}/api/grievances/${itemToDelete}`, { method: 'DELETE' });
       setGrievances(prev => prev.filter(item => item.id !== itemToDelete));
       if (selectedIssue && selectedIssue.id === itemToDelete) setSelectedIssue(null);
       setItemToDelete(null);

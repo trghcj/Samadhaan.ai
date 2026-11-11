@@ -1,0 +1,505 @@
+﻿id,text,language,department,group_id,split,is_variant,source
+C0001,Chauraahe par zebra crossing ka rang bilkul mit gaya hai.,hinglish,Roads,Roads-07,test,0,synthetic
+C0002,Mujhe apni pension ki sthiti jaanni hai. Ye main market ke paas hai.,hinglish,Unclear,Unclear-07,train,1,synthetic
+C0003,My neighbour is building illegally on government land.,en,Unclear,Unclear-06,train,0,synthetic
+C0004,"मुझे परेशानी है, कोई मेरी बात नहीं सुन रहा।",hi,Unclear,Unclear-01,train,0,synthetic
+C0005,Sewer line is choked and dirty water is entering our house.,en,Drainage,Drainage-05,train,0,synthetic
+C0006,सुबह से घर के नल में पानी नहीं आ रहा है। यह मुख्य बाज़ार के पास है।,hi,Water,Water-00,test,1,synthetic
+C0007,हर शाम बार-बार बिजली चली जाती है। कृपया जल्दी ठीक करवाएं।,hi,Electricity,Electricity-05,train,1,synthetic
+C0008,नल का पानी गंदा है और उसमें बदबू आ रही है। तीन दिन से ऐसा ही है।,hi,Water,Water-02,train,1,synthetic
+C0009,स्कूल के पास की स्ट्रीट लाइट बहुत धीमी है। कृपया जल्दी ठीक करवाएं।,hi,Street Lights,StreetLights-10,train,1,synthetic
+C0010,Medical waste is thrown in the open near the clinic. Please fix it soon.,en,Sanitation,Sanitation-11,train,1,synthetic
+C0011,Hamari gali mein peene ke paani ki supply time par nahi aati.,hinglish,Water,Water-07,train,0,synthetic
+C0012,Hamara water meter sahi se kaam nahi kar raha.,hinglish,Water,Water-06,train,0,synthetic
+C0013,Colony ke paas khule mein kachra jalaya ja raha hai. Teen din se aisa hi hai.,hinglish,Sanitation,Sanitation-03,train,1,synthetic
+C0014,Dead animals are lying on the roadside and not being removed. It has been like this for three days.,en,Sanitation,Sanitation-05,train,1,synthetic
+C0015,पड़ोसी सरकारी ज़मीन पर अवैध निर्माण कर रहा है। कॉलोनी के बहुत से लोग परेशान हैं।,hi,Unclear,Unclear-06,train,1,synthetic
+C0016,सोसाइटी की पानी की टंकी नहीं भर रही है।,hi,Water,Water-05,train,0,synthetic
+C0017,The electric wires are touching the tree branches near our home. This is near the main market.,en,Electricity,Electricity-11,calibration,1,synthetic
+C0018,Drinking water supply is irregular in our lane. Many residents of our colony are facing problems.,en,Water,Water-07,train,1,synthetic
+C0019,Our electricity bill is much higher than usual.,en,Electricity,Electricity-04,test,0,synthetic
+C0020,नल में कीचड़ वाला पानी आ रहा है। कृपया जल्दी ठीक करवाएं।,hi,Water,Water-09,train,1,synthetic
+C0021,Dirty water from the drain is flowing into the road. Many residents of our colony are facing problems.,en,Drainage,Drainage-09,calibration,1,synthetic
+C0022,The road is full of loose gravel and bikes are skidding. It has been like this for three days.,en,Roads,Roads-06,calibration,1,synthetic
+C0023,Frequent power cuts are happening every evening.,en,Electricity,Electricity-05,train,0,synthetic
+C0024,Water pressure in our building is very low.,en,Water,Water-04,calibration,0,synthetic
+C0025,Highway ke mod par koi sign board nahi hai. Please jaldi theek karwaiye.,hinglish,Roads,Roads-10,train,1,synthetic
+C0026,The whole street is dark at night because the lamps are off. It has been like this for three days.,en,Street Lights,StreetLights-01,train,1,synthetic
+C0027,स्कूल के पास स्पीड ब्रेकर नहीं है और गाड़ियां बहुत तेज़ चलती हैं। यह मुख्य बाज़ार के पास है।,hi,Roads,Roads-04,train,1,synthetic
+C0028,The street light in front of our house has not been working for days. Please fix it soon.,en,Street Lights,StreetLights-00,test,1,synthetic
+C0029,Water pressure in our building is very low. Please fix it soon.,en,Water,Water-04,calibration,1,synthetic
+C0030,School ke paas speed breaker nahi hai aur gaadiyan bahut tez chalti hain. Please jaldi theek karwaiye.,hinglish,Roads,Roads-04,train,1,synthetic
+C0031,The storm water drain is blocked with plastic. It has been like this for three days.,en,Drainage,Drainage-11,train,1,synthetic
+C0032,Water is logged in our lane after every small rain.,en,Drainage,Drainage-06,test,0,synthetic
+C0033,"Hello, kya aap sun sakte hain? Mujhe shikayat karni hai. Teen din se aisa hi hai.",hinglish,Unclear,Unclear-11,calibration,1,synthetic
+C0034,Park ke paas wali pipeline leak ho rahi hai aur paani barbaad ho raha hai.,hinglish,Water,Water-08,train,0,synthetic
+C0035,The area smells bad and the situation is terrible. This is near the main market.,en,Unclear,Unclear-08,test,1,synthetic
+C0036,We are getting muddy water in the taps.,en,Water,Water-09,train,0,synthetic
+C0037,There has been a power cut in our area since last night. Please fix it soon.,en,Electricity,Electricity-00,train,1,synthetic
+C0038,Rainwater is not draining and has flooded our street.,en,Drainage,Drainage-02,train,0,synthetic
+C0039,Garbage has not been collected from our street for a week.,en,Sanitation,Sanitation-00,train,0,synthetic
+C0040,Khudai ke baad sadak ka ek hissa dhans gaya hai. Ye main market ke paas hai.,hinglish,Roads,Roads-09,train,1,synthetic
+C0041,Street light din mein bhi jalti rehti hai aur bijli barbaad hoti hai. Colony ke bahut se log pareshan hain.,hinglish,Street Lights,StreetLights-04,train,1,synthetic
+C0042,Construction debris has been dumped on the vacant plot.,en,Sanitation,Sanitation-09,calibration,0,synthetic
+C0043,The drain in front of our house is blocked and overflowing. Please fix it soon.,en,Drainage,Drainage-00,test,1,synthetic
+C0044,हमारा बिजली का बिल बहुत ज़्यादा आया है।,hi,Electricity,Electricity-04,test,0,synthetic
+C0045,The street lamp keeps flickering all night. It has been like this for three days.,en,Street Lights,StreetLights-02,train,1,synthetic
+C0046,सड़क पर बजरी बिखरी है और बाइकें फिसल रही हैं। कृपया जल्दी ठीक करवाएं।,hi,Roads,Roads-06,calibration,1,synthetic
+C0047,Bus stop jaane wali sadak par street light nahi hai aur raat ko dar lagta hai.,hinglish,Street Lights,StreetLights-06,train,0,synthetic
+C0048,Sadak par bajri bikhri hai aur bike phisal rahi hain.,hinglish,Roads,Roads-06,calibration,0,synthetic
+C0049,स्ट्रीट लाइट का बल्ब फ्यूज हो गया है और बदलना है। यह मुख्य बाज़ार के पास है।,hi,Street Lights,StreetLights-09,test,1,synthetic
+C0050,The pipeline near the park is leaking and wasting water.,en,Water,Water-08,train,0,synthetic
+C0051,Road repair work has been left incomplete for weeks.,en,Roads,Roads-03,train,0,synthetic
+C0052,Kachra uthane wali gaadi time par nahi aati.,hinglish,Sanitation,Sanitation-07,calibration,0,synthetic
+C0053,A road divider near the flyover is broken. This is near the main market.,en,Roads,Roads-08,test,1,synthetic
+C0054,Gali ka public nal toot gaya hai.,hinglish,Water,Water-10,test,0,synthetic
+C0055,There is no speed breaker near the school and vehicles go very fast.,en,Roads,Roads-04,train,0,synthetic
+C0056,"Hello, kya aap sun sakte hain? Mujhe shikayat karni hai.",hinglish,Unclear,Unclear-11,calibration,0,synthetic
+C0057,स्कूल के पास स्पीड ब्रेकर नहीं है और गाड़ियां बहुत तेज़ चलती हैं।,hi,Roads,Roads-04,train,0,synthetic
+C0058,The street light near the crossing was broken by a truck.,en,Street Lights,StreetLights-07,calibration,0,synthetic
+C0059,Manhole ka dhakkan gayab hai aur bahut khatarnak hai.,hinglish,Drainage,Drainage-03,calibration,0,synthetic
+C0060,School ke paas ki street light bahut dim hai. Teen din se aisa hi hai.,hinglish,Street Lights,StreetLights-10,train,1,synthetic
+C0061,बिजली के तार पेड़ की डालियों को छू रहे हैं। कृपया जल्दी ठीक करवाएं।,hi,Electricity,Electricity-11,calibration,1,synthetic
+C0062,The electric meter at my house is faulty.,en,Electricity,Electricity-06,calibration,0,synthetic
+C0063,The electricity voltage is very low and our appliances are not working.,en,Electricity,Electricity-01,calibration,0,synthetic
+C0064,हमारे घर के सामने की नाली जाम हो गई है और बाहर बह रही है।,hi,Drainage,Drainage-00,test,0,synthetic
+C0065,Hamare ghar ke saamne ki street light kai dino se kaam nahi kar rahi.,hinglish,Street Lights,StreetLights-00,test,0,synthetic
+C0066,Pul ke paas ki sadak uneven hai aur khatarnak hai.,hinglish,Roads,Roads-11,train,0,synthetic
+C0067,Market ke paas ka footpath toota hua hai aur chalna khatarnak hai.,hinglish,Roads,Roads-05,train,0,synthetic
+C0068,Nal ka paani gandha hai aur bahut badbu aa rahi hai.,hinglish,Water,Water-02,train,0,synthetic
+C0069,Har chhoti baarish ke baad hamari gali mein paani bhar jaata hai. Colony ke bahut se log pareshan hain.,hinglish,Drainage,Drainage-06,test,1,synthetic
+C0070,चौराहे के पास की स्ट्रीट लाइट ट्रक से टूट गई है।,hi,Street Lights,StreetLights-07,calibration,0,synthetic
+C0071,Sewage ka paani sadak par beh raha hai.,hinglish,Drainage,Drainage-01,calibration,0,synthetic
+C0072,Hamara bijli ka bill bahut zyada aaya hai.,hinglish,Electricity,Electricity-04,test,0,synthetic
+C0073,There are no street lights on the road to the bus stop and it is unsafe at night.,en,Street Lights,StreetLights-06,train,0,synthetic
+C0074,हमारा वॉटर मीटर ठीक से काम नहीं कर रहा है।,hi,Water,Water-06,train,0,synthetic
+C0075,The lamp post light bulb is fused and needs replacement.,en,Street Lights,StreetLights-09,test,0,synthetic
+C0076,Stray dogs are tearing open garbage bags and spreading waste.,en,Sanitation,Sanitation-08,test,0,synthetic
+C0077,मुख्य सड़क की स्ट्रीट लाइटें आधी रात के बाद बंद हो जाती हैं।,hi,Street Lights,StreetLights-08,test,0,synthetic
+C0078,इलाके में बदबू है और हालत बहुत खराब है। तीन दिन से ऐसा ही है।,hi,Unclear,Unclear-08,test,1,synthetic
+C0079,School ke paas ki khuli naali kachre se bhari hai aur badbu aa rahi hai. Colony ke bahut se log pareshan hain.,hinglish,Drainage,Drainage-04,train,1,synthetic
+C0080,Padosi sarkari zameen par avaidh nirman kar raha hai. Please jaldi theek karwaiye.,hinglish,Unclear,Unclear-06,train,1,synthetic
+C0081,Subah se ghar mein nal mein paani nahi aa raha hai.,hinglish,Water,Water-00,test,0,synthetic
+C0082,स्कूल के पास बिजली का खंभा झुक गया है और गिर सकता है।,hi,Electricity,Electricity-07,train,0,synthetic
+C0083,The tap water in our house has stopped coming since morning. It has been like this for three days.,en,Water,Water-00,test,1,synthetic
+C0084,"Mujhe pareshani hai, koi meri baat nahi sun raha. Colony ke bahut se log pareshan hain.",hinglish,Unclear,Unclear-01,train,1,synthetic
+C0085,सड़क की मरम्मत का काम कई हफ्तों से अधूरा पड़ा है।,hi,Roads,Roads-03,train,0,synthetic
+C0086,School ke gate ke paas kachre ka dher laga hai.,hinglish,Sanitation,Sanitation-06,train,0,synthetic
+C0087,"Hello, can you hear me? I want to complain.",en,Unclear,Unclear-11,calibration,0,synthetic
+C0088,The bus service on our route has stopped. This is near the main market.,en,Unclear,Unclear-10,train,1,synthetic
+C0089,Hamari building mein paani ka pressure bahut kam hai. Please jaldi theek karwaiye.,hinglish,Water,Water-04,calibration,1,synthetic
+C0090,हमारी सड़क के खंभे पर लाइट लगी ही नहीं है। यह मुख्य बाज़ार के पास है।,hi,Street Lights,StreetLights-05,calibration,1,synthetic
+C0091,मुख्य सड़क की स्ट्रीट लाइटें आधी रात के बाद बंद हो जाती हैं। यह मुख्य बाज़ार के पास है।,hi,Street Lights,StreetLights-08,test,1,synthetic
+C0092,The newly built road has already developed cracks. Many residents of our colony are facing problems.,en,Roads,Roads-02,test,1,synthetic
+C0093,Colony ke peeche wale nale ki kai mahino se safai nahi hui hai. Colony ke bahut se log pareshan hain.,hinglish,Drainage,Drainage-08,train,1,synthetic
+C0094,क्लिनिक के पास मेडिकल कचरा खुले में फेंका जा रहा है। कॉलोनी के बहुत से लोग परेशान हैं।,hi,Sanitation,Sanitation-11,train,1,synthetic
+C0095,"I have a problem, nobody is listening to me.",en,Unclear,Unclear-01,train,0,synthetic
+C0096,"I have a problem, nobody is listening to me. It has been like this for three days.",en,Unclear,Unclear-01,train,1,synthetic
+C0097,The police are not taking my complaint.,en,Unclear,Unclear-02,train,0,synthetic
+C0098,सुबह से घर के नल में पानी नहीं आ रहा है।,hi,Water,Water-00,test,0,synthetic
+C0099,The electric meter at my house is faulty. Please fix it soon.,en,Electricity,Electricity-06,calibration,1,synthetic
+C0100,Nayi bani sadak par abhi se dararen pad gayi hain.,hinglish,Roads,Roads-02,test,0,synthetic
+C0101,There has been a power cut in our area since last night.,en,Electricity,Electricity-00,train,0,synthetic
+C0102,Ghar ke paas jam naali mein machhar panap rahe hain. Please jaldi theek karwaiye.,hinglish,Drainage,Drainage-10,train,1,synthetic
+C0103,हमारे इलाके में इंटरनेट बहुत धीमा चल रहा है। यह मुख्य बाज़ार के पास है।,hi,Unclear,Unclear-04,test,1,synthetic
+C0104,Mere ghar ka bijli meter kharab hai.,hinglish,Electricity,Electricity-06,calibration,0,synthetic
+C0105,The public toilet in our area is very dirty and unusable.,en,Sanitation,Sanitation-04,calibration,0,synthetic
+C0106,Hamare park ki street lights nahi jal rahi. Ye main market ke paas hai.,hinglish,Street Lights,StreetLights-03,train,1,synthetic
+C0107,The water tank in our society is not being filled. It has been like this for three days.,en,Water,Water-05,train,1,synthetic
+C0108,Har shaam bar bar bijli chali jaati hai.,hinglish,Electricity,Electricity-05,train,0,synthetic
+C0109,Clinic ke paas medical kachra khule mein phenka ja raha hai.,hinglish,Sanitation,Sanitation-11,train,0,synthetic
+C0110,Raat ko poori gali andheri rehti hai kyunki street light band hain. Ye main market ke paas hai.,hinglish,Street Lights,StreetLights-01,train,1,synthetic
+C0111,हमारे पार्क में कोई कूड़ेदान नहीं है।,hi,Sanitation,Sanitation-10,train,0,synthetic
+C0112,Street lights in our park are not turning on.,en,Street Lights,StreetLights-03,train,0,synthetic
+C0113,The drain in front of our house is blocked and overflowing.,en,Drainage,Drainage-00,test,0,synthetic
+C0114,हमारी अंधेरी गली में नई स्ट्रीट लाइटें चाहिए।,hi,Street Lights,StreetLights-11,calibration,0,synthetic
+C0115,"Mere ghar ke paas kuch gadbad hai, kisi ko bhejiye.",hinglish,Unclear,Unclear-00,calibration,0,synthetic
+C0116,Mujhe apni pension ki sthiti jaanni hai.,hinglish,Unclear,Unclear-07,train,0,synthetic
+C0117,Sadak ki marammat ka kaam kai hafton se adhura pada hai.,hinglish,Roads,Roads-03,train,0,synthetic
+C0118,Sewage water is overflowing onto the road.,en,Drainage,Drainage-01,calibration,0,synthetic
+C0119,The drain cover near the market is broken.,en,Drainage,Drainage-07,test,0,synthetic
+C0120,Hamari andheri gali mein nayi street lights chahiye.,hinglish,Street Lights,StreetLights-11,calibration,0,synthetic
+C0121,खाली प्लॉट पर मलबा डाल दिया गया है।,hi,Sanitation,Sanitation-09,calibration,0,synthetic
+C0122,कॉलोनी के पास खुले में कचरा जलाया जा रहा है।,hi,Sanitation,Sanitation-03,train,0,synthetic
+C0123,Sewer line is choked and dirty water is entering our house. This is near the main market.,en,Drainage,Drainage-05,train,1,synthetic
+C0124,New street lights are needed in our dark lane.,en,Street Lights,StreetLights-11,calibration,0,synthetic
+C0125,बिजली का वोल्टेज बहुत कम है और घर के उपकरण काम नहीं कर रहे हैं। कॉलोनी के बहुत से लोग परेशान हैं।,hi,Electricity,Electricity-01,calibration,1,synthetic
+C0126,चौराहे के पास की स्ट्रीट लाइट ट्रक से टूट गई है। कृपया जल्दी ठीक करवाएं।,hi,Street Lights,StreetLights-07,calibration,1,synthetic
+C0127,The power supply keeps tripping whenever it rains. Many residents of our colony are facing problems.,en,Electricity,Electricity-10,test,1,synthetic
+C0128,Gali ka public nal toot gaya hai. Teen din se aisa hi hai.,hinglish,Water,Water-10,test,1,synthetic
+C0129,The drain cover near the market is broken. Please fix it soon.,en,Drainage,Drainage-07,test,1,synthetic
+C0130,Sadak ki marammat ka kaam kai hafton se adhura pada hai. Ye main market ke paas hai.,hinglish,Roads,Roads-03,train,1,synthetic
+C0131,Jab bhi baarish hoti hai light trip ho jaati hai. Ye main market ke paas hai.,hinglish,Electricity,Electricity-10,test,1,synthetic
+C0132,The power supply keeps tripping whenever it rains.,en,Electricity,Electricity-10,test,0,synthetic
+C0133,School ke paas bijli ka khamba jhuk gaya hai aur gir sakta hai.,hinglish,Electricity,Electricity-07,train,0,synthetic
+C0134,Toofani paani ki naali plastic se band ho gayi hai.,hinglish,Drainage,Drainage-11,train,0,synthetic
+C0135,"Something is wrong near my house, please send someone. It has been like this for three days.",en,Unclear,Unclear-00,calibration,1,synthetic
+C0136,मुख्य सड़क के बीच में बहुत बड़ा गड्ढा है। यह मुख्य बाज़ार के पास है।,hi,Roads,Roads-00,calibration,1,synthetic
+C0137,Kachra uthane wali gaadi time par nahi aati. Ye main market ke paas hai.,hinglish,Sanitation,Sanitation-07,calibration,1,synthetic
+C0138,An electric pole near the school is leaning and may fall. Please fix it soon.,en,Electricity,Electricity-07,train,1,synthetic
+C0139,हमारा बिजली का बिल बहुत ज़्यादा आया है। यह मुख्य बाज़ार के पास है।,hi,Electricity,Electricity-04,test,1,synthetic
+C0140,"हेलो, क्या आप सुन सकते हैं? मुझे शिकायत करनी है।",hi,Unclear,Unclear-11,calibration,0,synthetic
+C0141,There are no road signs on the highway turn. This is near the main market.,en,Roads,Roads-10,train,1,synthetic
+C0142,Bus stop jaane wali sadak par street light nahi hai aur raat ko dar lagta hai. Ye main market ke paas hai.,hinglish,Street Lights,StreetLights-06,train,1,synthetic
+C0143,Hamare area ka public toilet bahut gandha hai aur use nahi kar sakte. Please jaldi theek karwaiye.,hinglish,Sanitation,Sanitation-04,calibration,1,synthetic
+C0144,There is no electricity connection even after applying a month ago.,en,Electricity,Electricity-08,train,0,synthetic
+C0145,इलाके में बदबू है और हालत बहुत खराब है।,hi,Unclear,Unclear-08,test,0,synthetic
+C0146,Colony ke paas khule mein kachra jalaya ja raha hai.,hinglish,Sanitation,Sanitation-03,train,0,synthetic
+C0147,Bus stop ke paas pani ki badi pipe leak ho rahi hai.,hinglish,Water,Water-03,calibration,0,synthetic
+C0148,हमारे इलाके का सार्वजनिक शौचालय बहुत गंदा है और इस्तेमाल लायक नहीं है। कॉलोनी के बहुत से लोग परेशान हैं।,hi,Sanitation,Sanitation-04,calibration,1,synthetic
+C0149,Hamare area mein aaj paani ki supply band hai.,hinglish,Water,Water-01,test,0,synthetic
+C0150,The nala behind our colony has not been cleaned for months.,en,Drainage,Drainage-08,train,0,synthetic
+C0151,बस स्टॉप जाने वाली सड़क पर स्ट्रीट लाइट नहीं है और रात को डर लगता है। तीन दिन से ऐसा ही है।,hi,Street Lights,StreetLights-06,train,1,synthetic
+C0152,हमारे इलाके में आज पानी की सप्लाई बंद है।,hi,Water,Water-01,test,0,synthetic
+C0153,Ghar ke paas jam naali mein machhar panap rahe hain.,hinglish,Drainage,Drainage-10,train,0,synthetic
+C0154,Kal raat se hamare area mein bijli nahi hai.,hinglish,Electricity,Electricity-00,train,0,synthetic
+C0155,The road in front of our house is badly damaged. Many residents of our colony are facing problems.,en,Roads,Roads-01,calibration,1,synthetic
+C0156,स्ट्रीट लाइट दिन में भी जलती रहती है और बिजली बर्बाद होती है। कृपया जल्दी ठीक करवाएं।,hi,Street Lights,StreetLights-04,train,1,synthetic
+C0157,The street light near the school is very dim.,en,Street Lights,StreetLights-10,train,0,synthetic
+C0158,The newly built road has already developed cracks.,en,Roads,Roads-02,test,0,synthetic
+C0159,Hamare area mein aaj paani ki supply band hai. Colony ke bahut se log pareshan hain.,hinglish,Water,Water-01,test,1,synthetic
+C0160,हमारे इलाके में इंटरनेट बहुत धीमा चल रहा है।,hi,Unclear,Unclear-04,test,0,synthetic
+C0161,Area mein badbu hai aur halat bahut kharab hai.,hinglish,Unclear,Unclear-08,test,0,synthetic
+C0162,"Please is par kuch kijiye, bahut zaroori hai.",hinglish,Unclear,Unclear-09,test,0,synthetic
+C0163,स्कूल के गेट के पास कचरे का ढेर लगा है।,hi,Sanitation,Sanitation-06,train,0,synthetic
+C0164,The street light in front of our house has not been working for days.,en,Street Lights,StreetLights-00,test,0,synthetic
+C0165,Mera ration card abhi tak nahi bana hai.,hinglish,Unclear,Unclear-03,train,0,synthetic
+C0166,The electric wires are touching the tree branches near our home.,en,Electricity,Electricity-11,calibration,0,synthetic
+C0167,स्ट्रीट लाइट दिन में भी जलती रहती है और बिजली बर्बाद होती है।,hi,Street Lights,StreetLights-04,train,0,synthetic
+C0168,Nobody has come to sweep our street for many days. This is near the main market.,en,Sanitation,Sanitation-02,test,1,synthetic
+C0169,The area smells bad and the situation is terrible.,en,Unclear,Unclear-08,test,0,synthetic
+C0170,पुल के पास की सड़क ऊबड़-खाबड़ है और खतरनाक है।,hi,Roads,Roads-11,train,0,synthetic
+C0171,Nal ka paani gandha hai aur bahut badbu aa rahi hai. Ye main market ke paas hai.,hinglish,Water,Water-02,train,1,synthetic
+C0172,Dirty water from the drain is flowing into the road.,en,Drainage,Drainage-09,calibration,0,synthetic
+C0173,पुलिस मेरी शिकायत नहीं लिख रही है। कृपया जल्दी ठीक करवाएं।,hi,Unclear,Unclear-02,train,1,synthetic
+C0174,घर के पास जाम नाली में मच्छर पनप रहे हैं। कृपया जल्दी ठीक करवाएं।,hi,Drainage,Drainage-10,train,1,synthetic
+C0175,हमारा वॉटर मीटर ठीक से काम नहीं कर रहा है। तीन दिन से ऐसा ही है।,hi,Water,Water-06,train,1,synthetic
+C0176,आवारा कुत्ते कचरे के थैले फाड़कर कचरा फैला रहे हैं। तीन दिन से ऐसा ही है।,hi,Sanitation,Sanitation-08,test,1,synthetic
+C0177,The garbage bin near the market is overflowing. Many residents of our colony are facing problems.,en,Sanitation,Sanitation-01,test,1,synthetic
+C0178,The water from the tap is dirty and smells bad. It has been like this for three days.,en,Water,Water-02,train,1,synthetic
+C0179,हमारे इलाके में आज पानी की सप्लाई बंद है। यह मुख्य बाज़ार के पास है।,hi,Water,Water-01,test,1,synthetic
+C0180,Hamare ghar ke saamne ki street light kai dino se kaam nahi kar rahi. Please jaldi theek karwaiye.,hinglish,Street Lights,StreetLights-00,test,1,synthetic
+C0181,The garbage collection vehicle does not come on time. Please fix it soon.,en,Sanitation,Sanitation-07,calibration,1,synthetic
+C0182,Raat ko loudspeaker ka bahut shor hota hai. Ye main market ke paas hai.,hinglish,Unclear,Unclear-05,calibration,1,synthetic
+C0183,Flyover ke paas road divider toot gaya hai.,hinglish,Roads,Roads-08,test,0,synthetic
+C0184,The pipeline near the park is leaking and wasting water. Please fix it soon.,en,Water,Water-08,train,1,synthetic
+C0185,The bridge approach road is uneven and dangerous.,en,Roads,Roads-11,train,0,synthetic
+C0186,हमारी बिल्डिंग में पानी का दबाव बहुत कम है। तीन दिन से ऐसा ही है।,hi,Water,Water-04,calibration,1,synthetic
+C0187,Street lights in our park are not turning on. Please fix it soon.,en,Street Lights,StreetLights-03,train,1,synthetic
+C0188,Our water meter is not working properly. Please fix it soon.,en,Water,Water-06,train,1,synthetic
+C0189,हमारी गली के बिजली बॉक्स से चिंगारियां निकल रही हैं।,hi,Electricity,Electricity-09,train,0,synthetic
+C0190,The water from the tap is dirty and smells bad.,en,Water,Water-02,train,0,synthetic
+C0191,कचरा उठाने वाली गाड़ी समय पर नहीं आती। तीन दिन से ऐसा ही है।,hi,Sanitation,Sanitation-07,calibration,1,synthetic
+C0192,The public tap in our street is broken.,en,Water,Water-10,test,0,synthetic
+C0193,पार्क के पास वाली पाइपलाइन लीक हो रही है और पानी बर्बाद हो रहा है।,hi,Water,Water-08,train,0,synthetic
+C0194,Kai dino se koi hamari gali mein jhadu lagane nahi aaya. Teen din se aisa hi hai.,hinglish,Sanitation,Sanitation-02,test,1,synthetic
+C0195,Sadak ke kinare mare hue janwar pade hain aur koi nahi utha raha. Teen din se aisa hi hai.,hinglish,Sanitation,Sanitation-05,train,1,synthetic
+C0196,तीन दिन से पानी का टैंकर नहीं आया है। तीन दिन से ऐसा ही है।,hi,Water,Water-11,calibration,1,synthetic
+C0197,बाज़ार के पास का फुटपाथ टूटा हुआ है और चलना खतरनाक है। यह मुख्य बाज़ार के पास है।,hi,Roads,Roads-05,train,1,synthetic
+C0198,Awara kutte kachre ke thaile phaad kar kachra faila rahe hain. Teen din se aisa hi hai.,hinglish,Sanitation,Sanitation-08,test,1,synthetic
+C0199,हमारी गली से एक हफ्ते से कचरा नहीं उठाया गया है।,hi,Sanitation,Sanitation-00,train,0,synthetic
+C0200,बाज़ार के पास का फुटपाथ टूटा हुआ है और चलना खतरनाक है।,hi,Roads,Roads-05,train,0,synthetic
+C0201,My neighbour is building illegally on government land. This is near the main market.,en,Unclear,Unclear-06,train,1,synthetic
+C0202,Hamare ghar ke saamne ki naali jam ho gayi hai aur bahar beh rahi hai. Teen din se aisa hi hai.,hinglish,Drainage,Drainage-00,test,1,synthetic
+C0203,"मुझे परेशानी है, कोई मेरी बात नहीं सुन रहा। तीन दिन से ऐसा ही है।",hi,Unclear,Unclear-01,train,1,synthetic
+C0204,पड़ोसी सरकारी ज़मीन पर अवैध निर्माण कर रहा है।,hi,Unclear,Unclear-06,train,0,synthetic
+C0205,नल में कीचड़ वाला पानी आ रहा है।,hi,Water,Water-09,train,0,synthetic
+C0206,Naali ka gandha paani sadak par beh raha hai.,hinglish,Drainage,Drainage-09,calibration,0,synthetic
+C0207,Teen din se paani ka tanker nahi aaya.,hinglish,Water,Water-11,calibration,0,synthetic
+C0208,हमारे इलाके का सार्वजनिक शौचालय बहुत गंदा है और इस्तेमाल लायक नहीं है।,hi,Sanitation,Sanitation-04,calibration,0,synthetic
+C0209,Society ki paani ki tanki bhari nahi ja rahi hai.,hinglish,Water,Water-05,train,0,synthetic
+C0210,कई दिनों से कोई हमारी गली में झाड़ू लगाने नहीं आया। कॉलोनी के बहुत से लोग परेशान हैं।,hi,Sanitation,Sanitation-02,test,1,synthetic
+C0211,कॉलोनी के पीछे वाले नाले की कई महीनों से सफाई नहीं हुई है। कृपया जल्दी ठीक करवाएं।,hi,Drainage,Drainage-08,train,1,synthetic
+C0212,The public tap in our street is broken. This is near the main market.,en,Water,Water-10,test,1,synthetic
+C0213,Market ke paas naali ka dhakkan toot gaya hai.,hinglish,Drainage,Drainage-07,test,0,synthetic
+C0214,Mosquitoes are breeding in the clogged drain near our house. It has been like this for three days.,en,Drainage,Drainage-10,train,1,synthetic
+C0215,There is a huge pothole in the middle of the main road.,en,Roads,Roads-00,calibration,0,synthetic
+C0216,The street light near the crossing was broken by a truck. It has been like this for three days.,en,Street Lights,StreetLights-07,calibration,1,synthetic
+C0217,Hamari sadak ke khambe par light lagi hi nahi hai.,hinglish,Street Lights,StreetLights-05,calibration,0,synthetic
+C0218,A main water pipe is leaking near the bus stop.,en,Water,Water-03,calibration,0,synthetic
+C0219,Hamare area mein internet bahut slow chal raha hai.,hinglish,Unclear,Unclear-04,test,0,synthetic
+C0220,The zebra crossing paint has faded completely at the junction. This is near the main market.,en,Roads,Roads-07,test,1,synthetic
+C0221,कई दिनों से कोई हमारी गली में झाड़ू लगाने नहीं आया।,hi,Sanitation,Sanitation-02,test,0,synthetic
+C0222,Bijli ke taar ped ki daaliyon se chhoo rahe hain. Please jaldi theek karwaiye.,hinglish,Electricity,Electricity-11,calibration,1,synthetic
+C0223,"Something is wrong near my house, please send someone.",en,Unclear,Unclear-00,calibration,0,synthetic
+C0224,Nal mein kichad wala paani aa raha hai.,hinglish,Water,Water-09,train,0,synthetic
+C0225,Flyover ke paas road divider toot gaya hai. Please jaldi theek karwaiye.,hinglish,Roads,Roads-08,test,1,synthetic
+C0226,Colony ka transformer bahut zor se sparking kar raha hai. Please jaldi theek karwaiye.,hinglish,Electricity,Electricity-03,test,1,synthetic
+C0227,"Hello, can you hear me? I want to complain. It has been like this for three days.",en,Unclear,Unclear-11,calibration,1,synthetic
+C0228,Nayi bani sadak par abhi se dararen pad gayi hain. Teen din se aisa hi hai.,hinglish,Roads,Roads-02,test,1,synthetic
+C0229,स्कूल के गेट के पास कचरे का ढेर लगा है। कृपया जल्दी ठीक करवाएं।,hi,Sanitation,Sanitation-06,train,1,synthetic
+C0230,हमारे रूट पर बस सेवा बंद हो गई है।,hi,Unclear,Unclear-10,train,0,synthetic
+C0231,Sadak ke kinare mare hue janwar pade hain aur koi nahi utha raha.,hinglish,Sanitation,Sanitation-05,train,0,synthetic
+C0232,A main water pipe is leaking near the bus stop. Please fix it soon.,en,Water,Water-03,calibration,1,synthetic
+C0233,There is no dustbin in our park.,en,Sanitation,Sanitation-10,train,0,synthetic
+C0234,School ke paas bijli ka khamba jhuk gaya hai aur gir sakta hai. Ye main market ke paas hai.,hinglish,Electricity,Electricity-07,train,1,synthetic
+C0235,गली का सार्वजनिक नल टूट गया है। तीन दिन से ऐसा ही है।,hi,Water,Water-10,test,1,synthetic
+C0236,Water is logged in our lane after every small rain. Many residents of our colony are facing problems.,en,Drainage,Drainage-06,test,1,synthetic
+C0237,Baarish ka paani nikal nahi raha aur hamari gali mein bhar gaya hai.,hinglish,Drainage,Drainage-02,train,0,synthetic
+C0238,हमारी बिल्डिंग में पानी का दबाव बहुत कम है।,hi,Water,Water-04,calibration,0,synthetic
+C0239,There is a heap of rubbish near the school gate. Please fix it soon.,en,Sanitation,Sanitation-06,train,1,synthetic
+C0240,The street lamp keeps flickering all night.,en,Street Lights,StreetLights-02,train,0,synthetic
+C0241,सीवेज का पानी सड़क पर बह रहा है।,hi,Drainage,Drainage-01,calibration,0,synthetic
+C0242,कचरा उठाने वाली गाड़ी समय पर नहीं आती।,hi,Sanitation,Sanitation-07,calibration,0,synthetic
+C0243,Highway ke mod par koi sign board nahi hai.,hinglish,Roads,Roads-10,train,0,synthetic
+C0244,Pul ke paas ki sadak uneven hai aur khatarnak hai. Teen din se aisa hi hai.,hinglish,Roads,Roads-11,train,1,synthetic
+C0245,एक महीने पहले आवेदन किया था लेकिन अभी तक बिजली कनेक्शन नहीं मिला। कॉलोनी के बहुत से लोग परेशान हैं।,hi,Electricity,Electricity-08,train,1,synthetic
+C0246,तूफानी पानी की नाली प्लास्टिक से बंद हो गई है।,hi,Drainage,Drainage-11,train,0,synthetic
+C0247,हाईवे के मोड़ पर कोई साइन बोर्ड नहीं है। तीन दिन से ऐसा ही है।,hi,Roads,Roads-10,train,1,synthetic
+C0248,Awara kutte kachre ke thaile phaad kar kachra faila rahe hain.,hinglish,Sanitation,Sanitation-08,test,0,synthetic
+C0249,Rainwater is not draining and has flooded our street. Please fix it soon.,en,Drainage,Drainage-02,train,1,synthetic
+C0250,हमारे घर के सामने की स्ट्रीट लाइट कई दिनों से काम नहीं कर रही।,hi,Street Lights,StreetLights-00,test,0,synthetic
+C0251,School ke paas ki khuli naali kachre se bhari hai aur badbu aa rahi hai.,hinglish,Drainage,Drainage-04,train,0,synthetic
+C0252,मुख्य सड़क के बीच में बहुत बड़ा गड्ढा है।,hi,Roads,Roads-00,calibration,0,synthetic
+C0253,A live wire is hanging from the electric pole near my house.,en,Electricity,Electricity-02,train,0,synthetic
+C0254,नाली का गंदा पानी सड़क पर बह रहा है। यह मुख्य बाज़ार के पास है।,hi,Drainage,Drainage-09,calibration,1,synthetic
+C0255,Hamari gali se ek hafte se kachra nahi uthaya gaya hai. Please jaldi theek karwaiye.,hinglish,Sanitation,Sanitation-00,train,1,synthetic
+C0256,There is no water supply in our area today. It has been like this for three days.,en,Water,Water-01,test,1,synthetic
+C0257,Kai dino se koi hamari gali mein jhadu lagane nahi aaya.,hinglish,Sanitation,Sanitation-02,test,0,synthetic
+C0258,The street light stays on during the day and wastes power. Many residents of our colony are facing problems.,en,Street Lights,StreetLights-04,train,1,synthetic
+C0259,The water tank in our society is not being filled.,en,Water,Water-05,train,0,synthetic
+C0260,सड़क की मरम्मत का काम कई हफ्तों से अधूरा पड़ा है। तीन दिन से ऐसा ही है।,hi,Roads,Roads-03,train,1,synthetic
+C0261,The light pole on our road has no lamp. It has been like this for three days.,en,Street Lights,StreetLights-05,calibration,1,synthetic
+C0262,Hamara bijli ka bill bahut zyada aaya hai. Teen din se aisa hi hai.,hinglish,Electricity,Electricity-04,test,1,synthetic
+C0263,Bus stop ke paas pani ki badi pipe leak ho rahi hai. Ye main market ke paas hai.,hinglish,Water,Water-03,calibration,1,synthetic
+C0264,बाज़ार के पास का कचरे का डिब्बा भरकर बाहर गिर रहा है। कृपया जल्दी ठीक करवाएं।,hi,Sanitation,Sanitation-01,test,1,synthetic
+C0265,कॉलोनी के पीछे वाले नाले की कई महीनों से सफाई नहीं हुई है।,hi,Drainage,Drainage-08,train,0,synthetic
+C0266,Street light poori raat jhapakti rehti hai. Please jaldi theek karwaiye.,hinglish,Street Lights,StreetLights-02,train,1,synthetic
+C0267,रात को लाउडस्पीकर का बहुत शोर होता है। कृपया जल्दी ठीक करवाएं।,hi,Unclear,Unclear-05,calibration,1,synthetic
+C0268,Sewer line jam hai aur gande paani ghar mein aa raha hai. Colony ke bahut se log pareshan hain.,hinglish,Drainage,Drainage-05,train,1,synthetic
+C0269,Hamari building mein paani ka pressure bahut kam hai.,hinglish,Water,Water-04,calibration,0,synthetic
+C0270,हर छोटी बारिश के बाद हमारी गली में पानी भर जाता है।,hi,Drainage,Drainage-06,test,0,synthetic
+C0271,The transformer in our colony is making loud sparking noises.,en,Electricity,Electricity-03,test,0,synthetic
+C0272,Street light poori raat jhapakti rehti hai.,hinglish,Street Lights,StreetLights-02,train,0,synthetic
+C0273,Bijli ke taar ped ki daaliyon se chhoo rahe hain.,hinglish,Electricity,Electricity-11,calibration,0,synthetic
+C0274,A live wire is hanging from the electric pole near my house. This is near the main market.,en,Electricity,Electricity-02,train,1,synthetic
+C0275,तीन दिन से पानी का टैंकर नहीं आया है।,hi,Water,Water-11,calibration,0,synthetic
+C0276,Park ke paas wali pipeline leak ho rahi hai aur paani barbaad ho raha hai. Teen din se aisa hi hai.,hinglish,Water,Water-08,train,1,synthetic
+C0277,The road has sunk in one portion after the digging work. It has been like this for three days.,en,Roads,Roads-09,train,1,synthetic
+C0278,स्कूल के पास की खुली नाली कचरे से भरी है और बदबू आ रही है।,hi,Drainage,Drainage-04,train,0,synthetic
+C0279,हमारी गली के बिजली बॉक्स से चिंगारियां निकल रही हैं। कॉलोनी के बहुत से लोग परेशान हैं।,hi,Electricity,Electricity-09,train,1,synthetic
+C0280,नाली का गंदा पानी सड़क पर बह रहा है।,hi,Drainage,Drainage-09,calibration,0,synthetic
+C0281,Police meri shikayat nahi likh rahi hai. Ye main market ke paas hai.,hinglish,Unclear,Unclear-02,train,1,synthetic
+C0282,Hamari gali mein peene ke paani ki supply time par nahi aati. Teen din se aisa hi hai.,hinglish,Water,Water-07,train,1,synthetic
+C0283,The public toilet in our area is very dirty and unusable. Many residents of our colony are facing problems.,en,Sanitation,Sanitation-04,calibration,1,synthetic
+C0284,जब भी बारिश होती है बिजली ट्रिप हो जाती है।,hi,Electricity,Electricity-10,test,0,synthetic
+C0285,बिजली का वोल्टेज बहुत कम है और घर के उपकरण काम नहीं कर रहे हैं।,hi,Electricity,Electricity-01,calibration,0,synthetic
+C0286,Hamare area ka public toilet bahut gandha hai aur use nahi kar sakte.,hinglish,Sanitation,Sanitation-04,calibration,0,synthetic
+C0287,Main road ki street lights aadhi raat ke baad band ho jaati hain. Ye main market ke paas hai.,hinglish,Street Lights,StreetLights-08,test,1,synthetic
+C0288,जब भी बारिश होती है बिजली ट्रिप हो जाती है। यह मुख्य बाज़ार के पास है।,hi,Electricity,Electricity-10,test,1,synthetic
+C0289,कॉलोनी का ट्रांसफॉर्मर बहुत तेज़ आवाज़ के साथ चिंगारी छोड़ रहा है।,hi,Electricity,Electricity-03,test,0,synthetic
+C0290,मेरे घर का बिजली मीटर खराब है।,hi,Electricity,Electricity-06,calibration,0,synthetic
+C0291,The garbage collection vehicle does not come on time.,en,Sanitation,Sanitation-07,calibration,0,synthetic
+C0292,Market ke paas naali ka dhakkan toot gaya hai. Please jaldi theek karwaiye.,hinglish,Drainage,Drainage-07,test,1,synthetic
+C0293,Mera ration card abhi tak nahi bana hai. Teen din se aisa hi hai.,hinglish,Unclear,Unclear-03,train,1,synthetic
+C0294,There is a heap of rubbish near the school gate.,en,Sanitation,Sanitation-06,train,0,synthetic
+C0295,School ke paas ki street light bahut dim hai.,hinglish,Street Lights,StreetLights-10,train,0,synthetic
+C0296,The garbage bin near the market is overflowing.,en,Sanitation,Sanitation-01,test,0,synthetic
+C0297,Khali plot par malba dump kar diya gaya hai.,hinglish,Sanitation,Sanitation-09,calibration,0,synthetic
+C0298,बाज़ार के पास नाली का ढक्कन टूट गया है।,hi,Drainage,Drainage-07,test,0,synthetic
+C0299,The road has sunk in one portion after the digging work.,en,Roads,Roads-09,train,0,synthetic
+C0300,मुझे अपनी पेंशन की स्थिति जाननी है।,hi,Unclear,Unclear-07,train,0,synthetic
+C0301,कॉलोनी के पास खुले में कचरा जलाया जा रहा है। कृपया जल्दी ठीक करवाएं।,hi,Sanitation,Sanitation-03,train,1,synthetic
+C0302,Mosquitoes are breeding in the clogged drain near our house.,en,Drainage,Drainage-10,train,0,synthetic
+C0303,गली का सार्वजनिक नल टूट गया है।,hi,Water,Water-10,test,0,synthetic
+C0304,The light pole on our road has no lamp.,en,Street Lights,StreetLights-05,calibration,0,synthetic
+C0305,हमारी गली में पीने के पानी की सप्लाई समय पर नहीं आती।,hi,Water,Water-07,train,0,synthetic
+C0306,Hamare area mein internet bahut slow chal raha hai. Teen din se aisa hi hai.,hinglish,Unclear,Unclear-04,test,1,synthetic
+C0307,हमारे पार्क में कोई कूड़ेदान नहीं है। यह मुख्य बाज़ार के पास है।,hi,Sanitation,Sanitation-10,train,1,synthetic
+C0308,Subah se ghar mein nal mein paani nahi aa raha hai. Please jaldi theek karwaiye.,hinglish,Water,Water-00,test,1,synthetic
+C0309,There is no dustbin in our park. It has been like this for three days.,en,Sanitation,Sanitation-10,train,1,synthetic
+C0310,हमारी गली से एक हफ्ते से कचरा नहीं उठाया गया है। कृपया जल्दी ठीक करवाएं।,hi,Sanitation,Sanitation-00,train,1,synthetic
+C0311,"मेरे घर के पास कुछ गड़बड़ है, किसी को भेजिए।",hi,Unclear,Unclear-00,calibration,0,synthetic
+C0312,Ek mahine pehle apply kiya tha lekin abhi tak bijli connection nahi mila.,hinglish,Electricity,Electricity-08,train,0,synthetic
+C0313,Garbage has not been collected from our street for a week. This is near the main market.,en,Sanitation,Sanitation-00,train,1,synthetic
+C0314,बस स्टॉप के पास पानी की मुख्य पाइप लीक हो रही है।,hi,Water,Water-03,calibration,0,synthetic
+C0315,There is no water supply in our area today.,en,Water,Water-01,test,0,synthetic
+C0316,Naali ka gandha paani sadak par beh raha hai. Teen din se aisa hi hai.,hinglish,Drainage,Drainage-09,calibration,1,synthetic
+C0317,मेरे घर के पास बिजली के खंभे से खुला तार लटक रहा है।,hi,Electricity,Electricity-02,train,0,synthetic
+C0318,हमारी अंधेरी गली में नई स्ट्रीट लाइटें चाहिए। कॉलोनी के बहुत से लोग परेशान हैं।,hi,Street Lights,StreetLights-11,calibration,1,synthetic
+C0319,School ke gate ke paas kachre ka dher laga hai. Teen din se aisa hi hai.,hinglish,Sanitation,Sanitation-06,train,1,synthetic
+C0320,नई बनी सड़क पर अभी से दरारें पड़ गई हैं।,hi,Roads,Roads-02,test,0,synthetic
+C0321,Bijli ka voltage bahut kam hai aur ghar ke upkaran kaam nahi kar rahe. Ye main market ke paas hai.,hinglish,Electricity,Electricity-01,calibration,1,synthetic
+C0322,The manhole cover is missing and it is dangerous.,en,Drainage,Drainage-03,calibration,0,synthetic
+C0323,Sewer line jam hai aur gande paani ghar mein aa raha hai.,hinglish,Drainage,Drainage-05,train,0,synthetic
+C0324,हाईवे के मोड़ पर कोई साइन बोर्ड नहीं है।,hi,Roads,Roads-10,train,0,synthetic
+C0325,Stray dogs are tearing open garbage bags and spreading waste. It has been like this for three days.,en,Sanitation,Sanitation-08,test,1,synthetic
+C0326,Hamara water meter sahi se kaam nahi kar raha. Ye main market ke paas hai.,hinglish,Water,Water-06,train,1,synthetic
+C0327,Hamare ghar ke saamne ki naali jam ho gayi hai aur bahar beh rahi hai.,hinglish,Drainage,Drainage-00,test,0,synthetic
+C0328,Market ke paas ka kachre ka dabba bhar kar bahar gir raha hai. Teen din se aisa hi hai.,hinglish,Sanitation,Sanitation-01,test,1,synthetic
+C0329,मेरे घर के पास बिजली के खंभे से खुला तार लटक रहा है। कॉलोनी के बहुत से लोग परेशान हैं।,hi,Electricity,Electricity-02,train,1,synthetic
+C0330,The water tanker has not come for three days. It has been like this for three days.,en,Water,Water-11,calibration,1,synthetic
+C0331,There is a lot of noise from the loudspeaker at night. Please fix it soon.,en,Unclear,Unclear-05,calibration,1,synthetic
+C0332,The electricity voltage is very low and our appliances are not working. This is near the main market.,en,Electricity,Electricity-01,calibration,1,synthetic
+C0333,Mere ghar ke paas bijli ke khambe se khula taar latak raha hai. Teen din se aisa hi hai.,hinglish,Electricity,Electricity-02,train,1,synthetic
+C0334,Hamari gali ke electric box se chingariyan nikal rahi hain. Please jaldi theek karwaiye.,hinglish,Electricity,Electricity-09,train,1,synthetic
+C0335,The street light near the school is very dim. This is near the main market.,en,Street Lights,StreetLights-10,train,1,synthetic
+C0336,कल रात से हमारे इलाके में बिजली नहीं है।,hi,Electricity,Electricity-00,train,0,synthetic
+C0337,Teen din se paani ka tanker nahi aaya. Ye main market ke paas hai.,hinglish,Water,Water-11,calibration,1,synthetic
+C0338,Hamare ghar ke saamne ki sadak bahut kharab ho gayi hai. Colony ke bahut se log pareshan hain.,hinglish,Roads,Roads-01,calibration,1,synthetic
+C0339,रात को लाउडस्पीकर का बहुत शोर होता है।,hi,Unclear,Unclear-05,calibration,0,synthetic
+C0340,Har chhoti baarish ke baad hamari gali mein paani bhar jaata hai.,hinglish,Drainage,Drainage-06,test,0,synthetic
+C0341,Raat ko poori gali andheri rehti hai kyunki street light band hain.,hinglish,Street Lights,StreetLights-01,train,0,synthetic
+C0342,Clinic ke paas medical kachra khule mein phenka ja raha hai. Colony ke bahut se log pareshan hain.,hinglish,Sanitation,Sanitation-11,train,1,synthetic
+C0343,There is a huge pothole in the middle of the main road. It has been like this for three days.,en,Roads,Roads-00,calibration,1,synthetic
+C0344,Nal mein kichad wala paani aa raha hai. Colony ke bahut se log pareshan hain.,hinglish,Water,Water-09,train,1,synthetic
+C0345,Padosi sarkari zameen par avaidh nirman kar raha hai.,hinglish,Unclear,Unclear-06,train,0,synthetic
+C0346,An electric pole near the school is leaning and may fall.,en,Electricity,Electricity-07,train,0,synthetic
+C0347,Market ke paas ka kachre ka dabba bhar kar bahar gir raha hai.,hinglish,Sanitation,Sanitation-01,test,0,synthetic
+C0348,रात को पूरी गली अंधेरी रहती है क्योंकि स्ट्रीट लाइटें बंद हैं। तीन दिन से ऐसा ही है।,hi,Street Lights,StreetLights-01,train,1,synthetic
+C0349,Mere ghar ka bijli meter kharab hai. Colony ke bahut se log pareshan hain.,hinglish,Electricity,Electricity-06,calibration,1,synthetic
+C0350,स्कूल के पास की खुली नाली कचरे से भरी है और बदबू आ रही है। यह मुख्य बाज़ार के पास है।,hi,Drainage,Drainage-04,train,1,synthetic
+C0351,मुझे अपनी पेंशन की स्थिति जाननी है। कृपया जल्दी ठीक करवाएं।,hi,Unclear,Unclear-07,train,1,synthetic
+C0352,Dead animals are lying on the roadside and not being removed.,en,Sanitation,Sanitation-05,train,0,synthetic
+C0353,Medical waste is thrown in the open near the clinic.,en,Sanitation,Sanitation-11,train,0,synthetic
+C0354,There are no road signs on the highway turn.,en,Roads,Roads-10,train,0,synthetic
+C0355,Toofani paani ki naali plastic se band ho gayi hai. Colony ke bahut se log pareshan hain.,hinglish,Drainage,Drainage-11,train,1,synthetic
+C0356,स्ट्रीट लाइट पूरी रात टिमटिमाती रहती है।,hi,Street Lights,StreetLights-02,train,0,synthetic
+C0357,The open drain near the school is full of waste and stinking.,en,Drainage,Drainage-04,train,0,synthetic
+C0358,Street light din mein bhi jalti rehti hai aur bijli barbaad hoti hai.,hinglish,Street Lights,StreetLights-04,train,0,synthetic
+C0359,हमारे रूट पर बस सेवा बंद हो गई है। यह मुख्य बाज़ार के पास है।,hi,Unclear,Unclear-10,train,1,synthetic
+C0360,The road in front of our house is badly damaged.,en,Roads,Roads-01,calibration,0,synthetic
+C0361,The footpath near the market is broken and unsafe to walk on. It has been like this for three days.,en,Roads,Roads-05,train,1,synthetic
+C0362,Raat ko loudspeaker ka bahut shor hota hai.,hinglish,Unclear,Unclear-05,calibration,0,synthetic
+C0363,आवारा कुत्ते कचरे के थैले फाड़कर कचरा फैला रहे हैं।,hi,Sanitation,Sanitation-08,test,0,synthetic
+C0364,चौराहे पर ज़ेब्रा क्रॉसिंग का रंग बिल्कुल मिट गया है। तीन दिन से ऐसा ही है।,hi,Roads,Roads-07,test,1,synthetic
+C0365,The footpath near the market is broken and unsafe to walk on.,en,Roads,Roads-05,train,0,synthetic
+C0366,Sewage water is overflowing onto the road. Many residents of our colony are facing problems.,en,Drainage,Drainage-01,calibration,1,synthetic
+C0367,Sewage ka paani sadak par beh raha hai. Teen din se aisa hi hai.,hinglish,Drainage,Drainage-01,calibration,1,synthetic
+C0368,There is no electricity connection even after applying a month ago. Please fix it soon.,en,Electricity,Electricity-08,train,1,synthetic
+C0369,सीवर लाइन जाम है और गंदा पानी घर में आ रहा है।,hi,Drainage,Drainage-05,train,0,synthetic
+C0370,हमारे घर के सामने की सड़क बहुत खराब हो गई है।,hi,Roads,Roads-01,calibration,0,synthetic
+C0371,Hamare park ki street lights nahi jal rahi.,hinglish,Street Lights,StreetLights-03,train,0,synthetic
+C0372,पुल के पास की सड़क ऊबड़-खाबड़ है और खतरनाक है। कॉलोनी के बहुत से लोग परेशान हैं।,hi,Roads,Roads-11,train,1,synthetic
+C0373,The internet connection in our area is very slow. This is near the main market.,en,Unclear,Unclear-04,test,1,synthetic
+C0374,पार्क के पास वाली पाइपलाइन लीक हो रही है और पानी बर्बाद हो रहा है। यह मुख्य बाज़ार के पास है।,hi,Water,Water-08,train,1,synthetic
+C0375,खाली प्लॉट पर मलबा डाल दिया गया है। कॉलोनी के बहुत से लोग परेशान हैं।,hi,Sanitation,Sanitation-09,calibration,1,synthetic
+C0376,Road repair work has been left incomplete for weeks. Many residents of our colony are facing problems.,en,Roads,Roads-03,train,1,synthetic
+C0377,घर के पास जाम नाली में मच्छर पनप रहे हैं।,hi,Drainage,Drainage-10,train,0,synthetic
+C0378,चौराहे पर ज़ेब्रा क्रॉसिंग का रंग बिल्कुल मिट गया है।,hi,Roads,Roads-07,test,0,synthetic
+C0379,The bridge approach road is uneven and dangerous. Many residents of our colony are facing problems.,en,Roads,Roads-11,train,1,synthetic
+C0380,फ्लाईओवर के पास रोड डिवाइडर टूट गया है। कृपया जल्दी ठीक करवाएं।,hi,Roads,Roads-08,test,1,synthetic
+C0381,"कृपया इस पर कुछ कीजिए, बहुत ज़रूरी है।",hi,Unclear,Unclear-09,test,0,synthetic
+C0382,The zebra crossing paint has faded completely at the junction.,en,Roads,Roads-07,test,0,synthetic
+C0383,Khali plot par malba dump kar diya gaya hai. Please jaldi theek karwaiye.,hinglish,Sanitation,Sanitation-09,calibration,1,synthetic
+C0384,There is no speed breaker near the school and vehicles go very fast. This is near the main market.,en,Roads,Roads-04,train,1,synthetic
+C0385,Chauraahe ke paas ki street light truck se tut gayi hai.,hinglish,Street Lights,StreetLights-07,calibration,0,synthetic
+C0386,हमारी गली में पीने के पानी की सप्लाई समय पर नहीं आती। यह मुख्य बाज़ार के पास है।,hi,Water,Water-07,train,1,synthetic
+C0387,सीवेज का पानी सड़क पर बह रहा है। कॉलोनी के बहुत से लोग परेशान हैं।,hi,Drainage,Drainage-01,calibration,1,synthetic
+C0388,हमारे पार्क की स्ट्रीट लाइटें नहीं जल रहीं।,hi,Street Lights,StreetLights-03,train,0,synthetic
+C0389,Manhole ka dhakkan gayab hai aur bahut khatarnak hai. Please jaldi theek karwaiye.,hinglish,Drainage,Drainage-03,calibration,1,synthetic
+C0390,स्कूल के पास की स्ट्रीट लाइट बहुत धीमी है।,hi,Street Lights,StreetLights-10,train,0,synthetic
+C0391,बारिश का पानी निकल नहीं रहा और हमारी गली में भर गया है।,hi,Drainage,Drainage-02,train,0,synthetic
+C0392,The police are not taking my complaint. Please fix it soon.,en,Unclear,Unclear-02,train,1,synthetic
+C0393,Nobody has come to sweep our street for many days.,en,Sanitation,Sanitation-02,test,0,synthetic
+C0394,Khudai ke baad sadak ka ek hissa dhans gaya hai.,hinglish,Roads,Roads-09,train,0,synthetic
+C0395,Mere ghar ke paas bijli ke khambe se khula taar latak raha hai.,hinglish,Electricity,Electricity-02,train,0,synthetic
+C0396,मैनहोल का ढक्कन गायब है और बहुत खतरनाक है। कॉलोनी के बहुत से लोग परेशान हैं।,hi,Drainage,Drainage-03,calibration,1,synthetic
+C0397,"Please is par kuch kijiye, bahut zaroori hai. Colony ke bahut se log pareshan hain.",hinglish,Unclear,Unclear-09,test,1,synthetic
+C0398,The lamp post light bulb is fused and needs replacement. Many residents of our colony are facing problems.,en,Street Lights,StreetLights-09,test,1,synthetic
+C0399,The street light stays on during the day and wastes power.,en,Street Lights,StreetLights-04,train,0,synthetic
+C0400,बाज़ार के पास नाली का ढक्कन टूट गया है। कृपया जल्दी ठीक करवाएं।,hi,Drainage,Drainage-07,test,1,synthetic
+C0401,सड़क किनारे मरे हुए जानवर पड़े हैं और कोई नहीं उठा रहा। कॉलोनी के बहुत से लोग परेशान हैं।,hi,Sanitation,Sanitation-05,train,1,synthetic
+C0402,बाज़ार के पास का कचरे का डिब्बा भरकर बाहर गिर रहा है।,hi,Sanitation,Sanitation-01,test,0,synthetic
+C0403,The tap water in our house has stopped coming since morning.,en,Water,Water-00,test,0,synthetic
+C0404,स्ट्रीट लाइट पूरी रात टिमटिमाती रहती है। कृपया जल्दी ठीक करवाएं।,hi,Street Lights,StreetLights-02,train,1,synthetic
+C0405,The whole street is dark at night because the lamps are off.,en,Street Lights,StreetLights-01,train,0,synthetic
+C0406,The water tanker has not come for three days.,en,Water,Water-11,calibration,0,synthetic
+C0407,हर शाम बार-बार बिजली चली जाती है।,hi,Electricity,Electricity-05,train,0,synthetic
+C0408,Kal raat se hamare area mein bijli nahi hai. Please jaldi theek karwaiye.,hinglish,Electricity,Electricity-00,train,1,synthetic
+C0409,The manhole cover is missing and it is dangerous. Many residents of our colony are facing problems.,en,Drainage,Drainage-03,calibration,1,synthetic
+C0410,नई बनी सड़क पर अभी से दरारें पड़ गई हैं। तीन दिन से ऐसा ही है।,hi,Roads,Roads-02,test,1,synthetic
+C0411,स्ट्रीट लाइट का बल्ब फ्यूज हो गया है और बदलना है।,hi,Street Lights,StreetLights-09,test,0,synthetic
+C0412,Hamare park mein koi dustbin nahi hai. Ye main market ke paas hai.,hinglish,Sanitation,Sanitation-10,train,1,synthetic
+C0413,The storm water drain is blocked with plastic.,en,Drainage,Drainage-11,train,0,synthetic
+C0414,Waste is being burnt in the open near our colony. Many residents of our colony are facing problems.,en,Sanitation,Sanitation-03,train,1,synthetic
+C0415,A road divider near the flyover is broken.,en,Roads,Roads-08,test,0,synthetic
+C0416,Street light ka bulb fuse ho gaya hai aur badalna hai.,hinglish,Street Lights,StreetLights-09,test,0,synthetic
+C0417,There are no street lights on the road to the bus stop and it is unsafe at night. Please fix it soon.,en,Street Lights,StreetLights-06,train,1,synthetic
+C0418,School ke paas speed breaker nahi hai aur gaadiyan bahut tez chalti hain.,hinglish,Roads,Roads-04,train,0,synthetic
+C0419,Waste is being burnt in the open near our colony.,en,Sanitation,Sanitation-03,train,0,synthetic
+C0420,The nala behind our colony has not been cleaned for months. It has been like this for three days.,en,Drainage,Drainage-08,train,1,synthetic
+C0421,"हेलो, क्या आप सुन सकते हैं? मुझे शिकायत करनी है। तीन दिन से ऐसा ही है।",hi,Unclear,Unclear-11,calibration,1,synthetic
+C0422,"Mere ghar ke paas kuch gadbad hai, kisi ko bhejiye. Teen din se aisa hi hai.",hinglish,Unclear,Unclear-00,calibration,1,synthetic
+C0423,स्कूल के पास बिजली का खंभा झुक गया है और गिर सकता है। यह मुख्य बाज़ार के पास है।,hi,Electricity,Electricity-07,train,1,synthetic
+C0424,The open drain near the school is full of waste and stinking. Please fix it soon.,en,Drainage,Drainage-04,train,1,synthetic
+C0425,मेरा राशन कार्ड अभी तक नहीं बना है।,hi,Unclear,Unclear-03,train,0,synthetic
+C0426,मेरे घर का बिजली मीटर खराब है। कृपया जल्दी ठीक करवाएं।,hi,Electricity,Electricity-06,calibration,1,synthetic
+C0427,सोसाइटी की पानी की टंकी नहीं भर रही है। कॉलोनी के बहुत से लोग परेशान हैं।,hi,Water,Water-05,train,1,synthetic
+C0428,Drinking water supply is irregular in our lane.,en,Water,Water-07,train,0,synthetic
+C0429,Main road ke beech mein bahut bada gaddha hai. Please jaldi theek karwaiye.,hinglish,Roads,Roads-00,calibration,1,synthetic
+C0430,सड़क किनारे मरे हुए जानवर पड़े हैं और कोई नहीं उठा रहा।,hi,Sanitation,Sanitation-05,train,0,synthetic
+C0431,सीवर लाइन जाम है और गंदा पानी घर में आ रहा है। कॉलोनी के बहुत से लोग परेशान हैं।,hi,Drainage,Drainage-05,train,1,synthetic
+C0432,The internet connection in our area is very slow.,en,Unclear,Unclear-04,test,0,synthetic
+C0433,Hamare park mein koi dustbin nahi hai.,hinglish,Sanitation,Sanitation-10,train,0,synthetic
+C0434,Colony ke peeche wale nale ki kai mahino se safai nahi hui hai.,hinglish,Drainage,Drainage-08,train,0,synthetic
+C0435,"Please do something about this, it is urgent.",en,Unclear,Unclear-09,test,0,synthetic
+C0436,My ration card has not been issued yet.,en,Unclear,Unclear-03,train,0,synthetic
+C0437,Hamari sadak ke khambe par light lagi hi nahi hai. Please jaldi theek karwaiye.,hinglish,Street Lights,StreetLights-05,calibration,1,synthetic
+C0438,Society ki paani ki tanki bhari nahi ja rahi hai. Please jaldi theek karwaiye.,hinglish,Water,Water-05,train,1,synthetic
+C0439,बिजली के तार पेड़ की डालियों को छू रहे हैं।,hi,Electricity,Electricity-11,calibration,0,synthetic
+C0440,Main road ke beech mein bahut bada gaddha hai.,hinglish,Roads,Roads-00,calibration,0,synthetic
+C0441,सड़क पर बजरी बिखरी है और बाइकें फिसल रही हैं।,hi,Roads,Roads-06,calibration,0,synthetic
+C0442,Bijli ka voltage bahut kam hai aur ghar ke upkaran kaam nahi kar rahe.,hinglish,Electricity,Electricity-01,calibration,0,synthetic
+C0443,हमारे घर के सामने की नाली जाम हो गई है और बाहर बह रही है। तीन दिन से ऐसा ही है।,hi,Drainage,Drainage-00,test,1,synthetic
+C0444,Hamare route par bus service band ho gayi hai. Colony ke bahut se log pareshan hain.,hinglish,Unclear,Unclear-10,train,1,synthetic
+C0445,Hamari gali ke electric box se chingariyan nikal rahi hain.,hinglish,Electricity,Electricity-09,train,0,synthetic
+C0446,Jab bhi baarish hoti hai light trip ho jaati hai.,hinglish,Electricity,Electricity-10,test,0,synthetic
+C0447,"Mujhe pareshani hai, koi meri baat nahi sun raha.",hinglish,Unclear,Unclear-01,train,0,synthetic
+C0448,Hamari andheri gali mein nayi street lights chahiye. Colony ke bahut se log pareshan hain.,hinglish,Street Lights,StreetLights-11,calibration,1,synthetic
+C0449,बस स्टॉप जाने वाली सड़क पर स्ट्रीट लाइट नहीं है और रात को डर लगता है।,hi,Street Lights,StreetLights-06,train,0,synthetic
+C0450,The road is full of loose gravel and bikes are skidding.,en,Roads,Roads-06,calibration,0,synthetic
+C0451,Market ke paas ka footpath toota hua hai aur chalna khatarnak hai. Teen din se aisa hi hai.,hinglish,Roads,Roads-05,train,1,synthetic
+C0452,Construction debris has been dumped on the vacant plot. This is near the main market.,en,Sanitation,Sanitation-09,calibration,1,synthetic
+C0453,हमारी सड़क के खंभे पर लाइट लगी ही नहीं है।,hi,Street Lights,StreetLights-05,calibration,0,synthetic
+C0454,Colony ka transformer bahut zor se sparking kar raha hai.,hinglish,Electricity,Electricity-03,test,0,synthetic
+C0455,Ek mahine pehle apply kiya tha lekin abhi tak bijli connection nahi mila. Teen din se aisa hi hai.,hinglish,Electricity,Electricity-08,train,1,synthetic
+C0456,Hamari gali se ek hafte se kachra nahi uthaya gaya hai.,hinglish,Sanitation,Sanitation-00,train,0,synthetic
+C0457,My ration card has not been issued yet. This is near the main market.,en,Unclear,Unclear-03,train,1,synthetic
+C0458,We are getting muddy water in the taps. Many residents of our colony are facing problems.,en,Water,Water-09,train,1,synthetic
+C0459,I want to know about my pension status.,en,Unclear,Unclear-07,train,0,synthetic
+C0460,हमारे घर के सामने की सड़क बहुत खराब हो गई है। कॉलोनी के बहुत से लोग परेशान हैं।,hi,Roads,Roads-01,calibration,1,synthetic
+C0461,बस स्टॉप के पास पानी की मुख्य पाइप लीक हो रही है। कॉलोनी के बहुत से लोग परेशान हैं।,hi,Water,Water-03,calibration,1,synthetic
+C0462,तूफानी पानी की नाली प्लास्टिक से बंद हो गई है। तीन दिन से ऐसा ही है।,hi,Drainage,Drainage-11,train,1,synthetic
+C0463,Street light ka bulb fuse ho gaya hai aur badalna hai. Teen din se aisa hi hai.,hinglish,Street Lights,StreetLights-09,test,1,synthetic
+C0464,Our electricity bill is much higher than usual. This is near the main market.,en,Electricity,Electricity-04,test,1,synthetic
+C0465,एक महीने पहले आवेदन किया था लेकिन अभी तक बिजली कनेक्शन नहीं मिला।,hi,Electricity,Electricity-08,train,0,synthetic
+C0466,"कृपया इस पर कुछ कीजिए, बहुत ज़रूरी है। यह मुख्य बाज़ार के पास है।",hi,Unclear,Unclear-09,test,1,synthetic
+C0467,"मेरे घर के पास कुछ गड़बड़ है, किसी को भेजिए। तीन दिन से ऐसा ही है।",hi,Unclear,Unclear-00,calibration,1,synthetic
+C0468,Street lights on the main road are switched off after midnight.,en,Street Lights,StreetLights-08,test,0,synthetic
+C0469,पुलिस मेरी शिकायत नहीं लिख रही है।,hi,Unclear,Unclear-02,train,0,synthetic
+C0470,मैनहोल का ढक्कन गायब है और बहुत खतरनाक है।,hi,Drainage,Drainage-03,calibration,0,synthetic
+C0471,रात को पूरी गली अंधेरी रहती है क्योंकि स्ट्रीट लाइटें बंद हैं।,hi,Street Lights,StreetLights-01,train,0,synthetic
+C0472,खुदाई के बाद सड़क का एक हिस्सा धंस गया है।,hi,Roads,Roads-09,train,0,synthetic
+C0473,Main road ki street lights aadhi raat ke baad band ho jaati hain.,hinglish,Street Lights,StreetLights-08,test,0,synthetic
+C0474,Hamare ghar ke saamne ki sadak bahut kharab ho gayi hai.,hinglish,Roads,Roads-01,calibration,0,synthetic
+C0475,मेरा राशन कार्ड अभी तक नहीं बना है। तीन दिन से ऐसा ही है।,hi,Unclear,Unclear-03,train,1,synthetic
+C0476,Street lights on the main road are switched off after midnight. It has been like this for three days.,en,Street Lights,StreetLights-08,test,1,synthetic
+C0477,Sparks are coming from the electrical box on our street. Many residents of our colony are facing problems.,en,Electricity,Electricity-09,train,1,synthetic
+C0478,Our water meter is not working properly.,en,Water,Water-06,train,0,synthetic
+C0479,खुदाई के बाद सड़क का एक हिस्सा धंस गया है। तीन दिन से ऐसा ही है।,hi,Roads,Roads-09,train,1,synthetic
+C0480,"Please do something about this, it is urgent. Many residents of our colony are facing problems.",en,Unclear,Unclear-09,test,1,synthetic
+C0481,Sparks are coming from the electrical box on our street.,en,Electricity,Electricity-09,train,0,synthetic
+C0482,हमारे पार्क की स्ट्रीट लाइटें नहीं जल रहीं। यह मुख्य बाज़ार के पास है।,hi,Street Lights,StreetLights-03,train,1,synthetic
+C0483,हमारे घर के सामने की स्ट्रीट लाइट कई दिनों से काम नहीं कर रही। तीन दिन से ऐसा ही है।,hi,Street Lights,StreetLights-00,test,1,synthetic
+C0484,Frequent power cuts are happening every evening. It has been like this for three days.,en,Electricity,Electricity-05,train,1,synthetic
+C0485,There is a lot of noise from the loudspeaker at night.,en,Unclear,Unclear-05,calibration,0,synthetic
+C0486,कल रात से हमारे इलाके में बिजली नहीं है। कॉलोनी के बहुत से लोग परेशान हैं।,hi,Electricity,Electricity-00,train,1,synthetic
+C0487,Hamare route par bus service band ho gayi hai.,hinglish,Unclear,Unclear-10,train,0,synthetic
+C0488,Area mein badbu hai aur halat bahut kharab hai. Please jaldi theek karwaiye.,hinglish,Unclear,Unclear-08,test,1,synthetic
+C0489,The transformer in our colony is making loud sparking noises. Please fix it soon.,en,Electricity,Electricity-03,test,1,synthetic
+C0490,New street lights are needed in our dark lane. This is near the main market.,en,Street Lights,StreetLights-11,calibration,1,synthetic
+C0491,Baarish ka paani nikal nahi raha aur hamari gali mein bhar gaya hai. Please jaldi theek karwaiye.,hinglish,Drainage,Drainage-02,train,1,synthetic
+C0492,फ्लाईओवर के पास रोड डिवाइडर टूट गया है।,hi,Roads,Roads-08,test,0,synthetic
+C0493,I want to know about my pension status. Please fix it soon.,en,Unclear,Unclear-07,train,1,synthetic
+C0494,The bus service on our route has stopped.,en,Unclear,Unclear-10,train,0,synthetic
+C0495,क्लिनिक के पास मेडिकल कचरा खुले में फेंका जा रहा है।,hi,Sanitation,Sanitation-11,train,0,synthetic
+C0496,Chauraahe ke paas ki street light truck se tut gayi hai. Colony ke bahut se log pareshan hain.,hinglish,Street Lights,StreetLights-07,calibration,1,synthetic
+C0497,Sadak par bajri bikhri hai aur bike phisal rahi hain. Ye main market ke paas hai.,hinglish,Roads,Roads-06,calibration,1,synthetic
+C0498,नल का पानी गंदा है और उसमें बदबू आ रही है।,hi,Water,Water-02,train,0,synthetic
+C0499,बारिश का पानी निकल नहीं रहा और हमारी गली में भर गया है। यह मुख्य बाज़ार के पास है।,hi,Drainage,Drainage-02,train,1,synthetic
+C0500,कॉलोनी का ट्रांसफॉर्मर बहुत तेज़ आवाज़ के साथ चिंगारी छोड़ रहा है। कृपया जल्दी ठीक करवाएं।,hi,Electricity,Electricity-03,test,1,synthetic
+C0501,हर छोटी बारिश के बाद हमारी गली में पानी भर जाता है। कॉलोनी के बहुत से लोग परेशान हैं।,hi,Drainage,Drainage-06,test,1,synthetic
+C0502,Har shaam bar bar bijli chali jaati hai. Ye main market ke paas hai.,hinglish,Electricity,Electricity-05,train,1,synthetic
+C0503,Chauraahe par zebra crossing ka rang bilkul mit gaya hai. Please jaldi theek karwaiye.,hinglish,Roads,Roads-07,test,1,synthetic
+C0504,Police meri shikayat nahi likh rahi hai.,hinglish,Unclear,Unclear-02,train,0,synthetic

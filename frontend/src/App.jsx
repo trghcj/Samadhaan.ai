@@ -7,6 +7,7 @@ import AuthPage from './pages/AuthPage';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { LogOut, Globe } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { API_BASE, API_OVERRIDDEN } from './api';
 import './index.css';
 
 // Protected Route Wrapper
@@ -159,6 +160,11 @@ function App() {
     <AuthProvider>
       <Router>
         <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+          {API_OVERRIDDEN && (
+            <div style={{ background: '#FEF3C7', color: '#92400E', fontSize: '0.8rem', fontWeight: 600, padding: '0.4rem 1rem', textAlign: 'center' }}>
+              Demo mode: using custom backend {API_BASE} (open the site with ?api=reset to go back)
+            </div>
+          )}
           <AppHeader />
           
           <main style={{ flex: 1 }}>
