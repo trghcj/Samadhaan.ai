@@ -186,12 +186,16 @@ async def upload_audio(
     Accepts audio, saves it locally, and queues the ML task in FastAPI BackgroundTasks.
     Returns immediately with a task_id so the frontend doesn't hang.
     """
-    file_path = f"temp_audio/{file.filename}"
+    # Never use the client's filename as a path: two uploads would overwrite each other mid-processing,
+    # and a name like "../x" could write outside temp_audio. Keep only a known audio extension.
+    ext = os.path.splitext(os.path.basename(file.filename or ""))[1].lower()
+    if ext not in {".webm", ".wav", ".mp3", ".m4a", ".ogg", ".mp4", ".flac"}:
+        ext = ".webm"
+    task_id = str(uuid.uuid4())
+    file_path = f"temp_audio/{task_id}{ext}"
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
-        
-    # Generate unique task ID
-    task_id = str(uuid.uuid4())
+
     task_tracker[task_id] = {"status": "processing"}
     
     # Define the background worker function
@@ -211,7 +215,14 @@ async def upload_audio(
                 "status": "error",
                 "error": str(e)
             }
-            
+        finally:
+            # Raw complaint audio is not kept unless KEEP_AUDIO=1 (useful when collecting recordings for evaluation).
+            if os.getenv("KEEP_AUDIO") != "1":
+                try:
+                    os.remove(fp)
+                except OSError:
+                    pass
+
     # Dispatch native FastAPI background task
     background_tasks.add_task(run_ai_task, task_id, file_path, user_id, reporter_name, reporter_phone, location, extra_details, before_photo_url)
     

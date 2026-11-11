@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Microphone A/B test</title>
+<style>
+  body { font: 16px/1.5 system-ui, sans-serif; max-width: 720px; margin: 2rem auto; padding: 0 1rem; }
+  .row { display: flex; gap: .75rem; align-items: center; padding: .6rem 0; border-bottom: 1px solid #ddd; flex-wrap: wrap; }
+  .name { flex: 1 1 260px; }
+  button { padding: .5rem 1rem; font-size: 1rem; cursor: pointer; }
+  .rec { background: #c62828; color: #fff; border: 0; }
+  small, .out { color: #555; }
+  code { background: #f2f2f2; padding: 0 .25rem; }
+</style>
+</head>
+<body>
+<h1>Microphone A/B test</h1>
+<p>Say the <b>same sentence</b> each time, at the same distance from the microphone, for example
+<i>"paani nahi aa raha hai"</i>. Record each setting twice. Each recording downloads automatically as a
+<code>mic_&lt;setting&gt;_&lt;n&gt;.webm</code> file. Then tell Claude the sentence you said.</p>
+<p><small>Serve this page from localhost (microphone access needs it):
+<code>python -m http.server 8765</code> in the <code>research</code> folder, then open
+<code>http://localhost:8765/mic_ab_test.html</code>.</small></p>
+<div id="rows"></div>
+<script>
+// The first row is what the app uses today (frontend/src/pages/CitizenPortal.jsx).
+const SETTINGS = [
+  { id: 'A_current_app',  label: 'A. Current app (noise suppression OFF, echo cancel OFF, auto gain ON)',
+    c: { echoCancellation: false, noiseSuppression: false, autoGainControl: true } },
+  { id: 'B_browser_default', label: 'B. Browser defaults (noise suppression ON, echo cancel ON, auto gain ON)',
+    c: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } },
+  { id: 'C_noise_only', label: 'C. Noise suppression ON only (echo cancel OFF, auto gain OFF)',
+    c: { echoCancellation: false, noiseSuppression: true, autoGainControl: false } },
+  { id: 'D_all_off', label: 'D. Everything OFF (raw microphone)',
+    c: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } },
+];
+const counts = {};
+const rows = document.getElementById('rows');
+
+SETTINGS.forEach(s => {
+  const row = document.createElement('div'); row.className = 'row';
+  row.innerHTML = `<div class="name">${s.label}</div><button>Record</button><span class="out"></span>`;
+  const btn = row.querySelector('button'), out = row.querySelector('.out');
+  let rec = null, stream = null, chunks = [];
+  btn.onclick = async () => {
+    if (!rec) {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, ...s.c } });
+      const got = stream.getAudioTracks()[0].getSettings();
+      rec = new MediaRecorder(stream, { audioBitsPerSecond: 128000 }); chunks = [];
+      rec.ondataavailable = e => chunks.push(e.data);
+      rec.onstop = async () => {
+        stream.getTracks().forEach(t => t.stop());
+        const blob = new Blob(chunks, { type: 'audio/webm' });
+        counts[s.id] = (counts[s.id] || 0) + 1;
+        const name = `mic_${s.id}_${counts[s.id]}.webm`;
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click();
+        // quick on-page level check: quietest vs loudest 0.25 s
+        const buf = await new AudioContext().decodeAudioData(await blob.arrayBuffer());
+        const x = buf.getChannelData(0), fr = Math.floor(buf.sampleRate / 4), p = [];
+        for (let i = 0; i + fr <= x.length; i += fr) { let e = 0; for (let j = i; j < i + fr; j++) e += x[j] * x[j]; p.push(e / fr); }
+        p.sort((a, b) => a - b); const k = Math.max(1, Math.floor(p.length / 10));
+        const lo = p.slice(0, k).reduce((a, b) => a + b) / k, hi = p.slice(-k).reduce((a, b) => a + b) / k;
+        out.textContent = `saved ${name} (${buf.duration.toFixed(1)} s). background rms ${Math.sqrt(lo).toFixed(3)}, loudest rms ${Math.sqrt(hi).toFixed(3)}, ~${(10 * Math.log10(hi / lo)).toFixed(1)} dB apart. browser applied: NS=${got.noiseSuppression} EC=${got.echoCancellation} AGC=${got.autoGainControl}`;
+        rec = null; btn.textContent = 'Record'; btn.className = '';
+      };
+      rec.start(); btn.textContent = 'Stop'; btn.className = 'rec'; out.textContent = 'recording...';
+    } else { rec.stop(); }
+  };
+  rows.appendChild(row);
+});
+</script>
+</body>
+</html>

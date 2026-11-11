@@ -1,10 +1,13 @@
 import os
 import json
+import base64
 from datetime import datetime, timedelta
 from faster_whisper import WhisperModel
 from dotenv import load_dotenv
 from database import SessionLocal
+import asr
 import models
+import muril_classifier
 
 import requests
 
@@ -24,32 +27,63 @@ def get_whisper_model(progress_callback=None):
         if progress_callback: progress_callback("Downloading and loading audio model (first run only, takes ~30s)...")
         print("Loading Whisper Model (this may take a moment on first run)...")
         try:
-            # Using 'tiny' with 'default' compute_type and cpu_threads=1 to prevent Render CPU thrashing
-            whisper_model = WhisperModel("tiny", device="cpu", compute_type="default", cpu_threads=1)
+            # Defaults ('tiny', 'default', 1 thread) suit a small free server like Render. On a laptop set in backend/.env:
+            #   WHISPER_MODEL=small  WHISPER_COMPUTE=int8  WHISPER_THREADS=4
+            # Language and VAD settings live in asr.ASRConfig (WHISPER_LANGUAGE, WHISPER_LANGUAGES, WHISPER_VAD, WHISPER_PROMPT).
+            size = os.getenv("WHISPER_MODEL", "tiny")
+            print(f"Loading Whisper model '{size}'...")
+            whisper_model = WhisperModel(
+                size,
+                device="cpu",
+                compute_type=os.getenv("WHISPER_COMPUTE", "default"),
+                cpu_threads=int(os.getenv("WHISPER_THREADS", "1")),
+            )
             print("Whisper Model loaded successfully.")
         except Exception as e:
             print(f"Error loading whisper: {e}")
     return whisper_model
 
 def process_audio_task(audio_file_path: str, user_id: str = None, reporter_name: str = None, reporter_phone: str = None, location: str = None, extra_details: str = None, progress_callback=None, before_photo_url: str = None):
-    # 1. Transcription Phase
-    transcript = ""
+    # 1. Transcription Phase (raw transcript: asr.py never corrects or rewrites what Whisper heard)
+    audio = asr.load_audio(audio_file_path)  # raises asr.AudioError (empty / corrupted / too short / silent)
     model = get_whisper_model(progress_callback)
-    if model:
-        if progress_callback: progress_callback("Transcribing audio...")
-        try:
-            segments, info = model.transcribe(audio_file_path, beam_size=5)
-            transcript = " ".join([segment.text for segment in segments]).strip()
-        except Exception as e:
-            print(f"Transcription error: {e}")
-            
+    if model is None:
+        raise RuntimeError("The speech recognition model could not be loaded. Check the server log.")
+    if progress_callback: progress_callback("Transcribing audio...")
+    try:
+        asr_info = asr.transcribe(model, audio)
+    except Exception as e:
+        raise RuntimeError(f"Speech recognition failed: {e}") from e
+    transcript = asr_info.pop("text")
+    # Log measurements only (not the transcript or the audio, which are complaint content).
+    print(f"ASR: lang={asr_info['language']}({asr_info['language_source']}) {asr_info['seconds']}s "
+          f"logprob={asr_info['avg_logprob']} no_speech={asr_info['max_no_speech_prob']} est_snr={asr_info['est_snr_db']}dB")
+
     if not transcript:
         transcript = "[Inaudible / Empty Audio]"
 
     result_dict = None
-    
+
     # 2. Classification & Uncertainty Phase
-    if not GEMINI_API_KEY or GEMINI_API_KEY == "PASTE_YOUR_API_KEY_HERE" or GEMINI_API_KEY == "":
+    # Prefer the fine-tuned MuRIL model (calibrated High/Medium/Low) when its files are present;
+    # set CLASSIFIER=gemini to force the original Gemini path.
+    if os.getenv("CLASSIFIER", "muril").lower() == "muril" and transcript != "[Inaudible / Empty Audio]":
+        if progress_callback: progress_callback("Classifying with MuRIL...")
+        result_dict = muril_classifier.classify(transcript)
+
+    if transcript == "[Inaudible / Empty Audio]":
+        # Nothing was recognised: never guess a department (this used to fall through to the mock "Water" result).
+        result_dict = {
+            "prediction_set": "Unclear",
+            "confidence_level": "Low",
+            "confidence_score": 0.0,
+            "priority": "Medium",
+            "classifier": "none (no speech recognised)",
+        }
+
+    if result_dict is not None:
+        pass
+    elif not GEMINI_API_KEY or GEMINI_API_KEY == "PASTE_YOUR_API_KEY_HERE" or GEMINI_API_KEY == "":
         result_dict = {
             "prediction_set": "Water Department (Mock)",
             "confidence_level": "Medium",
@@ -129,7 +163,8 @@ def process_audio_task(audio_file_path: str, user_id: str = None, reporter_name:
             }
             
     result_dict["transcript"] = transcript
-    
+    result_dict["asr"] = asr_info  # speech-stage measurements, kept apart from the classifier fields
+
     # Save the result to PostgreSQL
     if progress_callback: progress_callback("Saving grievance to database...")
     try:
@@ -216,7 +251,7 @@ def verify_resolution(before_url: str, after_url: str) -> dict:
         }
         '''
         
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key={GEMINI_API_KEY}"
         payload = {
             "contents": [{
                 "parts": [

@@ -1,0 +1,7 @@
+torch
+transformers
+scikit-learn
+numpy
+sentencepiece
+jiwer
+faster-whisper
