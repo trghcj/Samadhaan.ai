@@ -58,7 +58,7 @@ Minor_Project/
         └── pages/ AuthPage.jsx, CitizenPortal.jsx, CitizenDashboard.jsx, OperatorDashboard.jsx
 ```
 
-Also present: `research/outputs/tradeoff_20_vs_60.png` (trade-off curves for the 20- and 60-epoch runs on calibration rows) and `research/colab_runs/` (Colab result zips, git-ignored). The committed `research/outputs/muril/metrics.json` predates the `train_loss` field and does not contain it.
+Also present: `research/outputs/final_e40/` (probabilities and metrics of a 40-epoch default-mode run, seed 42, no weights), `research/outputs/tradeoff_20_vs_60.png` (trade-off curves for the 20- and 60-epoch runs on calibration rows) and `research/colab_runs/` (Colab result zips, git-ignored). The committed `research/outputs/muril/metrics.json` predates the `train_loss` field and does not contain it.
 
 ## 2. What each script does
 
@@ -136,6 +136,8 @@ The thresholds were chosen on the 126 calibration rows (target silent error 0.05
 - 60 epochs: accuracy 0.7698 (calibration) and 0.7937 (test); top softmax probability 0.605 to 0.977 (calibration) and 0.498 to 0.977 (test); mean confidence 0.957 / 0.951; ECE 0.1966 / 0.1671.
 - Applying the current `thresholds.json` to the 60-epoch run routes 100% automatically with 23.0% (calibration) and 20.6% (test) silent errors.
 - Largest automatic share with silent errors at or below 5% on calibration rows: 73.0% for 20 epochs, 51.6% for 60 epochs (`tradeoff_20_vs_60.png`).
+- 40 epochs (`research/outputs/final_e40/metrics.json`, trained on all 252 train rows): accuracy 0.7937 (calibration) and 0.8095 (test), macro F1 0.7844 and 0.8027, final train loss 0.1363; top softmax probability 0.444 to 0.904 (calibration) and 0.552 to 0.904 (test); ECE 0.1073 and 0.1224.
+- The app still loads `research/outputs/muril/model` (the 20-epoch weights) and `research/outputs/muril/thresholds.json`; nothing from the 40-epoch run is wired into the app, and its weights are not in the repository.
 - The weights of the 60-epoch run were not downloaded to this computer; `thresholds.json` still belongs to the 20-epoch model.
 
 **Tests:** 25 tests in `backend/tests` (21 in `test_asr.py`, 4 in `test_api.py`). All 25 passed on the last run in this session. They cover audio validation, language choice, raw-transcript handling, error reporting, routing levels, Whisper on synthetic clips, and the upload endpoint on a temporary SQLite database. They do not cover the frontend.
