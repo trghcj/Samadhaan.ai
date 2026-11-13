@@ -26,3 +26,6 @@ backend/temp_audio/
 __pycache__/
 *.pyc
 .pytest_cache/
+
+# Colab run downloads (result zips)
+research/colab_runs/

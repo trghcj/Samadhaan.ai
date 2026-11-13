@@ -73,6 +73,23 @@ def write_probs(path, rows, probs):
             w.writerow([r["id"], r["language"], r["department"], LABELS[k], f"{p[k]:.6f}"] + [f"{x:.6f}" for x in p])
 
 
+def split_val_groups(train_rows, n, seed):
+    """Take n whole groups (group_id) per class out of the TRAIN rows as a validation set.
+    A group holds every language version and variant of one base complaint, so none of them stays in training.
+    The groups are chosen with their own RNG seeded by `seed`; the global training RNG is not touched."""
+    rng = random.Random(seed)
+    val_ids, chosen = set(), {}
+    for dept in LABELS:
+        groups = sorted({r["group_id"] for r in train_rows if r["department"] == dept})
+        if n >= len(groups):
+            raise SystemExit(f"--val_groups {n} leaves no training groups for {dept} (it has {len(groups)} in the train split)")
+        chosen[dept] = sorted(rng.sample(groups, n))
+        val_ids.update(chosen[dept])
+    train = [r for r in train_rows if r["group_id"] not in val_ids]
+    val = [r for r in train_rows if r["group_id"] in val_ids]
+    return train, val, chosen
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--data", default=os.path.join(ROOT, "data", "complaints.csv"))
@@ -83,6 +100,10 @@ def main():
     ap.add_argument("--batch", type=int, default=16)
     ap.add_argument("--max_len", type=int, default=64)
     ap.add_argument("--seed", type=int, default=42)
+    ap.add_argument("--val_groups", type=int, default=0,
+                    help="N > 0: validation mode. Hold out N whole groups per class from the train split, log validation "
+                         "loss/accuracy each epoch, and write only metrics.json (no probs_*.csv, no model). "
+                         "Calibration and test rows are never used.")
     args = ap.parse_args()
 
     set_seed(args.seed)
@@ -92,6 +113,11 @@ def main():
 
     rows = load_rows(args.data)
     by_split = {s: [r for r in rows if r["split"] == s] for s in ("train", "calibration", "test")}
+    val_groups_chosen = None
+    if args.val_groups > 0:
+        # Validation mode: calibration and test rows are dropped here, so they are never encoded or predicted on.
+        train_rows, val_rows, val_groups_chosen = split_val_groups(by_split["train"], args.val_groups, args.seed)
+        by_split = {"train": train_rows, "val": val_rows}
     print({s: len(v) for s, v in by_split.items()})
 
     tokenizer = AutoTokenizer.from_pretrained(args.model)
@@ -106,6 +132,8 @@ def main():
     total = len(loader) * args.epochs
     sched = get_linear_schedule_with_warmup(opt, int(0.1 * total), total)
 
+    train_losses = []
+    val_losses, val_accs = [], []
     for epoch in range(1, args.epochs + 1):
         model.train()
         running = 0.0
@@ -118,8 +146,35 @@ def main():
             opt.zero_grad()
             running += loss.item()
         print(f"epoch {epoch}/{args.epochs}  train loss {running / len(loader):.4f}")
+        train_losses.append(running / len(loader))
+        if val_groups_chosen is not None:
+            vp = predict_probs(model, data["val"], device, args.batch)
+            vy = np.array([LABEL2ID[r["department"]] for r in by_split["val"]])
+            vl = float(-np.mean(np.log(np.clip(vp[np.arange(len(vy)), vy], 1e-12, 1.0))))
+            va = float((vp.argmax(axis=1) == vy).mean())
+            val_losses.append(vl)
+            val_accs.append(va)
+            val_conf = float(vp.max(axis=1).mean())
+            print(f"           val loss {vl:.4f}  val accuracy {va:.4f}")
 
     metrics = {"model": args.model, "epochs": args.epochs, "lr": args.lr, "seed": args.seed}
+    metrics["train_loss"] = train_losses
+    if val_groups_chosen is not None:
+        metrics.update({
+            "val_groups": args.val_groups,
+            "val_group_ids": val_groups_chosen,
+            "n_train": len(by_split["train"]),
+            "n_val": len(by_split["val"]),
+            "val_loss": val_losses,
+            "val_accuracy": val_accs,
+            "val_mean_confidence": val_conf,  # mean top softmax probability of the final model on the validation rows
+        })
+        with open(os.path.join(args.out, "metrics.json"), "w") as f:
+            json.dump(metrics, f, indent=2)
+        print(f"validation mode: wrote metrics.json only (no probs, no model) to {args.out}")
+        print(f"final: train loss {train_losses[-1]:.4f}  val loss {val_losses[-1]:.4f}  "
+              f"val accuracy {val_accs[-1]:.4f}  mean val confidence {val_conf:.4f}")
+        return
     for split in ("calibration", "test"):
         probs = predict_probs(model, data[split], device, args.batch)
         y_true = [LABEL2ID[r["department"]] for r in by_split[split]]
