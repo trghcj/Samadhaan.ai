@@ -46,7 +46,14 @@ def fit_temperature(probs, labels):
     labels: array (n_rows,), true class indices in the same row order
     Use calibration rows only. Return a float.
     """
-    raise NotImplementedError("write fit_temperature")
+    rows = np.arange(len(labels))
+    best_t, best_nll = None, float("inf")
+    for t in np.linspace(0.05, 5.0, 500):
+        p = apply_temperature(probs, t)[rows, labels]
+        nll = float(-np.mean(np.log(np.clip(p, 1e-12, 1.0))))
+        if nll < best_nll:
+            best_t, best_nll = float(t), nll
+    return best_t
 
 
 def ece_of(probs, labels):
