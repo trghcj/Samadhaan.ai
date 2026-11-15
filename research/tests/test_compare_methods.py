@@ -46,6 +46,27 @@ def test_conformal_row_matches_conformal_py_and_shares_add_up():
     assert abs(res["auto"] + res["ask"] + res["human"] - 1) < 1e-9
 
 
+def test_method_6_needs_mc_files_and_matches_method_1_on_identical_probs():
+    import shutil
+    import tempfile
+    assert len(cm.compare([RUN], DATA, n_splits=3)) == 5            # final_e40 has no MC file -> five methods only
+    with tempfile.TemporaryDirectory() as tmp:
+        shutil.copy(os.path.join(RUN, "probs_calibration.csv"), tmp)
+        shutil.copy(os.path.join(RUN, "probs_calibration.csv"), os.path.join(tmp, "probs_mc_calibration.csv"))
+        res = cm.compare([tmp], DATA, n_splits=6)
+        assert len(res) == 6
+        for k in ("accuracy", "ece", "auto", "silent", "over5"):
+            assert abs(res[5][0][k] - res[0][0][k]) < 1e-12, k       # MC file = normal probs -> same as method 1
+        with open(os.path.join(tmp, "probs_mc_calibration.csv"), "a", encoding="utf-8") as f:
+            f.write("X,en,Water,Water,0.5,0.5,0.1,0.1,0.1,0.1,0.1,0.1\n")
+        try:
+            cm.compare([tmp], DATA, n_splits=1)
+        except SystemExit as e:
+            assert "different rows" in str(e)
+        else:
+            raise AssertionError("an MC file with different rows was accepted")
+
+
 def test_summary_spread():
     fake = {m: {i: {"x": float(i)} for i in range(5)} for m in range(5)}
     s = cm.summarise(fake, 5)

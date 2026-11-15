@@ -64,6 +64,21 @@ def predict_probs(model, data, device, batch_size):
     return np.concatenate(out)
 
 
+@torch.no_grad()
+def predict_probs_mc(model, data, device, batch_size, n_passes):
+    """Monte-Carlo dropout: n_passes forward passes with dropout ON (random each pass), probabilities averaged."""
+    model.train()  # switches dropout on; BERT has no batch-norm, so nothing else changes
+    total = 0.0
+    for _ in range(n_passes):
+        out = []
+        for ids, mask, _ in DataLoader(data, batch_size=batch_size, collate_fn=collate):
+            logits = model(input_ids=ids.to(device), attention_mask=mask.to(device)).logits
+            out.append(torch.softmax(logits, dim=-1).cpu().numpy())
+        total = total + np.concatenate(out)
+    model.eval()
+    return total / n_passes
+
+
 def write_probs(path, rows, probs):
     with open(path, "w", newline="", encoding="utf-8-sig") as f:
         w = csv.writer(f)
@@ -104,7 +119,12 @@ def main():
                     help="N > 0: validation mode. Hold out N whole groups per class from the train split, log validation "
                          "loss/accuracy each epoch, and write only metrics.json (no probs_*.csv, no model). "
                          "Calibration and test rows are never used.")
+    ap.add_argument("--mc_dropout", type=int, default=0,
+                    help="N > 0: after training, average N forward passes with dropout ON on the calibration and test rows "
+                         "and also write probs_mc_calibration.csv and probs_mc_test.csv. The normal probs_*.csv are unchanged.")
     args = ap.parse_args()
+    if args.mc_dropout > 0 and args.val_groups > 0:
+        raise SystemExit("--mc_dropout needs the calibration and test rows; it cannot be combined with --val_groups")
 
     set_seed(args.seed)
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -186,6 +206,11 @@ def main():
         }
         write_probs(os.path.join(args.out, f"probs_{split}.csv"), by_split[split], probs)
         print(split, metrics[split])
+        if args.mc_dropout > 0:  # after the normal probs are written, so those files are identical to a run without the flag
+            mc = predict_probs_mc(model, data[split], device, args.batch, args.mc_dropout)
+            write_probs(os.path.join(args.out, f"probs_mc_{split}.csv"), by_split[split], mc)
+            metrics[f"mc_{split}"] = {"passes": args.mc_dropout, "accuracy": float(accuracy_score(y_true, mc.argmax(axis=1)))}
+            print(f"mc {split}", metrics[f"mc_{split}"])
 
     with open(os.path.join(args.out, "metrics.json"), "w") as f:
         json.dump(metrics, f, indent=2)

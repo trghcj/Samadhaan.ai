@@ -13,12 +13,16 @@ Methods
   3 method 1 with risk correction require (wrong_auto + 1) / (n + 1) <= 5% on the fitting half
   4 ensemble                      average the probabilities of all given runs, then the rule of method 1 (one result)
   5 conformal sets, alpha 0.10    conformal.py: set size 1 -> auto; 2 or 3 -> ask; 0 or >= 4 -> human
+  6 MC dropout + threshold        probabilities averaged over dropout-on passes (probs_mc_calibration.csv of each run
+                                  folder, made with train_muril.py --mc_dropout N), then the rule of method 1.
+                                  Added only when every run folder has that file.
 Silent error = auto-routed AND wrong, as a share of ALL evaluated rows. ECE (5 equal-count bins) and accuracy are those
 of the probabilities the method uses (raw, scaled, or averaged). "splits >5%" = share of the splits whose held-out
 silent error exceeded 5%.
 """
 import argparse
 import csv
+import os
 import random
 
 import numpy as np
@@ -29,7 +33,7 @@ from temperature_scaling import apply_temperature, ece_of, fit_temperature
 TARGET = 0.05
 ALPHA = 0.10
 METHODS = ["1 raw softmax + threshold", "2 temperature + threshold", "3 threshold, risk-corrected",
-           "4 ensemble + threshold", "5 conformal sets (alpha 0.10)"]
+           "4 ensemble + threshold", "5 conformal sets (alpha 0.10)", "6 MC dropout + threshold"]
 
 
 def pick_threshold(conf, ok, corrected=False):
@@ -64,8 +68,9 @@ def threshold_method(fit_p, fit_y, ev_p, ev_y, ev_l, corrected):
     return score(ev_p, ev_y, ev_l, ev_p.max(axis=1) >= t)
 
 
-def run_methods(fit_idx, ev_idx, p, y, l, ens):
-    """All five methods for one run on one split. p = this run's probs, ens = averaged probs of all runs."""
+def run_methods(fit_idx, ev_idx, p, y, l, ens, mc=None):
+    """All methods for one run on one split. p = this run's probs, ens = averaged probs of all runs,
+    mc = this run's MC-dropout probs (method 6 is skipped when None)."""
     fp, fy, ep, ey, el = p[fit_idx], y[fit_idx], p[ev_idx], y[ev_idx], l[ev_idx]
     res = [threshold_method(fp, fy, ep, ey, el, False)]
     t_fit = fit_temperature(fp, fy)
@@ -75,11 +80,13 @@ def run_methods(fit_idx, ev_idx, p, y, l, ens):
     qhat = cf.fit_qhat(fp, fy, ALPHA)
     where = cf.route(cf.prediction_sets(ep, qhat).sum(axis=1))
     res.append(score(ep, ey, el, where == "auto", {"ask": (where == "ask").mean(), "human": (where == "human").mean()}))
+    if mc is not None:
+        res.append(threshold_method(mc[fit_idx], fy, mc[ev_idx], ey, el, False))
     return res
 
 
-def read_ids(run_dir):
-    with open(f"{run_dir}/probs_calibration.csv", encoding="utf-8-sig", newline="") as f:
+def read_ids(run_dir, name="probs_calibration.csv"):
+    with open(f"{run_dir}/{name}", encoding="utf-8-sig", newline="") as f:
         return [r["id"] for r in csv.DictReader(f)]
 
 
@@ -91,13 +98,20 @@ def compare(run_dirs, data_path, n_splits=cf.N_SPLITS, seed=0):
         if read_ids(r) != ids:
             raise SystemExit(f"{r} has different calibration rows or order; cannot average probabilities")
     ens = np.mean([r[0] for r in runs], axis=0)
+    mc_name = "probs_mc_calibration.csv"
+    mcs = [None] * len(runs)
+    if all(os.path.exists(os.path.join(r, mc_name)) for r in run_dirs):
+        for r in run_dirs:
+            if read_ids(r, mc_name) != ids:
+                raise SystemExit(f"{r}/{mc_name} has different rows or order than probs_calibration.csv")
+        mcs = [cf.load_run(r, "calibration", data_path, probs_file=mc_name)[0] for r in run_dirs]
     _, y, l, groups = runs[0]
     rng = random.Random(seed)
     splits = [cf.group_halves(groups, rng) for _ in range(n_splits)]
-    acc = {m: {i: [] for i in range(len(runs))} for m in range(5)}
+    acc = {m: {i: [] for i in range(len(runs))} for m in range(5 + (mcs[0] is not None))}
     for fit_idx, ev_idx in splits:
         for i, run in enumerate(runs):
-            for m, res in enumerate(run_methods(fit_idx, ev_idx, run[0], y, l, ens)):
+            for m, res in enumerate(run_methods(fit_idx, ev_idx, run[0], y, l, ens, mcs[i])):
                 acc[m][i].append(res)
     return {m: {i: {k: float(np.mean([r[k] for r in rs])) for k in rs[0]} for i, rs in per.items()} for m, per in acc.items()}
 
@@ -131,7 +145,7 @@ def main():
     print(f"CALIBRATION rows only, {args.splits} by-group half splits, {n} runs: average (spread over runs). "
           f"Method 4 is one result, no spread.\n")
     print(f"{'method':<32}{'accuracy':>16}{'ECE':>16}{'auto share':>18}{'silent error':>18}{'splits >5%':>18}")
-    for m, name in enumerate(METHODS):
+    for m, name in enumerate(METHODS[:len(s)]):
         d = s[m]
         print(f"{name:<32}{cell(d['accuracy'], False, m):>16}{cell(d['ece'], False, m):>16}{cell(d['auto'], True, m):>18}"
               f"{cell(d['silent'], True, m):>18}{cell(d['over5'], True, m):>18}")
@@ -140,7 +154,7 @@ def main():
     langs = sorted(k[5:] for k in s[0] if k.startswith("auto_"))
     print("\nPer language: auto share / silent error (share of that language's own rows)")
     print(f"{'method':<32}" + "".join(f"{lang:>30}" for lang in langs))
-    for m, name in enumerate(METHODS):
+    for m, name in enumerate(METHODS[:len(s)]):
         row = "".join(f"{cell(s[m]['auto_' + g], True, m) + ' / ' + cell(s[m]['silent_' + g], True, m):>30}" for g in langs)
         print(f"{name:<32}{row}")
 

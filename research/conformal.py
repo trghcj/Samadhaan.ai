@@ -30,9 +30,9 @@ N_SPLITS = 200
 EPS = 1e-9  # guards the comparison p >= 1 - qhat against float rounding of the stored probabilities
 
 
-def load_run(run_dir, split, data_path):
+def load_run(run_dir, split, data_path, probs_file=None):
     """probs (n, 7), true labels (n,), languages (n,), group ids (n,) for one split of a run folder."""
-    with open(os.path.join(run_dir, f"probs_{split}.csv"), encoding="utf-8-sig", newline="") as f:
+    with open(os.path.join(run_dir, probs_file or f"probs_{split}.csv"), encoding="utf-8-sig", newline="") as f:
         rows = list(csv.DictReader(f))
     with open(data_path, encoding="utf-8-sig", newline="") as f:
         group_of = {r["id"]: r["group_id"] for r in csv.DictReader(f)}
