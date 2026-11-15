@@ -1,0 +1,34 @@
+{
+  "model_dir": "research/outputs/final_e40/model",
+  "t_high": 0.888406,
+  "qhat": 0.977175,
+  "alpha": 0.1,
+  "target_silent_error": 0.05,
+  "rule": "t_high = lowest threshold with (wrong_auto + 1) / (n + 1) <= target on the calibration rows",
+  "calibrated_on": "all 126 calibration rows of research/outputs/final_e40",
+  "n_calibration": 126,
+  "calibration_wrong_auto": 5,
+  "calibration_auto_share": 0.47619047619047616,
+  "score_map": [
+    {
+      "max_conf": 0.858063,
+      "est_accuracy": 0.6428571428571429
+    },
+    {
+      "max_conf": 0.88185,
+      "est_accuracy": 0.7407407407407407
+    },
+    {
+      "max_conf": 0.890278,
+      "est_accuracy": 0.6666666666666666
+    },
+    {
+      "max_conf": 0.897403,
+      "est_accuracy": 0.8518518518518519
+    },
+    {
+      "max_conf": 0.904264,
+      "est_accuracy": 0.9629629629629629
+    }
+  ]
+}

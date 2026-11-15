@@ -66,7 +66,7 @@ Also present: `research/outputs/final_e40/` (probabilities and metrics of a 40-e
 - `main.py`: endpoints `GET /`, `GET /api/reset-db`, `GET /api/grievances`, `PATCH /api/grievances/{id}/resolve`, `DELETE /api/grievances/{id}`, `PATCH /api/grievances/{id}/clarify`, `POST /api/users/sync`, `GET /api/grievances/me/{uid}`, `POST /api/upload`, `GET /api/status/{task_id}`. Upload saves the audio under a UUID name, runs the pipeline in a background task, keeps task status in an in-memory dict, deletes the audio afterwards unless `KEEP_AUDIO=1`.
 - `ai_pipeline.py`: `process_audio_task` loads and decodes the audio, runs Whisper, classifies (MuRIL if available and `CLASSIFIER` is not `gemini`, else Gemini over REST, else a mock result), computes an SLA deadline from priority (High 1 day, Medium 7, Low 14), saves a `Grievance` row, returns the result dict including an `asr` block. `verify_resolution` sends before/after photos to Gemini and returns `{valid, reason}`.
 - `asr.py`: `load_audio` (decode to 16 kHz mono; raises `AudioError` for empty, unreadable, shorter than 0.5 s, or silent audio), `pick_language` (chooses between Hindi and English from Whisper's language probabilities), `transcribe` (voice-activity filter on by default; returns the raw text plus language, average log-probability, no-speech probability, duration, peak, rms, estimated SNR). It does not modify the text.
-- `muril_classifier.py`: loads the saved model and `thresholds.json`, softmax over 7 labels, maps the top probability to High/Medium/Low, builds a clarifying question (Medium) or top-3 alternatives (Low).
+- `muril_classifier.py`: loads `research/outputs/final_e40/router_config.json` and the 40-epoch model it points to; softmax over 7 labels; confidence >= `t_high` -> High (automatic); otherwise the conformal set (probability >= 1 - `qhat`): size 2 or 3 -> Medium (the citizen picks one of the set, stored in `alternative_departments`), any other size -> Low (human, top 3).
 - `models.py`: `Grievance` (transcript, prediction, confidence, confidence_score, clarifying_question, alternative_departments, reporter fields, location, photo URLs, priority, sla_deadline, ai_verification_status/notes, resolution fields) and `User` (uid, email, display_name, role, department).
 - `init_db.py`, `migrate_db.py`, `debug_gemini.py`, `test_model.py`: one-off maintenance and debugging scripts.
 
@@ -137,7 +137,7 @@ The thresholds were chosen on the 126 calibration rows (target silent error 0.05
 - Applying the current `thresholds.json` to the 60-epoch run routes 100% automatically with 23.0% (calibration) and 20.6% (test) silent errors.
 - Largest automatic share with silent errors at or below 5% on calibration rows: 73.0% for 20 epochs, 51.6% for 60 epochs (`tradeoff_20_vs_60.png`).
 - 40 epochs (`research/outputs/final_e40/metrics.json`, trained on all 252 train rows): accuracy 0.7937 (calibration) and 0.8095 (test), macro F1 0.7844 and 0.8027, final train loss 0.1363; top softmax probability 0.444 to 0.904 (calibration) and 0.552 to 0.904 (test); ECE 0.1073 and 0.1224.
-- The app still loads `research/outputs/muril/model` (the 20-epoch weights) and `research/outputs/muril/thresholds.json`; nothing from the 40-epoch run is wired into the app, and its weights are not in the repository.
+- The app now loads `research/outputs/final_e40/model` and `router_config.json` (made by `research/make_router_config.py` from all 126 calibration rows: `t_high` 0.888406 by the risk-corrected rule, conformal `qhat` 0.977175 at alpha 0.10). `research/outputs/muril/` (20-epoch model, `thresholds.json`) is kept unchanged as a backup and is no longer read. The weights are git-ignored.
 - The weights of the 60-epoch run were not downloaded to this computer; `thresholds.json` still belongs to the 20-epoch model.
 
 **Tests:** 25 tests in `backend/tests` (21 in `test_asr.py`, 4 in `test_api.py`). All 25 passed on the last run in this session. They cover audio validation, language choice, raw-transcript handling, error reporting, routing levels, Whisper on synthetic clips, and the upload endpoint on a temporary SQLite database. They do not cover the frontend.
@@ -155,7 +155,7 @@ The thresholds were chosen on the 126 calibration rows (target silent error 0.05
 - Backend API, database models, Firebase login, citizen portal, citizen dashboard, operator Kanban dashboard, 8-language UI text (all implemented; not covered by automated tests).
 
 **Half-done**
-- Medium confidence: the clarifying question is shown and the answer is appended to the transcript, but the complaint is not classified again and `confidence` is set to `"High"` (`main.py`, `clarify_grievance`).
+- Medium: the citizen is shown the conformal set as buttons plus "None of these". A pick becomes the prediction with confidence `"Confirmed by citizen"`; "none of these" sets confidence `"Low"` for human review. The complaint is not classified again.
 - Confidence methods: only raw softmax exists, and it is badly calibrated (ECE above).
 - Priority/SLA: Gemini returns a priority; MuRIL does not, so MuRIL-routed complaints always get `Medium` and a 7-day SLA.
 - Microphone-settings comparison: the page exists, no recordings from it have been analysed.
@@ -184,7 +184,7 @@ The thresholds were chosen on the 126 calibration rows (target silent error 0.05
 **Backend**
 - `ai_pipeline.py`: if no Gemini key is set and MuRIL is unavailable, the result is a fake `"Water Department (Mock)"`, Medium, 0.5.
 - `muril_classifier.py`: priority is the constant `"Medium"`; the clarifying question is a fixed template ("Is your complaint about X or Y? ...").
-- `main.py` `clarify_grievance`: sets `confidence = "High"` after any reply, without re-checking.
+- `muril_classifier.py` Medium question text is a fixed sentence ("Which department should handle your complaint? ..."); the options come from the conformal set, which can include the class `Unclear`.
 - `verify_resolution`: any Gemini failure (including a missing key) returns `valid: False`, so an after-photo resolution is rejected in that case.
 - `init_db.py`: drops all tables and inserts 4 mock rows, including a prediction `"Public Works"` and `"Water, Electricity"` that are not among the 7 classes.
 - Constants in code: `LABELS` is duplicated in `train_muril.py` and `muril_classifier.py` and must match by hand; `MAX_LEN = 64`; `TARGET_SILENT_ERROR = 0.05`; `N_BINS = 5`; seed 42; SLA of 1/7/14 days; Gemini model name `gemini-flash-latest` (the README says "Gemini 1.5 Flash").
@@ -206,3 +206,8 @@ The thresholds were chosen on the 126 calibration rows (target silent error 0.05
 - `README.md` says Supabase PostgreSQL; the code reads `DATABASE_URL` and tests use SQLite.
 
 **Local-only, not in the repository:** `backend/.env` (keys: `DATABASE_URL`, `WHISPER_MODEL`, `WHISPER_COMPUTE`, `WHISPER_THREADS`, `WHISPER_LANGUAGE`, `KEEP_AUDIO`; there is no `GEMINI_API_KEY` in it, so on this machine the Gemini fallback and Gemini photo verification cannot work), `frontend/.env.local`, the MuRIL weights, `backend/demo.db`, `backend/temp_audio/`.
+
+## Router config and first application to the test rows (2026-11-15)
+
+- `router_config.json` (in `research/outputs/final_e40/`): `t_high` 0.888406 (5 wrong among 47.6% auto-routed calibration rows; (5+1)/(126+1) <= 0.05), `qhat` 0.977175.
+- Applied once to the 126 test rows of `final_e40` (seed 42) through `backend/muril_classifier.build_result`: auto 39.7% (50), asked 43.7% (55), human 16.7% (21), silent error 0.8% (1/126; 2.0% of the auto-routed rows). In 53 of the 55 asked rows the true department was among the options. The test rows of this seed had already been seen earlier (training reports, temperature scaling, the conformal `--final_test` run), so this is not a fresh held-out result.

@@ -19,8 +19,9 @@ const ConfidenceDebug = ({ result }) => {
       <div style={row}><span>Level</span><strong>{result.confidence_level}</strong></div>
       {result.raw_confidence !== undefined && <div style={row}><span>Model's top probability</span><strong>{pct(result.raw_confidence)}</strong></div>}
       {result.t_high !== undefined && (
-        <div style={row}><span>Lines (Low / Medium / High)</span><span>below {pct(result.t_low)} / {pct(result.t_low)}–{pct(result.t_high)} / {pct(result.t_high)}+</span></div>
+        <div style={row}><span>Routed automatically at or above</span><span>{pct(result.t_high)}</span></div>
       )}
+      {result.set_size !== undefined && <div style={row}><span>Departments still possible (conformal set)</span><span>{result.set_size}</span></div>}
       {result.confidence_score !== undefined && <div style={row}><span>Estimated chance this is right</span><strong>{pct(result.confidence_score)}</strong></div>}
       {Array.isArray(result.top3) && (
         <div style={{ marginTop: '0.5rem' }}>
@@ -46,7 +47,7 @@ const CitizenPortal = () => {
   const [reporterPhone, setReporterPhone] = useState('');
   const [location, setLocation] = useState('');
   const [extraDetails, setExtraDetails] = useState('');
-  const [clarifyAnswer, setClarifyAnswer] = useState('');
+  const DEFAULT_OPTIONS = ['Water', 'Electricity', 'Roads', 'Sanitation', 'Drainage', 'Street Lights']; // only for the Gemini fallback, which sends no options
   const [beforePhoto, setBeforePhoto] = useState(null);
 
   const mediaRecorderRef = useRef(null);
@@ -184,6 +185,27 @@ const CitizenPortal = () => {
     }
   };
 
+  // The citizen picks one of the offered departments, or "none_of_these" (then a person reviews the complaint).
+  const submitClarification = async (choice) => {
+    setStatus('processing');
+    setStatusStep('Saving your answer...');
+    try {
+      const res = await fetch(`${API_BASE}/api/grievances/${result.id}/clarify`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ choice })
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      setResult({ ...result, prediction_set: data.prediction || result.prediction_set, confidence_level: data.outcome === 'human_review' ? 'Low' : 'Confirmed by citizen' });
+      setStatus('success');
+    } catch (e) {
+      console.error(e);
+      alert("Failed to submit your answer. Please try again.");
+      setStatus('clarification');
+    }
+  };
+
   return (
     <div>
       {/* Dark Hero Section like TestFit */}
@@ -291,41 +313,17 @@ const CitizenPortal = () => {
                 </div>
                 <ConfidenceDebug result={result} />
 
-                <textarea 
-                  value={clarifyAnswer} 
-                  onChange={e => setClarifyAnswer(e.target.value)} 
-                  rows="3" 
-                  style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-main)', marginBottom: '1rem' }} 
-                  placeholder="Type your answer here..." 
-                />
-                
-                <div style={{ display: 'flex', gap: '1rem' }}>
-                  <button className="btn btn-outline" style={{ flex: 1 }} onClick={() => setStatus('idle')}>{t("Start Over")}</button>
-                  <button 
-                    className="btn btn-primary" 
-                    style={{ flex: 2 }} 
-                    onClick={async () => {
-                      if(!clarifyAnswer.trim()) return alert("Please enter an answer.");
-                      setStatus('processing');
-                      setStatusStep('Saving your answer...');
-                      try {
-                        await fetch(`${API_BASE}/api/grievances/${result.id}/clarify`, {
-                          method: 'PATCH',
-                          headers: {'Content-Type': 'application/json'},
-                          body: JSON.stringify({answer: clarifyAnswer})
-                        });
-                        setStatus('success');
-                        setClarifyAnswer('');
-                      } catch(e) {
-                        console.error(e);
-                        alert("Failed to submit clarification");
-                        setStatus('clarification');
-                      }
-                    }}
-                  >
-                    {t("Submit Answer")}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1rem' }}>
+                  {(result?.options?.length ? result.options : DEFAULT_OPTIONS).map(dept => (
+                    <button key={dept} className="btn btn-primary" style={{ width: '100%', padding: '1rem' }} onClick={() => submitClarification(dept)}>
+                      {t(`${dept} Dept.`, { defaultValue: `${dept} Department` })}
+                    </button>
+                  ))}
+                  <button className="btn btn-outline" style={{ width: '100%', padding: '1rem' }} onClick={() => submitClarification('none_of_these')}>
+                    {t("None of these", { defaultValue: 'None of these' })}
                   </button>
                 </div>
+                <button className="btn btn-outline" style={{ width: '100%' }} onClick={() => setStatus('idle')}>{t("Start Over")}</button>
               </div>
             )}
           </div>

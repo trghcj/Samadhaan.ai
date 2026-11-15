@@ -1,6 +1,7 @@
-from fastapi import FastAPI, File, UploadFile, BackgroundTasks
+from fastapi import FastAPI, File, UploadFile, BackgroundTasks, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from ai_pipeline import process_audio_task
+import muril_classifier
 import shutil
 import os
 import uuid
@@ -111,24 +112,45 @@ def delete_grievance(g_id: int, db: Session = Depends(get_db)):
     db.commit()
     return {"status": "success"}
 
+NONE_OF_THESE = "none_of_these"
+FALLBACK_DEPARTMENTS = [d for d in muril_classifier.LABELS if d != "Unclear"]  # used when no options were stored (Gemini path)
+
+
 class ClarifyRequest(BaseModel):
-    answer: str
+    choice: str  # one of the departments that were offered, or "none_of_these"
+
 
 @app.patch("/api/grievances/{g_id}/clarify")
 def clarify_grievance(g_id: int, req: ClarifyRequest, db: Session = Depends(get_db)):
     grievance = db.query(models.Grievance).filter(models.Grievance.id == g_id).first()
     if not grievance:
-        return {"error": "Not found"}
-    
-    # Append the citizen's clarification to the main transcript so operators can see it
-    grievance.transcript = f"{grievance.transcript}\n\n[Citizen Clarification]: {req.answer}"
-    # Clear the question so it doesn't prompt again
-    grievance.clarifying_question = None 
-    # Bump confidence up since they clarified
-    grievance.confidence = "High"
-    
+        raise HTTPException(status_code=404, detail="Grievance not found")
+    if not grievance.clarifying_question:
+        raise HTTPException(status_code=409, detail="This complaint is not waiting for a clarification")
+
+    offered = [d.strip() for d in (grievance.alternative_departments or "").split(",") if d.strip()] or FALLBACK_DEPARTMENTS
+    choice = req.choice.strip()
+
+    if choice == NONE_OF_THESE:
+        # No offered department fits: a person decides. The model's guess stays on the record, confidence is Low.
+        grievance.transcript = f"{grievance.transcript}\n\n[Citizen Clarification]: none of the offered departments ({', '.join(offered)})"
+        grievance.confidence = "Low"
+        grievance.clarifying_question = None
+        db.commit()
+        return {"status": "success", "outcome": "human_review"}
+
+    if choice not in offered:
+        raise HTTPException(status_code=400, detail=f"Pick one of: {', '.join(offered)}, or {NONE_OF_THESE}")
+
+    # The citizen's pick becomes the prediction; it is marked as confirmed by the citizen, not as model confidence.
+    grievance.transcript = f"{grievance.transcript}\n\n[Citizen Clarification]: chose {choice} (offered: {', '.join(offered)})"
+    grievance.prediction = choice
+    grievance.confidence = "Confirmed by citizen"
+    grievance.clarifying_question = None
     db.commit()
-    return {"status": "success"}
+    return {"status": "success", "outcome": "confirmed", "prediction": choice}
+
+
 class UserSyncRequest(BaseModel):
     uid: str
     email: str

@@ -232,17 +232,6 @@ def test_pipeline_rejects_empty_recording(pipeline, tmp_path):
         ai_pipeline.process_audio_task(str(empty))
 
 
-# ---------- existing routing behaviour is unchanged ----------
-def test_routing_levels_still_follow_thresholds():
-    th = {"t_high": 0.355, "t_low": 0.325, "score_map": [{"max_conf": 1.0, "est_accuracy": 0.9}]}
-    probs = lambda top: np.array([top, 0.2, 0.1, 0.1, 0.1, 0.1, 1 - top - 0.6])
-    assert muril_classifier.build_result(probs(0.40), th)["confidence_level"] == "High"
-    mid = muril_classifier.build_result(probs(0.34), th)
-    assert mid["confidence_level"] == "Medium" and "clarifying_question" in mid
-    low = muril_classifier.build_result(probs(0.30), th)
-    assert low["confidence_level"] == "Low" and low["alternative_departments"]
-
-
 # ---------- real Whisper on the synthetic clips (skipped if the model is not cached) ----------
 @pytest.fixture(scope="module")
 def whisper():
