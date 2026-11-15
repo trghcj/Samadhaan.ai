@@ -184,7 +184,7 @@ The thresholds were chosen on the 126 calibration rows (target silent error 0.05
 **Backend**
 - `ai_pipeline.py`: if no Gemini key is set and MuRIL is unavailable, the result is a fake `"Water Department (Mock)"`, Medium, 0.5.
 - `muril_classifier.py`: priority is the constant `"Medium"`; the clarifying question is a fixed template ("Is your complaint about X or Y? ...").
-- `muril_classifier.py` Medium question text is a fixed sentence ("Which department should handle your complaint? ..."); the options come from the conformal set, which can include the class `Unclear`.
+- `muril_classifier.py` Medium question text is a fixed sentence ("Which department should handle your complaint? ..."); the options come from the conformal set without the class `Unclear`; if fewer than 2 real departments remain the complaint goes to a human.
 - `verify_resolution`: any Gemini failure (including a missing key) returns `valid: False`, so an after-photo resolution is rejected in that case.
 - `init_db.py`: drops all tables and inserts 4 mock rows, including a prediction `"Public Works"` and `"Water, Electricity"` that are not among the 7 classes.
 - Constants in code: `LABELS` is duplicated in `train_muril.py` and `muril_classifier.py` and must match by hand; `MAX_LEN = 64`; `TARGET_SILENT_ERROR = 0.05`; `N_BINS = 5`; seed 42; SLA of 1/7/14 days; Gemini model name `gemini-flash-latest` (the README says "Gemini 1.5 Flash").
@@ -210,4 +210,4 @@ The thresholds were chosen on the 126 calibration rows (target silent error 0.05
 ## Router config and first application to the test rows (2026-11-15)
 
 - `router_config.json` (in `research/outputs/final_e40/`): `t_high` 0.888406 (5 wrong among 47.6% auto-routed calibration rows; (5+1)/(126+1) <= 0.05), `qhat` 0.977175.
-- Applied once to the 126 test rows of `final_e40` (seed 42) through `backend/muril_classifier.build_result`: auto 39.7% (50), asked 43.7% (55), human 16.7% (21), silent error 0.8% (1/126; 2.0% of the auto-routed rows). In 53 of the 55 asked rows the true department was among the options. The test rows of this seed had already been seen earlier (training reports, temperature scaling, the conformal `--final_test` run), so this is not a fresh held-out result.
+- Applied once to the 126 test rows of `final_e40` (seed 42) through `backend/muril_classifier.build_result`: auto 39.7% (50), asked 43.7% (55), human 16.7% (21), silent error 0.8% (1/126; 2.0% of the auto-routed rows). In 53 of the 55 asked rows the true department was among the options. (These figures were computed before `Unclear` was removed from the options; they were not recomputed, to keep the single use of the test rows.) The test rows of this seed had already been seen earlier (training reports, temperature scaling, the conformal `--final_test` run), so this is not a fresh held-out result.

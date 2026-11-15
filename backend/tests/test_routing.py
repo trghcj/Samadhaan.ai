@@ -40,6 +40,20 @@ def test_medium_when_two_or_three_classes_are_in_the_set():
     assert three["confidence_level"] == "Medium" and three["options"] == ["Water", "Electricity", "Roads"]
 
 
+def test_unclear_is_never_offered_and_too_few_real_departments_go_to_a_human():
+    # set = {Unclear, Electricity, Roads}: two real departments remain -> Medium, without Unclear
+    p = np.array([0.0, 0.33, 0.32, 0.0, 0.0, 0.0, 0.35])                       # Unclear .35, Electricity .33, Roads .32
+    r = mc.build_result(p, CFG)
+    assert r["confidence_level"] == "Medium" and r["options"] == ["Electricity", "Roads"] and r["set_size"] == 3
+    assert "Unclear" not in r["alternative_departments"]
+    # set = {Unclear, Water}: only one real department -> human
+    q = np.array([0.40, 0.0, 0.0, 0.0, 0.0, 0.0, 0.60])
+    r2 = mc.build_result(q, CFG)
+    assert (r2["confidence_level"], r2["route"], r2["set_size"]) == ("Low", "human", 2) and "options" not in r2
+    # Unclear on its own in the set -> size 1 -> human
+    assert mc.build_result(np.array([0.0, 0.1, 0.0, 0.0, 0.0, 0.0, 0.8]), CFG)["route"] == "human"
+
+
 def test_low_when_set_size_is_one_zero_or_four_plus_and_gives_top_three():
     one = mc.build_result(probs(0.80), CFG)            # sure-ish, but below t_high and alone in the set -> human
     assert (one["confidence_level"], one["route"], one["set_size"]) == ("Low", "human", 1)

@@ -9,6 +9,7 @@ Routing (frozen settings in router_config.json):
   otherwise build the conformal set (every class with probability >= 1 - qhat):
       set size 2 or 3                          -> Medium : ask the citizen to pick one of the set
       any other size                           -> Low    : send to a human with the top 3
+  "Unclear" is never offered as a choice; if fewer than 2 real departments remain in the set, the complaint goes to a human.
 The previous model and thresholds.json (research/outputs/muril/) are kept as a backup and are no longer read.
 
 Needs the heavy deps in requirements-muril.txt (torch, transformers); they are
@@ -74,10 +75,12 @@ def build_result(probs, config):
     conf = float(probs[order[0]])
     members = conformal_set(probs, config["qhat"])
     top3 = [LABELS[int(i)] for i in order[:3]]
+    # "Unclear" is not a department, so it is never offered to the citizen as a choice.
+    options = [LABELS[i] for i in members if LABELS[i] != "Unclear"]
 
     if conf >= config["t_high"]:
         level, route = "High", "auto"
-    elif len(members) in (2, 3):
+    elif len(members) in (2, 3) and len(options) >= 2:
         level, route = "Medium", "ask"
     else:
         level, route = "Low", "human"
@@ -97,7 +100,6 @@ def build_result(probs, config):
         "set_size": len(members),
     }
     if level == "Medium":
-        options = [LABELS[i] for i in members]
         result["options"] = options  # the citizen picks one of these (or "none of these")
         result["alternative_departments"] = ", ".join(options)  # stored with the grievance; the clarify endpoint checks against it
         result["clarifying_question"] = "Which department should handle your complaint? Please pick one."

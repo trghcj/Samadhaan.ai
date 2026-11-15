@@ -143,7 +143,7 @@ const OperatorDashboard = () => {
         let match = false;
         if (activeFilters.includes('High Priority') && (g.priority === 'High' || g.priority === 'Critical')) match = true;
         if (activeFilters.includes('Fraud Alert') && g.ai_verification_status === 'Rejected') match = true;
-        if (activeFilters.includes('High Confidence') && g.confidence === 'High') match = true;
+        if (activeFilters.includes('High Confidence') && (g.confidence === 'High' || g.confidence === 'Confirmed by citizen')) match = true;
         return match;
       });
     }
