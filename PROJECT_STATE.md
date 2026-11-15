@@ -210,4 +210,12 @@ The thresholds were chosen on the 126 calibration rows (target silent error 0.05
 ## Router config and first application to the test rows (2026-11-15)
 
 - `router_config.json` (in `research/outputs/final_e40/`): `t_high` 0.888406 (5 wrong among 47.6% auto-routed calibration rows; (5+1)/(126+1) <= 0.05), `qhat` 0.977175.
-- Applied once to the 126 test rows of `final_e40` (seed 42) through `backend/muril_classifier.build_result`: auto 39.7% (50), asked 43.7% (55), human 16.7% (21), silent error 0.8% (1/126; 2.0% of the auto-routed rows). In 53 of the 55 asked rows the true department was among the options. (These figures were computed before `Unclear` was removed from the options; they were not recomputed, to keep the single use of the test rows.) The test rows of this seed had already been seen earlier (training reports, temperature scaling, the conformal `--final_test` run), so this is not a fresh held-out result.
+- Applied to the 126 test rows of `final_e40` (seed 42) through `backend/muril_classifier.build_result`, in two versions of the rule. The test rows of this seed had already been seen earlier (training reports, temperature scaling, the conformal `--final_test` run), so neither is a fresh held-out result.
+
+| | auto | asked | human | silent error (share of all rows) | true department among the offered options |
+|---|---|---|---|---|---|
+| Version 1: the options are the whole conformal set (can include `Unclear`) | 39.7% (50) | 43.7% (55) | 16.7% (21) | 0.8% (1/126; 2.0% of auto-routed) | 53 of 55 (96.4%) |
+| Version 2 (current): `Unclear` removed from the options, fewer than 2 real departments -> human | 39.7% (50) | 43.7% (55) | 16.7% (21) | 0.8% (1/126; 2.0% of auto-routed) | 50 of 55 (90.9%) |
+
+- Why the rule changed: for a design reason (`Unclear` is not a department, so it should not be a button), decided before the second application to the test rows and not because of any test result. Auto share and silent error cannot be affected by it: High is decided by `t_high` alone, before the options are built. Here the asked and human shares did not move either, because every asked test row still had at least 2 real departments. The only number that changed is the last column: in 3 of the 55 asked rows the true class was `Unclear`, which the citizen can no longer pick (they would press "None of these", which goes to a human).
+- This second application used the test rows a second time; no further use is planned for this seed.
