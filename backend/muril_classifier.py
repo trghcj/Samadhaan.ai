@@ -17,6 +17,7 @@ imported lazily so the normal backend (e.g. on Render) is unaffected.
 """
 import json
 import os
+import threading
 
 import numpy as np
 
@@ -29,6 +30,7 @@ _REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CONFIG_PATH = os.getenv("MURIL_ROUTER_CONFIG", os.path.join(_REPO, "research", "outputs", "final_e40", "router_config.json"))
 
 _state = {"tokenizer": None, "model": None, "config": None, "failed": False}
+_load_lock = threading.Lock()  # the startup preload and a first request must not load the weights twice
 
 
 def read_config(path=None):
@@ -111,15 +113,23 @@ def build_result(probs, config):
 def _load():
     if _state["model"] is not None:
         return
-    import torch  # noqa: F401  (lazy: heavy)
-    from transformers import AutoModelForSequenceClassification, AutoTokenizer
+    with _load_lock:
+        if _state["model"] is not None:
+            return
+        import torch  # noqa: F401  (lazy: heavy)
+        from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
-    _state["config"] = read_config()
-    path = model_dir(_state["config"])
-    _state["tokenizer"] = AutoTokenizer.from_pretrained(path)
-    model = AutoModelForSequenceClassification.from_pretrained(path)
-    model.eval()
-    _state["model"] = model
+        _state["config"] = read_config()
+        path = model_dir(_state["config"])
+        _state["tokenizer"] = AutoTokenizer.from_pretrained(path)
+        model = AutoModelForSequenceClassification.from_pretrained(path)
+        model.eval()
+        _state["model"] = model
+
+
+def warm_up():
+    """Load the weights and run one prediction now, so the first complaint is not slow. Returns True if ready."""
+    return classify("warm up") is not None
 
 
 def classify(text):

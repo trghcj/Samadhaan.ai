@@ -138,15 +138,52 @@ def test_default_config_does_not_force_a_language(monkeypatch):
     for k in ("WHISPER_LANGUAGE", "WHISPER_LANGUAGES", "WHISPER_VAD", "WHISPER_PROMPT"):
         monkeypatch.delenv(k, raising=False)
     cfg = asr.ASRConfig.from_env()
-    assert cfg.language == "auto" and cfg.languages == ("hi", "en") and cfg.vad and cfg.prompt == ""
+    assert cfg.language == "auto" and cfg.languages == ("hi", "en") and cfg.vad and cfg.prompt == ""  # hint off by default
 
 
-def test_prompt_is_off_by_default_and_used_only_when_set():
+def test_hint_is_off_by_default():
     m = FakeModel({"hi": 0.9})
-    asr.transcribe(m, AUDIO, asr.ASRConfig())
+    asr.transcribe(m, AUDIO, asr.ASRConfig(language="hi"))
+    assert "initial_prompt" not in m.kwargs
+
+
+def test_civic_hint_is_sent_in_the_chosen_language():
+    m = FakeModel({"hi": 0.9})
+    asr.transcribe(m, AUDIO, asr.ASRConfig(language="hi", prompt="civic"))
+    assert "पानी" in m.kwargs["initial_prompt"] and "water" in m.kwargs["initial_prompt"]
+    assert m.kwargs["initial_prompt"].startswith("पानी")          # Hindi words first for Hindi
+    asr.transcribe(m, AUDIO, asr.ASRConfig(language="en", prompt="civic"))
+    assert m.kwargs["initial_prompt"].startswith("water") and "street light" in m.kwargs["initial_prompt"]
+
+
+def test_hint_can_be_switched_off_or_replaced():
+    m = FakeModel({"hi": 0.9})
+    asr.transcribe(m, AUDIO, asr.ASRConfig(prompt=""))
     assert "initial_prompt" not in m.kwargs
     asr.transcribe(m, AUDIO, asr.ASRConfig(prompt="x"))
     assert m.kwargs["initial_prompt"] == "x"
+    for value, expected in ((None, ""), ("", ""), ("off", ""), ("OFF", ""), ("none", ""), ("civic", "civic"), ("ON", "civic"), ("my words", "my words")):
+        assert asr.ASRConfig.prompt_from_env(value) == expected
+
+
+def test_output_that_only_repeats_the_hint_is_transcribed_again_without_it():
+    class Echo(FakeModel):
+        def transcribe(self, audio, **kw):
+            self.calls = getattr(self, "calls", []) + [kw]
+            text = "पानी, बिजली, सड़क" if "initial_prompt" in kw else "मेरी गली में पानी नहीं आ रहा है"
+            return iter([FakeSegment(text)]), None
+
+    m = Echo({"hi": 0.9})
+    r = asr.transcribe(m, AUDIO, asr.ASRConfig(language="hi", prompt="civic"))
+    assert r["text"] == "मेरी गली में पानी नहीं आ रहा है"
+    assert r["prompt_retried_without"] is True and r["prompt_used"] is False
+    assert "initial_prompt" in m.calls[0] and "initial_prompt" not in m.calls[1]
+
+
+def test_a_real_sentence_that_uses_hint_words_is_not_retried():
+    m = FakeModel({"hi": 0.9}, text="मेरी गली में पानी नहीं आ रहा है")
+    r = asr.transcribe(m, AUDIO, asr.ASRConfig(language="hi", prompt="civic"))
+    assert r["prompt_used"] is True and r["prompt_retried_without"] is False
 
 
 def test_raw_transcript_is_returned_unmodified():
@@ -191,6 +228,29 @@ def test_pipeline_keeps_raw_transcript_and_exposes_asr_measurements(pipeline, mo
     assert r["transcript"] == "पानी नहीं आरा है"
     assert r["asr"]["language"] == "hi" and "avg_logprob" in r["asr"]
     assert FakeDB.saved.transcript == "पानी नहीं आरा है"  # stored raw
+
+
+def test_pipeline_uses_the_citizens_language_choice(pipeline, monkeypatch):
+    ai_pipeline, path = pipeline
+    m = FakeModel({"hi": 0.9, "en": 0.05}, text="no water")
+    monkeypatch.setattr(ai_pipeline, "get_whisper_model", lambda cb=None: m)
+    r = ai_pipeline.process_audio_task(path, language="en")
+    assert m.kwargs["language"] == "en" and r["asr"]["language_source"] == "fixed" and r["input"] == "voice"
+    r = ai_pipeline.process_audio_task(path)          # no choice: Whisper picks between Hindi and English
+    assert m.kwargs["language"] == "hi" and r["asr"]["language_source"] == "detected"
+    ai_pipeline.process_audio_task(path, language="auto")
+    assert m.kwargs["language"] == "hi"                # "auto" is not a forced language
+
+
+def test_typed_complaint_goes_through_the_same_routing_without_speech(pipeline, monkeypatch):
+    ai_pipeline, _ = pipeline
+    monkeypatch.setattr(ai_pipeline, "get_whisper_model", lambda cb=None: pytest.fail("speech model must not be used"))
+    r = ai_pipeline.process_text_task("  meri gali mein paani nahi aa raha  ", location="x")
+    assert r["transcript"] == "meri gali mein paani nahi aa raha" and r["input"] == "text" and "asr" not in r
+    assert FakeDB.saved.transcript == "meri gali mein paani nahi aa raha"
+    assert r["confidence_level"] in ("High", "Medium", "Low") and "id" in r
+    with pytest.raises(ValueError):
+        ai_pipeline.process_text_task("   ")
 
 
 def test_pipeline_sends_nothing_heard_to_a_human_not_a_department(pipeline, monkeypatch):

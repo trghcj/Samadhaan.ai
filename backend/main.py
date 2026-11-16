@@ -1,10 +1,12 @@
 from fastapi import FastAPI, File, UploadFile, BackgroundTasks, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from ai_pipeline import process_audio_task
+from ai_pipeline import process_audio_task, process_text_task
 import muril_classifier
 import shutil
 import os
 import uuid
+import threading
+import time
 
 # In-memory dictionary to track background task status
 task_tracker = {}
@@ -37,9 +39,31 @@ def get_db():
     finally:
         db.close()
 
+models_ready = {"speech": False, "classifier": False}
+
+
+def preload_models():
+    """Load Whisper and MuRIL now (and run one dummy prediction), so the first complaint is not slow."""
+    import ai_pipeline
+
+    started = time.time()
+    models_ready["speech"] = ai_pipeline.get_whisper_model() is not None
+    if os.getenv("CLASSIFIER", "muril").lower() == "muril" and muril_classifier.is_available():
+        models_ready["classifier"] = muril_classifier.warm_up()
+    print(f"Models preloaded in {time.time() - started:.1f}s: {models_ready}")
+
+
+@app.on_event("startup")
+async def start_preload():
+    # In a thread, so the server accepts requests at once; a request that arrives while loading simply waits for the
+    # load to finish (both loaders are locked). Set PRELOAD_MODELS=0 to load lazily on first use instead (e.g. on a tiny host).
+    if os.getenv("PRELOAD_MODELS", "1") != "0":
+        threading.Thread(target=preload_models, daemon=True, name="preload-models").start()
+
+
 @app.get("/")
 async def root():
-    return {"message": "Samadhaan.ai Backend is running", "status": "ok"}
+    return {"message": "Samadhaan.ai Backend is running", "status": "ok", "models_ready": models_ready}
 
 @app.get("/api/reset-db")
 def reset_database():
@@ -202,12 +226,15 @@ async def upload_audio(
     reporter_phone: Optional[str] = Form(None),
     location: Optional[str] = Form(None),
     extra_details: Optional[str] = Form(None),
-    before_photo_url: Optional[str] = Form(None)
+    before_photo_url: Optional[str] = Form(None),
+    language: Optional[str] = Form(None)
 ):
     """
     Accepts audio, saves it locally, and queues the ML task in FastAPI BackgroundTasks.
     Returns immediately with a task_id so the frontend doesn't hang.
+    `language` is the citizen's choice ("hi" or "en"); "auto" or nothing lets Whisper choose between Hindi and English.
     """
+    language = check_language(language)
     # Never use the client's filename as a path: two uploads would overwrite each other mid-processing,
     # and a name like "../x" could write outside temp_audio. Keep only a known audio extension.
     ext = os.path.splitext(os.path.basename(file.filename or ""))[1].lower()
@@ -221,13 +248,13 @@ async def upload_audio(
     task_tracker[task_id] = {"status": "processing"}
     
     # Define the background worker function
-    def run_ai_task(tid, fp, c_uid, r_name, r_phone, loc, extra, b_photo):
+    def run_ai_task(tid, fp, c_uid, r_name, r_phone, loc, extra, b_photo, lang):
         def update_progress(msg):
             task_tracker[tid] = {"status": "processing", "step": msg}
             print(f"Task {tid} progress: {msg}")
             
         try:
-            result = process_audio_task(fp, c_uid, r_name, r_phone, loc, extra, progress_callback=update_progress, before_photo_url=b_photo)
+            result = process_audio_task(fp, c_uid, r_name, r_phone, loc, extra, progress_callback=update_progress, before_photo_url=b_photo, language=lang)
             task_tracker[tid] = {
                 "status": "success",
                 "ai_result": result
@@ -246,8 +273,54 @@ async def upload_audio(
                     pass
 
     # Dispatch native FastAPI background task
-    background_tasks.add_task(run_ai_task, task_id, file_path, user_id, reporter_name, reporter_phone, location, extra_details, before_photo_url)
+    background_tasks.add_task(run_ai_task, task_id, file_path, user_id, reporter_name, reporter_phone, location, extra_details, before_photo_url, language)
     
+    return {"task_id": task_id, "status": "processing"}
+
+
+MAX_TEXT_CHARS = 1000
+
+
+def check_language(language):
+    lang = (language or "auto").strip().lower()
+    if lang not in ("hi", "en", "auto"):
+        raise HTTPException(status_code=400, detail="language must be 'hi', 'en' or 'auto'")
+    return None if lang == "auto" else lang
+
+
+@app.post("/api/submit-text")
+async def submit_text(
+    background_tasks: BackgroundTasks,
+    text: str = Form(...),
+    user_id: Optional[str] = Form(None),
+    reporter_name: Optional[str] = Form(None),
+    reporter_phone: Optional[str] = Form(None),
+    location: Optional[str] = Form(None),
+    extra_details: Optional[str] = Form(None),
+    before_photo_url: Optional[str] = Form(None),
+):
+    """A typed complaint: same classifier, routing and database save as a spoken one, without the speech stage.
+    Poll /api/status/{task_id} exactly as for an upload."""
+    text = text.strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="The complaint text is empty. Please type your complaint.")
+    if len(text) > MAX_TEXT_CHARS:
+        raise HTTPException(status_code=400, detail=f"The complaint is too long (limit {MAX_TEXT_CHARS} characters).")
+    task_id = str(uuid.uuid4())
+    task_tracker[task_id] = {"status": "processing"}
+
+    def run_text_task(tid):
+        def update_progress(msg):
+            task_tracker[tid] = {"status": "processing", "step": msg}
+
+        try:
+            result = process_text_task(text, user_id, reporter_name, reporter_phone, location, extra_details,
+                                       progress_callback=update_progress, before_photo_url=before_photo_url)
+            task_tracker[tid] = {"status": "success", "ai_result": result}
+        except Exception as e:
+            task_tracker[tid] = {"status": "error", "error": str(e)}
+
+    background_tasks.add_task(run_text_task, task_id)
     return {"task_id": task_id, "status": "processing"}
 
 @app.get("/api/status/{task_id}")

@@ -219,3 +219,13 @@ The thresholds were chosen on the 126 calibration rows (target silent error 0.05
 
 - Why the rule changed: for a design reason (`Unclear` is not a department, so it should not be a button), decided before the second application to the test rows and not because of any test result. Auto share and silent error cannot be affected by it: High is decided by `t_high` alone, before the options are built. Here the asked and human shares did not move either, because every asked test row still had at least 2 real departments. The only number that changed is the last column: in 3 of the 55 asked rows the true class was `Unclear`, which the citizen can no longer pick (they would press "None of these", which goes to a human).
 - This second application used the test rows a second time; no further use is planned for this seed.
+
+## Speech stage changes for the live demo (2026-11-16)
+
+- The citizen portal has a Hindi / English choice before recording; it is sent as `language` and passed to Whisper (`hi`/`en`; nothing or `auto` keeps the old automatic choice between Hindi and English).
+- Typed complaints: `POST /api/submit-text` (text up to 1000 characters) goes through the same classifier, routing and database save as a recording; the result carries `input: "text"` and no `asr` block.
+- The result and clarification screens always show the transcript ("What we heard" / "What you wrote").
+- Models load at server start in a background thread (`PRELOAD_MODELS=0` turns it off; `GET /` shows `models_ready`); both loaders are locked so a request during loading waits instead of loading twice.
+- Initial prompt: implemented (`WHISPER_PROMPT=civic`, civic words in Hindi and English, in the chosen language) but OFF by default. Measured on the 7 real recordings in `backend/temp_audio` with `small`: with the hint, 07e09451 took 21.7 s and 4e622ab6 20.0 s (2.5 s and 2.6 s without), and `recording.webm` took 18.3 s because the output was only the hint's words and was transcribed again; forcing temperature 0 with the hint gave 131-210 characters of repetitive text for 4.7 s of speech. On the three clean synthetic clips the hint changed nothing useful. If the output consists only of the hint's words, it is transcribed again without it.
+- Benchmark of small / medium / large-v3-turbo: see `README_DEMO.md`. `backend/benchmark_whisper.py` does the timing; it lives in `backend/`, nothing in `research/` was changed. `muril_classifier.py` gained a load lock and `warm_up()`; the routing logic and `router_config.json` are unchanged.
+- Not measured: Hindi word error rate of the three sizes on real speech (there are no reference transcripts for the real recordings).

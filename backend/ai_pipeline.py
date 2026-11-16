@@ -1,6 +1,8 @@
+import dataclasses
 import os
 import json
 import base64
+import threading
 from datetime import datetime, timedelta
 from faster_whisper import WhisperModel
 from dotenv import load_dotenv
@@ -20,16 +22,21 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 
 # Initialize Whisper model lazily to prevent blocking Uvicorn startup
 whisper_model = None
+_whisper_lock = threading.Lock()  # the startup preload and a first request must not load the model twice
 
 def get_whisper_model(progress_callback=None):
     global whisper_model
-    if whisper_model is None:
+    if whisper_model is not None:
+        return whisper_model
+    with _whisper_lock:
+        if whisper_model is not None:
+            return whisper_model
         if progress_callback: progress_callback("Downloading and loading audio model (first run only, takes ~30s)...")
         print("Loading Whisper Model (this may take a moment on first run)...")
         try:
             # Defaults ('tiny', 'default', 1 thread) suit a small free server like Render. On a laptop set in backend/.env:
             #   WHISPER_MODEL=small  WHISPER_COMPUTE=int8  WHISPER_THREADS=4
-            # Language and VAD settings live in asr.ASRConfig (WHISPER_LANGUAGE, WHISPER_LANGUAGES, WHISPER_VAD, WHISPER_PROMPT).
+            # Language, VAD and hint settings live in asr.ASRConfig (WHISPER_LANGUAGE, WHISPER_LANGUAGES, WHISPER_VAD, WHISPER_PROMPT).
             size = os.getenv("WHISPER_MODEL", "tiny")
             print(f"Loading Whisper model '{size}'...")
             whisper_model = WhisperModel(
@@ -43,7 +50,8 @@ def get_whisper_model(progress_callback=None):
             print(f"Error loading whisper: {e}")
     return whisper_model
 
-def process_audio_task(audio_file_path: str, user_id: str = None, reporter_name: str = None, reporter_phone: str = None, location: str = None, extra_details: str = None, progress_callback=None, before_photo_url: str = None):
+
+def process_audio_task(audio_file_path: str, user_id: str = None, reporter_name: str = None, reporter_phone: str = None, location: str = None, extra_details: str = None, progress_callback=None, before_photo_url: str = None, language: str = None):
     # 1. Transcription Phase (raw transcript: asr.py never corrects or rewrites what Whisper heard)
     audio = asr.load_audio(audio_file_path)  # raises asr.AudioError (empty / corrupted / too short / silent)
     model = get_whisper_model(progress_callback)
@@ -51,7 +59,10 @@ def process_audio_task(audio_file_path: str, user_id: str = None, reporter_name:
         raise RuntimeError("The speech recognition model could not be loaded. Check the server log.")
     if progress_callback: progress_callback("Transcribing audio...")
     try:
-        asr_info = asr.transcribe(model, audio)
+        cfg = asr.ASRConfig.from_env()
+        if language in ("hi", "en"):  # the citizen's own choice beats guessing the language from a short clip
+            cfg = dataclasses.replace(cfg, language=language)
+        asr_info = asr.transcribe(model, audio, cfg)
     except Exception as e:
         raise RuntimeError(f"Speech recognition failed: {e}") from e
     transcript = asr_info.pop("text")
@@ -62,6 +73,22 @@ def process_audio_task(audio_file_path: str, user_id: str = None, reporter_name:
     if not transcript:
         transcript = "[Inaudible / Empty Audio]"
 
+    return route_and_save(transcript, asr_info, user_id, reporter_name, reporter_phone, location, extra_details,
+                          progress_callback, before_photo_url)
+
+
+def process_text_task(text: str, user_id: str = None, reporter_name: str = None, reporter_phone: str = None, location: str = None, extra_details: str = None, progress_callback=None, before_photo_url: str = None):
+    """A typed complaint: the same classifier, routing and database save as a spoken one, without the speech stage."""
+    text = (text or "").strip()
+    if not text:
+        raise ValueError("The complaint text is empty.")
+    return route_and_save(text, None, user_id, reporter_name, reporter_phone, location, extra_details,
+                          progress_callback, before_photo_url)
+
+
+def route_and_save(transcript, asr_info, user_id, reporter_name, reporter_phone, location, extra_details,
+                   progress_callback, before_photo_url):
+    """Classify and route a transcript (spoken or typed), then save the grievance."""
     result_dict = None
 
     # 2. Classification & Uncertainty Phase
@@ -163,7 +190,9 @@ def process_audio_task(audio_file_path: str, user_id: str = None, reporter_name:
             }
             
     result_dict["transcript"] = transcript
-    result_dict["asr"] = asr_info  # speech-stage measurements, kept apart from the classifier fields
+    result_dict["input"] = "voice" if asr_info is not None else "text"
+    if asr_info is not None:
+        result_dict["asr"] = asr_info  # speech-stage measurements, kept apart from the classifier fields
 
     # Save the result to PostgreSQL
     if progress_callback: progress_callback("Saving grievance to database...")

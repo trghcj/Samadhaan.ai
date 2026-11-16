@@ -34,6 +34,23 @@ const ConfidenceDebug = ({ result }) => {
   );
 };
 
+// What the system understood (speech) or what the citizen typed. Always shown, so a wrong transcript is visible.
+const TranscriptBox = ({ result }) => {
+  const { t } = useTranslation();
+  if (!result || !result.transcript) return null;
+  const heard = result.transcript !== '[Inaudible / Empty Audio]';
+  return (
+    <div style={{ width: '100%', marginTop: '1.5rem', padding: '1rem', borderRadius: '8px', background: '#F1F5F9', textAlign: 'left' }}>
+      <div style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: '#64748B', marginBottom: '0.35rem' }}>
+        {result.input === 'text' ? t('What you wrote', { defaultValue: 'What you wrote' }) : t('What we heard', { defaultValue: 'What we heard' })}
+      </div>
+      <div dir="auto" style={{ fontSize: '1.05rem', color: '#0F172A', whiteSpace: 'pre-wrap' }}>
+        {heard ? result.transcript : t('We could not hear any speech in the recording.', { defaultValue: 'We could not hear any speech in the recording.' })}
+      </div>
+    </div>
+  );
+};
+
 const CitizenPortal = () => {
   const { t } = useTranslation();
   const [isRecording, setIsRecording] = useState(false);
@@ -49,6 +66,9 @@ const CitizenPortal = () => {
   const [extraDetails, setExtraDetails] = useState('');
   const DEFAULT_OPTIONS = ['Water', 'Electricity', 'Roads', 'Sanitation', 'Drainage', 'Street Lights']; // only for the Gemini fallback, which sends no options
   const [beforePhoto, setBeforePhoto] = useState(null);
+  const [language, setLanguage] = useState('hi'); // the language the citizen will speak; sent to Whisper so it need not guess
+  const [inputMode, setInputMode] = useState('voice'); // 'voice' or 'text'
+  const [typedText, setTypedText] = useState('');
 
   const mediaRecorderRef = useRef(null);
   const chunksRef = useRef([]);
@@ -56,7 +76,26 @@ const CitizenPortal = () => {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
 
+  const resetToStart = () => {
+    setInputMode('voice');
+    setTypedText('');
+    setStatus('idle');
+  };
+
+  const startTyping = () => {
+    if (!currentUser) {
+      const wantToLogin = window.confirm("Log in to track your grievance status on a personalized dashboard!\n\nClick OK to log in, or Cancel to report anonymously.");
+      if (wantToLogin) {
+        navigate('/auth');
+        return;
+      }
+    }
+    setInputMode('text');
+    setStatus('form');
+  };
+
   const startRecording = async () => {
+    setInputMode('voice');
     if (!currentUser) {
       const wantToLogin = window.confirm("Log in to track your grievance status on a personalized dashboard!\n\nClick OK to log in, or Cancel to report anonymously.");
       if (wantToLogin) {
@@ -98,7 +137,12 @@ const CitizenPortal = () => {
     setStatus('processing');
     
     const formData = new FormData();
-    formData.append('file', audioData, 'recording.webm');
+    if (inputMode === 'text') {
+      formData.append('text', typedText);
+    } else {
+      formData.append('file', audioData, 'recording.webm');
+      formData.append('language', language);
+    }
     
     if (currentUser) {
       formData.append('user_id', currentUser.uid);
@@ -131,13 +175,18 @@ const CitizenPortal = () => {
     }
     
     try {
-      const response = await fetch(`${API_BASE}/api/upload`, {
+      const response = await fetch(`${API_BASE}${inputMode === 'text' ? '/api/submit-text' : '/api/upload'}`, {
         method: 'POST',
         body: formData,
       });
       
       const data = await response.json();
-      
+      if (!response.ok) {
+        alert(data.detail || 'The server could not accept this complaint.');
+        setStatus('form');
+        return;
+      }
+
       if (data.task_id) {
         // Start polling the status endpoint every 2 seconds
         const pollInterval = setInterval(async () => {
@@ -157,7 +206,7 @@ const CitizenPortal = () => {
               clearInterval(pollInterval);
               console.error("Backend Task Error:", statusData.error);
               alert("An error occurred during AI processing: " + (statusData.error || "Unknown Error. Please try again."));
-              setStatus('idle');
+              setStatus(inputMode === 'text' ? 'form' : 'idle');
             } else if (statusData.status === 'processing') {
               // Update the UI with the specific step from the backend
               if (statusData.step) {
@@ -173,7 +222,7 @@ const CitizenPortal = () => {
       // Do not fake a result: a failed request must be visible, not shown as a routed complaint.
       console.error("Could not reach the backend:", err);
       alert(`Could not reach the server at ${API_BASE}. Is the backend running?`);
-      setStatus('idle');
+      setStatus(inputMode === 'text' ? 'form' : 'idle');
     }
   };
 
@@ -233,10 +282,31 @@ const CitizenPortal = () => {
             <p style={{ fontWeight: 500, fontSize: '1.25rem' }}>
               {isRecording ? "Recording... Tap to stop" : "Tap to start recording"}
             </p>
+            {!isRecording && (
+              <>
+                <div role="group" aria-label="Language of your complaint" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>{t('I will speak in', { defaultValue: 'I will speak in' })}</span>
+                  {[['hi', 'हिन्दी'], ['en', 'English']].map(([code, label]) => (
+                    <button key={code} type="button" className={`btn ${language === code ? 'btn-primary' : 'btn-outline'}`}
+                      aria-pressed={language === code} style={{ padding: '0.4rem 1.1rem' }} onClick={() => setLanguage(code)}>{label}</button>
+                  ))}
+                </div>
+                <button type="button" className="btn btn-outline" onClick={startTyping}>{t('Or type your complaint instead', { defaultValue: 'Or type your complaint instead' })}</button>
+              </>
+            )}
           </>
         ) : status === 'form' ? (
           <form onSubmit={submitGrievanceForm} style={{ width: '100%', textAlign: 'left' }}>
             <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', textAlign: 'center', fontWeight: 700 }}>Just a few more details...</h2>
+
+            {inputMode === 'text' && (
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.25rem', color: 'var(--text-muted)' }}>{t('Your complaint *', { defaultValue: 'Your complaint *' })}</label>
+                <textarea value={typedText} onChange={e => setTypedText(e.target.value)} required rows="4" maxLength={1000} dir="auto"
+                  style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-main)' }}
+                  placeholder="e.g. meri gali mein paani nahi aa raha hai / no water in my street" />
+              </div>
+            )}
             
             {!currentUser && (
               <>
@@ -267,7 +337,7 @@ const CitizenPortal = () => {
             </div>
 
             <div style={{ display: 'flex', gap: '1rem' }}>
-              <button type="button" className="btn btn-outline" style={{ flex: 1, padding: '1rem' }} onClick={() => setStatus('idle')}>{t("Cancel")}</button>
+              <button type="button" className="btn btn-outline" style={{ flex: 1, padding: '1rem' }} onClick={resetToStart}>{t("Cancel")}</button>
               <button type="submit" className="btn btn-primary" style={{ flex: 2, padding: '1rem' }}>{t("Submit Grievance")}</button>
             </div>
           </form>
@@ -292,8 +362,9 @@ const CitizenPortal = () => {
                 <strong>{result?.prediction_set ? t(`${result.prediction_set} Dept.`, { defaultValue: `${result.prediction_set} Department` }) : 'relevant department'}</strong>.
               </p>
             )}
+            <TranscriptBox result={result} />
             <ConfidenceDebug result={result} />
-            <button className="btn btn-outline" style={{ marginTop: '2rem' }} onClick={() => setStatus('idle')}>{t("Report Another")}</button>
+            <button className="btn btn-outline" style={{ marginTop: '2rem' }} onClick={resetToStart}>{t("Report Another")}</button>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -311,7 +382,8 @@ const CitizenPortal = () => {
                   <strong>{t("Question from AI:")}</strong><br/>
                   {result?.clarifying_question || "We detected multiple possible departments. Could you provide a bit more detail to help us route this correctly?"}
                 </div>
-                <ConfidenceDebug result={result} />
+                <TranscriptBox result={result} />
+            <ConfidenceDebug result={result} />
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1rem' }}>
                   {(result?.options?.length ? result.options : DEFAULT_OPTIONS).map(dept => (
@@ -323,7 +395,7 @@ const CitizenPortal = () => {
                     {t("None of these", { defaultValue: 'None of these' })}
                   </button>
                 </div>
-                <button className="btn btn-outline" style={{ width: '100%' }} onClick={() => setStatus('idle')}>{t("Start Over")}</button>
+                <button className="btn btn-outline" style={{ width: '100%' }} onClick={resetToStart}>{t("Start Over")}</button>
               </div>
             )}
           </div>

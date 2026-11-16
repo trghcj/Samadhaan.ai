@@ -55,8 +55,21 @@ To go back to the deployed backend: open `https://samadhaan-ai.vercel.app/?api=r
 | `WHISPER_LANGUAGE` | `auto` | `auto` chooses between Hindi and English from Whisper's own probabilities. `hi` or `en` forces one language; forcing `hi` turns English speech into nonsense. |
 | `WHISPER_LANGUAGES` | `hi,en` | The languages `auto` may choose from. |
 | `WHISPER_VAD` | `1` | Skips non-speech so noise is not decoded. Set `0` to compare. |
-| `WHISPER_PROMPT` | empty | Optional vocabulary hint. Off by default: on hard audio Whisper repeats the hint words instead of what was said. |
+| `WHISPER_PROMPT` | off | `civic` sends a hint of common civic words (Hindi and English) in the chosen language; other text is used as the hint. Off by default: on this project's noisy laptop recordings the hint made Whisper 8-10 times slower on 3 of 7 clips and produced repetitive text (measured with `backend/benchmark_whisper.py`). If the output is only the hint's own words, it is transcribed again without the hint. |
+| `PRELOAD_MODELS` | `1` | Loads Whisper and MuRIL when the server starts (in a thread, so the server answers at once; `GET /` shows `models_ready`). `0` loads on first use, for tiny hosts. |
 | `KEEP_AUDIO` | unset | `1` keeps uploaded recordings in `backend/temp_audio` (one file per upload) for evaluation. Otherwise they are deleted after processing. |
+
+## Whisper size on this laptop (CPU, int8, 4 threads; 11 clips, hint off)
+
+Measured with `cd backend && python benchmark_whisper.py --clips tests/fixtures temp_audio` (3 synthetic clips and 8 real recordings, 1-10 s long). Seconds are per clip, after one warm-up run.
+
+| size | disk | load | mean | slowest | under 8 s |
+|---|---|---|---|---|---|
+| small | 0.49 GB | 1.5 s | 2.5 s | 10.7 s (one noisy 10 s clip) | no |
+| medium | 1.53 GB | 2.8 s | 5.0 s | 6.4 s | yes |
+| large-v3-turbo | 1.62 GB | 3.3 s | 6.2 s | 7.3 s | yes |
+
+On the three clips with known text, `small` wrote "आरा है" where `medium` and `large-v3-turbo` wrote "आ रहा है". Time per clip is almost constant (Whisper always works on a 30 s window), so a longer recording costs little more. Turbo is the largest size under 8 s, with a thin margin (0.7 s): another heavy program running at the same time can push it over. Set `WHISPER_MODEL=large-v3-turbo` in `backend/.env` to use it (first start downloads 1.6 GB; check free disk first).
 
 Tests: `cd backend && python -m pytest -q` (add `-m "not model"` to skip the Whisper tests).
 Evaluation on real recordings: see the header of `research/eval_asr.py`.

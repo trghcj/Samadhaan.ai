@@ -6,6 +6,7 @@ The same functions are used by the app (ai_pipeline.py) and by research/eval_asr
 evaluation measures the real code path.
 """
 import os
+import re
 from dataclasses import dataclass
 
 import numpy as np
@@ -13,6 +14,16 @@ from faster_whisper.audio import decode_audio
 
 SAMPLE_RATE = 16000
 MIN_SECONDS = 0.5
+
+
+# Vocabulary hint for Whisper: common civic words in Hindi and English. It is OFF by default (WHISPER_PROMPT=civic turns it
+# on): on this project's real, noisy laptop-microphone recordings it made Whisper 8-10x slower on 3 of 7 clips and, without
+# the temperature fallback, produced long repetitive output; on clean synthetic speech it changed nothing useful.
+# If the output is nothing but the hint, transcribe() asks again without it (see _echoes_hint).
+CIVIC_PROMPTS = {
+    "hi": "पानी, बिजली, सड़क, कचरा, नाली, स्ट्रीट लाइट, water, electricity, road, garbage, drain, street light.",
+    "en": "water, electricity, road, garbage, drain, street light, पानी, बिजली, सड़क, कचरा, नाली.",
+}
 
 
 class AudioError(ValueError):
@@ -24,7 +35,7 @@ class ASRConfig:
     language: str = "auto"       # "hi" / "en" force one language; "auto" picks between `languages` only
     languages: tuple = ("hi", "en")
     vad: bool = True             # drop non-speech so Whisper does not decode noise (and hallucinate on it)
-    prompt: str = ""             # optional vocabulary hint; off by default (it can leak into the output)
+    prompt: str = ""             # "" = no hint (default); "civic" = the civic-words hint above for the chosen language; other text = custom hint
     beam_size: int = 5
 
     @classmethod
@@ -33,8 +44,20 @@ class ASRConfig:
             language=(os.getenv("WHISPER_LANGUAGE") or "auto").strip().lower(),
             languages=tuple(x.strip() for x in os.getenv("WHISPER_LANGUAGES", "hi,en").split(",") if x.strip()),
             vad=os.getenv("WHISPER_VAD", "1") != "0",
-            prompt=os.getenv("WHISPER_PROMPT", ""),
+            prompt=cls.prompt_from_env(os.getenv("WHISPER_PROMPT")),
         )
+
+    @staticmethod
+    def prompt_from_env(value):
+        value = (value or "").strip()
+        if value.lower() in ("", "off", "none", "0"):
+            return ""
+        return "civic" if value.lower() in ("civic", "on", "1") else value
+
+    def prompt_for(self, language):
+        if self.prompt == "civic":
+            return CIVIC_PROMPTS.get(language, CIVIC_PROMPTS["hi"])
+        return self.prompt
 
 
 def audio_stats(x):
@@ -75,6 +98,13 @@ def pick_language(model, audio, cfg):
     return best, float(probs.get(best, 0.0))
 
 
+def _echoes_hint(text, hint):
+    """True when the transcript is made only of words from the hint: Whisper repeated the hint instead of the speech."""
+    words = re.findall(r"\w+", text.lower())
+    hint_words = set(re.findall(r"\w+", hint.lower()))
+    return bool(words) and all(w in hint_words for w in words)
+
+
 def transcribe(model, audio, cfg=None):
     """audio: float32 array from load_audio(). Returns the raw transcript and measurements."""
     cfg = cfg or ASRConfig.from_env()
@@ -84,12 +114,24 @@ def transcribe(model, audio, cfg=None):
     else:
         language, lang_prob, source = cfg.language, None, "fixed"
     kwargs = {"beam_size": cfg.beam_size, "language": language, "task": "transcribe", "vad_filter": cfg.vad}
-    if cfg.prompt:
-        kwargs["initial_prompt"] = cfg.prompt
+    hint = cfg.prompt_for(language)
+    retried = False
+    if hint:
+        kwargs["initial_prompt"] = hint
     segments, _ = model.transcribe(audio, **kwargs)
     segments = list(segments)
+    text = " ".join(s.text.strip() for s in segments).strip()
+    if hint and _echoes_hint(text, hint):
+        # The output is only the hint's own words: do not trust it. Transcribe again without the hint.
+        kwargs.pop("initial_prompt")
+        segments, _ = model.transcribe(audio, **kwargs)
+        segments = list(segments)
+        text = " ".join(s.text.strip() for s in segments).strip()
+        retried = True
     return {
-        "text": " ".join(s.text.strip() for s in segments).strip(),
+        "text": text,
+        "prompt_used": bool(hint) and not retried,
+        "prompt_retried_without": retried,
         "language": language,
         "language_probability": lang_prob,
         "language_source": source,
