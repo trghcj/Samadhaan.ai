@@ -8,12 +8,23 @@ import { API_BASE } from '../api';
 // TEMPORARY (mentor demo): shows what the classifier saw. Remove this component and its
 // two usages below once the review is over.
 const ConfidenceDebug = ({ result }) => {
+  const [open, setOpen] = useState(false); // hidden until the presenter asks for it
   if (!result || (result.raw_confidence === undefined && result.confidence_score === undefined)) return null;
-  const pct = (x) => `${(x * 100).toFixed(1)}%`;
+  const pct = (x) => `${(x * 100).toFixed(2)}%`;
   const row = { display: 'flex', justifyContent: 'space-between', gap: '1rem', padding: '0.15rem 0' };
+  if (!open) {
+    return (
+      <button type="button" className="btn btn-outline" style={{ marginTop: '1.5rem', padding: '0.35rem 1rem', fontSize: '0.85rem' }} onClick={() => setOpen(true)}>
+        Show details
+      </button>
+    );
+  }
   return (
     <div style={{ width: '100%', marginTop: '1.5rem', padding: '1rem', border: '1px dashed #94A3B8', borderRadius: '8px', background: '#F8FAFC', fontSize: '0.85rem', textAlign: 'left', color: '#334155' }}>
-      <div style={{ fontWeight: 700, marginBottom: '0.5rem' }}>Confidence details (temporary, for review)</div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+        <div style={{ fontWeight: 700 }}>Confidence details (temporary, for review)</div>
+        <button type="button" className="btn btn-outline" style={{ padding: '0.2rem 0.8rem', fontSize: '0.8rem' }} onClick={() => setOpen(false)}>Hide details</button>
+      </div>
       {result.transcript && <div style={row}><span>Heard</span><span style={{ textAlign: 'right' }}>{result.transcript}</span></div>}
       <div style={row}><span>Classifier</span><span>{result.classifier || 'gemini'}</span></div>
       <div style={row}><span>Level</span><strong>{result.confidence_level}</strong></div>
@@ -22,7 +33,6 @@ const ConfidenceDebug = ({ result }) => {
         <div style={row}><span>Routed automatically at or above</span><span>{pct(result.t_high)}</span></div>
       )}
       {result.set_size !== undefined && <div style={row}><span>Departments still possible (conformal set)</span><span>{result.set_size}</span></div>}
-      {result.confidence_score !== undefined && <div style={row}><span>Estimated chance this is right</span><strong>{pct(result.confidence_score)}</strong></div>}
       {Array.isArray(result.top3) && (
         <div style={{ marginTop: '0.5rem' }}>
           {result.top3.map((d, i) => (

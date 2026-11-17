@@ -1,0 +1,21 @@
+﻿id,category,status,error,transcript,predicted,level,route,options,raw_confidence,seconds,grievance_id,transcript_ok,route_ok
+clear_en_water,clear,success,,There is no water supply in our street since morning.,Water,Medium,ask,"Water, Drainage",0.856,9.35,27,True,True
+clear_en_electricity,clear,success,,the electricity has been cut in our area for three hours,Electricity,High,auto,,0.898,9.41,28,True,True
+clear_en_road,clear,success,,There is a big pothole in the middle of the main road.,Roads,Low,human,,0.456,8.91,29,True,False
+clear_en_sanitation,clear,success,,the garbage is not collected from our colony for a week,Sanitation,High,auto,,0.897,9.18,30,True,True
+clear_hi_water,clear,success,,मेरी गली में तीन दिन से पानी नहीं आ रहा है।,Water,Medium,ask,"Water, Drainage",0.623,9.44,31,True,True
+clear_hi_electricity,clear,success,,हमारे इलाके में कल रात से बिजली नहीं आ रही है,Electricity,High,auto,,0.898,9.9,32,True,True
+clear_hi_road,clear,success,,मुख्य सडक पर बहुत बड़ा गधा हो गया है,Roads,High,auto,,0.889,9.62,33,False,True
+clear_hi_sanitation,clear,success,,हमारी कॉलोनी में एक हफ़ते से कचरा नहीं उठाया गया है,Sanitation,High,auto,,0.898,10.16,34,True,True
+clear_hinglish_water,clear,success,,हमारी गली में सुबह से पानी नहीं आ रहा है,Drainage,Medium,ask,"Drainage, Water, Sanitation",0.839,11.23,35,True,True
+clear_hinglish_electricity,clear,success,,हमारे मोहले में कल रात से बिजली नहीं है,Electricity,High,auto,,0.898,11.74,36,True,True
+clear_hinglish_road,clear,success,,सडक पर बहुत बड़ा गढधा हो गया है,Roads,High,auto,,0.889,11.97,37,False,True
+clear_hinglish_sanitation,clear,success,,हमारी कॉलोनी में कूड़ा नहीं उठाया जा रहा है,Sanitation,High,auto,,0.898,12.12,38,True,True
+between_en_dirty_water_road,between,success,,dirty water is flowing on the road near my house,Drainage,Medium,ask,"Drainage, Water, Sanitation",0.848,21.13,39,True,True
+between_en_garbage_drain,between,success,,Garbage is blocking the drain in our lane.,Drainage,Medium,ask,"Drainage, Water, Sanitation",0.848,11.48,41,True,True
+between_hi_pole_on_road,between,success,,सडक पर बिजली का खंभा गिरा हुआ है और तार लटक रही है,Electricity,High,auto,,0.898,11.7,42,True,False
+between_hinglish_drain_water_road,between,success,,नाली का गंधा पानी सडक पर भर गया है,Drainage,Medium,ask,"Drainage, Water, Sanitation",0.846,11.49,43,True,True
+vague_en_solve,vague,success,,Please solve the problem in my area.,Unclear,High,auto,,0.904,10.93,44,True,False
+vague_en_help,vague,success,,Something is wrong here. Please help us.,Unclear,High,auto,,0.904,10.97,45,True,False
+vague_hi_samasya,vague,success,,क्रिपेया हमारे इलाके की समस्या का समाधान कीजिए.,Unclear,High,auto,,0.903,21.7,46,True,False
+vague_hinglish_problem,vague,success,,मेरी प्राब्लम का सॉल्यूशन कीजिए,Unclear,High,auto,,0.903,12.58,48,False,False

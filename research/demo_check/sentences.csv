@@ -1,0 +1,21 @@
+id,category,language_spoken,portal_language,sentence,expected_department,acceptable_departments,key_words
+clear_en_water,clear,en,en,There is no water supply in our street since morning.,Water,Water,water;supply|no
+clear_en_electricity,clear,en,en,The electricity has been cut in our area for three hours.,Electricity,Electricity,electricity|power;cut|hours
+clear_en_road,clear,en,en,There is a big pothole in the middle of the main road.,Roads,Roads,pothole|hole;road
+clear_en_sanitation,clear,en,en,The garbage is not collected from our colony for a week.,Sanitation,Sanitation,garbage;collect
+clear_hi_water,clear,hi,hi,मेरी गली में तीन दिन से पानी नहीं आ रहा है।,Water,Water,पानी;नहीं
+clear_hi_electricity,clear,hi,hi,हमारे इलाके में कल रात से बिजली नहीं आ रही है।,Electricity,Electricity,बिजली;नहीं
+clear_hi_road,clear,hi,hi,मुख्य सड़क पर बहुत बड़ा गड्ढा हो गया है।,Roads,Roads,सड़क|सडक;गड्ढा|गड्डा|गढ्ढा|गड़्ढा
+clear_hi_sanitation,clear,hi,hi,हमारी कॉलोनी में एक हफ्ते से कचरा नहीं उठाया गया है।,Sanitation,Sanitation,कचरा|कूड़ा|कूडा;नहीं
+clear_hinglish_water,clear,hinglish,hi,Humari gali mein subah se paani nahi aa raha hai.,Water,Water,paani|pani|पानी;nahi|नहीं
+clear_hinglish_electricity,clear,hinglish,hi,Hamare mohalle mein kal raat se bijli nahi hai.,Electricity,Electricity,bijli|बिजली;nahi|नहीं
+clear_hinglish_road,clear,hinglish,hi,Sadak par bahut bada gaddha ho gaya hai.,Roads,Roads,sadak|सड़क|सडक;gaddha|gadda|गड्ढा|गड्डा|गढ्ढा
+clear_hinglish_sanitation,clear,hinglish,hi,Hamari colony mein kooda nahi uthaya ja raha hai.,Sanitation,Sanitation,kooda|kuda|kachra|कूड़ा|कूडा|कचरा;nahi|नहीं
+between_en_dirty_water_road,between,en,en,Dirty water is flowing on the road near my house.,Drainage,Drainage|Water|Roads,water;road
+between_en_garbage_drain,between,en,en,Garbage is blocking the drain in our lane.,Sanitation,Sanitation|Drainage,garbage;drain
+between_hi_pole_on_road,between,hi,hi,सड़क पर बिजली का खंभा गिरा हुआ है और तार लटक रहे हैं।,Electricity,Electricity|Roads,सड़क|सडक;बिजली|खंभा|खम्भा
+between_hinglish_drain_water_road,between,hinglish,hi,Nali ka gandha paani sadak par bhar gaya hai.,Drainage,Drainage|Roads|Water|Sanitation,nali|नाली;sadak|सड़क|सडक
+vague_en_solve,vague,en,en,Please solve the problem in my area.,Unclear,Unclear,problem;area
+vague_en_help,vague,en,en,Something is wrong here. Please help us.,Unclear,Unclear,wrong|help;help|please
+vague_hi_samasya,vague,hi,hi,कृपया हमारे इलाके की समस्या का समाधान कीजिए।,Unclear,Unclear,समस्या;समाधान|इलाके|इलाका
+vague_hinglish_problem,vague,hinglish,hi,Meri problem ka solution kijiye.,Unclear,Unclear,problem|प्रॉब्लम;solution|सॉल्यूशन|समाधान
