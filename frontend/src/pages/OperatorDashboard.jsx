@@ -15,6 +15,11 @@ const getCategoryIcon = (prediction) => {
   return '📄';
 };
 
+// The model was sure the complaint belongs to none of the departments (class "Unclear" with High confidence).
+// Told apart from unsure ones, which keep the label "Unclear".
+const isOutOfScope = (g) => g.prediction === 'Unclear' && g.confidence === 'High';
+const categoryLabel = (g, fallback) => (isOutOfScope(g) ? 'Out of scope' : (g.prediction || fallback).replace('Department', '').trim());
+
 const OperatorDashboard = () => {
   const { currentUser, userDepartment } = useAuth();
   
@@ -265,7 +270,7 @@ const OperatorDashboard = () => {
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
           <span>{getCategoryIcon(g.prediction)}</span>
-          <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#111827' }}>{(g.prediction || 'Issue').replace('Department', '').trim()}</span>
+          <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#111827' }}>{categoryLabel(g, 'Issue')}</span>
         </div>
         
         <p style={{ fontSize: '0.85rem', color: '#4B5563', marginBottom: '1rem', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: 1.4 }}>
@@ -446,7 +451,7 @@ const OperatorDashboard = () => {
                 <h3 style={{ fontSize: '0.75rem', fontWeight: 800, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '0.75rem' }}>Complaint Details</h3>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
                   <span style={{ fontSize: '1.5rem' }}>{getCategoryIcon(selectedGrievance.prediction)}</span>
-                  <span style={{ fontSize: '1.1rem', fontWeight: 700, color: '#111827' }}>{(selectedGrievance.prediction || 'Unknown').replace('Department', '').trim()} Classification</span>
+                  <span style={{ fontSize: '1.1rem', fontWeight: 700, color: '#111827' }}>{isOutOfScope(selectedGrievance) ? 'Out of scope' : `${categoryLabel(selectedGrievance, 'Unknown')} Classification`}</span>
                 </div>
                 <p style={{ fontSize: '1rem', color: '#374151', lineHeight: 1.6, backgroundColor: '#F9FAFB', padding: '1rem', borderRadius: '8px', border: '1px solid #E5E7EB' }}>
                   "{selectedGrievance.transcript}"

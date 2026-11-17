@@ -364,6 +364,9 @@ const CitizenPortal = () => {
             <h2 style={{ color: 'var(--text-main)', marginBottom: '0.5rem' }}>{t("Grievance Routed")}</h2>
             {result?.confidence_level === 'Low' ? (
               <p style={{ color: 'var(--text-muted)' }}>{t("We were unable to confidently categorize your issue automatically. It has been sent directly to a Human Operator for manual review.")}</p>
+            ) : result?.prediction_set === 'Unclear' && result?.confidence_level === 'High' ? (
+              // The model is sure this is none of our departments: not the same as being unsure.
+              <p style={{ color: 'var(--text-muted)' }}>{t("This doesn't look like a problem for one of our departments (water, electricity, roads, sanitation, drainage, street lights). It has been sent to an operator, who will guide you.", { defaultValue: "This doesn't look like a problem for one of our departments (water, electricity, roads, sanitation, drainage, street lights). It has been sent to an operator, who will guide you." })}</p>
             ) : result?.prediction_set === 'Unclear' ? (
               <p style={{ color: 'var(--text-muted)' }}>{t("We were unable to confidently categorize your issue automatically. It has been sent directly to a Human Operator for manual review.")}</p>
             ) : (
