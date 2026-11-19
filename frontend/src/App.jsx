@@ -8,6 +8,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { LogOut, Globe, Mic, ClipboardList, ChevronDown, Check } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { API_BASE, API_OVERRIDDEN } from './api';
+import Logo from './components/Logo';
 import './index.css';
 
 // Protected Route Wrapper
@@ -171,8 +172,9 @@ const AppHeader = () => {
     <header className="app-header">
       <div className="app-header-inner">
       <div className="app-header-left">
-        <Link to="/" className="brand">
-          Samadhaan<span>.ai</span>
+        <Link to="/" className="brand" aria-label="Samadhaan.ai home">
+          <Logo size={34} />
+          <span className="brand-text">Samadhaan<span>.ai</span></span>
         </Link>
         {navItems.length > 0 && (
           <nav className="app-nav" aria-label="Main">

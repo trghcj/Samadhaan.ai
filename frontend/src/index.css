@@ -50,7 +50,8 @@ body {
   text-decoration: none; color: var(--accent); font-weight: 900; font-size: 1.3rem;
   font-style: italic; letter-spacing: -0.04em; white-space: nowrap;
 }
-.brand span { color: var(--text-main); }
+.brand { display: inline-flex; align-items: center; gap: 10px; }
+.brand .brand-text span { color: var(--text-main); }
 .app-nav { display: flex; align-items: stretch; gap: 0.25rem; height: 100%; margin-left: 0.75rem; }
 .app-nav-item {
   display: inline-flex; align-items: center; gap: 0.45rem; padding: 0 0.85rem;

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="3 5 57 57" role="img" aria-label="Samadhaan.ai">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FF8A3D"/>
+      <stop offset="1" stop-color="#FF4D12"/>
+    </linearGradient>
+  </defs>
+  <!-- speech bubble with tail -->
+  <circle cx="24" cy="31" r="20" fill="url(#g)"/>
+  <path d="M9 41 L5 58 L21 50 Z" fill="url(#g)"/>
+  <!-- microphone -->
+  <rect x="19.5" y="16" width="9" height="16.5" rx="4.5" fill="#fff"/>
+  <path d="M14.5 27.5 a9.5 9.5 0 0 0 19 0" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+  <path d="M24 37 v5.5 M19.5 43.5 h9" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+  <!-- sound waves -->
+  <path d="M48 22.5 A11 11 0 0 1 48 39.5" fill="none" stroke="url(#g)" stroke-width="4" stroke-linecap="round"/>
+  <path d="M53.5 17 A17.5 17.5 0 0 1 53.5 45" fill="none" stroke="url(#g)" stroke-width="4" stroke-linecap="round"/>
+</svg>
