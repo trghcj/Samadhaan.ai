@@ -29,8 +29,12 @@ import models
 from sqlalchemy.orm import Session
 from fastapi import Depends
 
-# Create tables if they don't exist
+# Create tables if they don't exist, then add columns that newer code introduced (create_all never alters a table)
 models.Base.metadata.create_all(bind=engine)
+from schema_sync import add_missing_columns
+_added = add_missing_columns(engine, models.Grievance)
+if _added:
+    print(f"Added columns to grievances: {_added}")
 
 def get_db():
     db = SessionLocal()
