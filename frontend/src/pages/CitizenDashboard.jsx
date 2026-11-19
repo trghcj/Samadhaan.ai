@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { API_BASE } from '../api';
 import { deptInfo, formatRef, splitTranscript, routingInfo } from '../utils/grievance';
 import LocationView from '../components/LocationView';
+import { PageHeader, StatTiles } from '../components/PageLayout';
 
 const CATEGORY_LABELS = { Water: 'Water Supply', Roads: 'Roads', Electricity: 'Electricity', Sanitation: 'Sanitation', Drainage: 'Drainage', 'Street Lights': 'Street Lights', Unclear: 'Under officer review' };
 
@@ -160,6 +161,7 @@ const CitizenDashboard = () => {
     total: grievances.length,
     progress: grievances.filter(g => statusOf(g) === 'progress').length,
     resolved: grievances.filter(g => statusOf(g) === 'resolved').length,
+    overdue: grievances.filter(g => statusOf(g) === 'progress' && g.sla_deadline && new Date(g.sla_deadline + 'Z') < new Date()).length,
   }), [grievances]);
 
   useEffect(() => {
@@ -175,42 +177,43 @@ const CitizenDashboard = () => {
   const sectionTitle = { fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', fontWeight: 700, marginBottom: '0.6rem' };
 
   return (
-    <div style={{ maxWidth: 920, margin: '0 auto', padding: '2rem 1rem 3rem' }}>
+    <div className="page-bg">
+    <div className="page">
 
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem' }}>
-        <div>
-          <h1 style={{ fontSize: '1.9rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '0.35rem' }}>
-            {t('My complaints', { defaultValue: 'My complaints' })}
-          </h1>
-          {!loading && (
-            <div className="summary-line">
-              <span>{t('{{count}} complaints', { count: stats.total, defaultValue: '{{count}} complaints' })}</span>
-              <span><i style={{ background: '#F59E0B' }} />{stats.progress} {t('in progress', { defaultValue: 'in progress' })}</span>
-              <span><i style={{ background: '#10B981' }} />{stats.resolved} {t('resolved', { defaultValue: 'resolved' })}</span>
-            </div>
-          )}
-        </div>
-        <button className="btn btn-primary" onClick={() => navigate('/')} style={{ borderRadius: 10, padding: '0.75rem 1.25rem' }}>
-          <Mic size={17} /> {t('New complaint', { defaultValue: 'New complaint' })}
-        </button>
-      </div>
+      <PageHeader
+        eyebrow={t('Citizen portal', { defaultValue: 'Citizen portal' })}
+        title={t('My complaints', { defaultValue: 'My complaints' })}
+        subtitle={t('Track the civic problems you have reported.', { defaultValue: 'Track the civic problems you have reported.' })}
+        actions={
+          <button className="btn btn-primary" onClick={() => navigate('/')}>
+            <Mic size={16} /> {t('New complaint', { defaultValue: 'New complaint' })}
+          </button>
+        }
+      />
+
+      <StatTiles items={[
+        { label: t('Total', { defaultValue: 'Total' }), value: loading ? '–' : stats.total, Icon: ClipboardList, tone: 'neutral' },
+        { label: t('In progress', { defaultValue: 'In progress' }), value: loading ? '–' : stats.progress, Icon: Clock, tone: 'amber' },
+        { label: t('Overdue', { defaultValue: 'Overdue' }), value: loading ? '–' : stats.overdue, Icon: AlertTriangle, tone: 'red' },
+        { label: t('Resolved'), value: loading ? '–' : stats.resolved, Icon: Check, tone: 'green' },
+      ]} />
 
       {/* Search, filter, sort */}
       {grievances.length > 0 && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-          <div style={{ position: 'relative', flex: '1 1 260px', maxWidth: 380 }}>
-            <Search size={16} style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: '#9CA3AF' }} />
-            <input className="input" type="text" placeholder={t('Search by text, place or reference', { defaultValue: 'Search by text, place or reference' })} value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
-              style={{ paddingLeft: '2.4rem', paddingTop: '0.6rem', paddingBottom: '0.6rem', fontSize: '0.9rem' }} />
+        <div className="toolbar">
+          <div className="toolbar-left">
+            <div className="search-box">
+              <Search size={16} />
+              <input className="input" type="text" placeholder={t('Search by text, place or reference', { defaultValue: 'Search by text, place or reference' })} value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+            </div>
           </div>
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          <div className="toolbar-right">
             <div className="segmented" role="group" aria-label="Filter by status">
               {FILTERS.map(([id, label]) => (
                 <button key={id} type="button" className={filter === id ? 'active' : ''} aria-pressed={filter === id} onClick={() => setFilter(id)}>{label}</button>
               ))}
             </div>
-            <select className="input" value={sortOrder} onChange={e => setSortOrder(e.target.value)} style={{ width: 'auto', padding: '0.5rem 0.8rem', fontSize: '0.875rem', cursor: 'pointer' }} aria-label="Sort">
+            <select className="input control" value={sortOrder} onChange={e => setSortOrder(e.target.value)} aria-label="Sort">
               <option value="newest">{t("Newest First")}</option>
               <option value="oldest">{t("Oldest First")}</option>
             </select>
@@ -221,11 +224,11 @@ const CitizenDashboard = () => {
       {/* List */}
       {loading ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          {[1, 2].map(i => <div key={i} style={{ height: 170, backgroundColor: '#F3F4F6', borderRadius: 14, animation: 'pulse 1.5s infinite' }} />)}
+          {[1, 2].map(i => <div key={i} style={{ height: 170, backgroundColor: '#F3F4F6', borderRadius: 12, animation: 'pulse 1.5s infinite' }} />)}
           <style>{`@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }`}</style>
         </div>
       ) : grievances.length === 0 ? (
-        <div style={{ backgroundColor: '#fff', borderRadius: 14, border: '1px solid var(--border)', padding: '4rem 2rem', textAlign: 'center' }}>
+        <div className="panel" style={{ padding: '4rem 2rem', textAlign: 'center' }}>
           <div style={{ width: 64, height: 64, borderRadius: '50%', background: '#FFF7F3', color: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem' }}>
             <ClipboardList size={28} />
           </div>
@@ -242,7 +245,7 @@ const CitizenDashboard = () => {
           <button className="link-btn" style={{ marginTop: '0.75rem' }} onClick={() => { setSearchTerm(''); setFilter('all'); }}>{t('Clear filters', { defaultValue: 'Clear filters' })}</button>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
+        <div className="complaint-list">
           {filteredAndSorted.map(g => {
             const cat = getCategoryInfo(g.prediction);
             const { complaint, clarification } = splitTranscript(g.transcript);
@@ -402,6 +405,7 @@ const CitizenDashboard = () => {
           </div>
         </div>
       )}
+    </div>
     </div>
   );
 };

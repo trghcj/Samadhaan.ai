@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Clock, CheckCircle, Search, X, ShieldAlert, Activity, Calendar, MapPin, Download, RefreshCw, ImagePlus, PlayCircle, Undo2, UserCheck, Inbox } from 'lucide-react';
+import { Clock, CheckCircle, Search, X, ShieldAlert, Activity, Calendar, MapPin, Download, RefreshCw, ImagePlus, PlayCircle, Undo2, UserCheck, Inbox, AlertTriangle } from 'lucide-react';
+import { PageHeader, StatTiles } from '../components/PageLayout';
 import { useAuth } from '../contexts/AuthContext';
 import { API_BASE } from '../api';
 import { deptInfo, formatRef, splitTranscript, routingInfo, TONE_COLORS, slaInfo } from '../utils/grievance';
@@ -195,27 +196,29 @@ const OperatorDashboard = () => {
   const title = userDepartment === 'All Departments' ? 'All departments' : `${userDepartment || 'Department'}`;
 
   return (
-    <div style={{ backgroundColor: '#F9FAFB', minHeight: 'calc(100vh - 64px)' }}>
-      <div style={{ maxWidth: 1240, margin: '0 auto', padding: '1.75rem 1.5rem 3rem' }}>
+    <div className="page-bg">
+      <div className="page">
 
-        {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: '1rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
-          <div>
-            <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#6B7280', marginBottom: '0.2rem' }}>Complaint register</div>
-            <h1 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#111827', margin: 0, lineHeight: 1.2 }}>{title}</h1>
-            <p style={{ fontSize: '0.9rem', color: '#6B7280', margin: '0.25rem 0 0' }}>
-              {counts.open + counts.inProgress} open{overdue > 0 && <> · <span style={{ color: '#DC2626', fontWeight: 600 }}>{overdue} overdue</span></>} · {counts.resolved} resolved
-            </p>
-          </div>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <button className="btn btn-outline" onClick={fetchGrievances} style={{ background: '#fff', borderRadius: 8, padding: '0.55rem 0.9rem', fontSize: '0.875rem' }} aria-label="Refresh">
+        <PageHeader
+          eyebrow="Complaint register"
+          title={title}
+          subtitle="Complaints routed to your department, soonest deadline first."
+          actions={<>
+            <button className="btn btn-outline" onClick={fetchGrievances} aria-label="Refresh">
               <RefreshCw size={15} className={loading ? 'spin-anim' : ''} /> Refresh
             </button>
-            <button className="btn btn-outline" onClick={handleExport} style={{ background: '#fff', borderRadius: 8, padding: '0.55rem 0.9rem', fontSize: '0.875rem' }}>
+            <button className="btn btn-outline" onClick={handleExport}>
               <Download size={15} /> Export CSV
             </button>
-          </div>
-        </div>
+          </>}
+        />
+
+        <StatTiles items={[
+          { label: 'Open', value: counts.open, Icon: Inbox, tone: 'neutral' },
+          { label: 'In progress', value: counts.inProgress, Icon: PlayCircle, tone: 'blue' },
+          { label: 'Overdue', value: overdue, Icon: AlertTriangle, tone: 'red' },
+          { label: 'Resolved', value: counts.resolved, Icon: CheckCircle, tone: 'green' },
+        ]} />
 
         {/* Tabs */}
         <div className="tabs" role="tablist">
@@ -228,19 +231,22 @@ const OperatorDashboard = () => {
         </div>
 
         {/* Search + filter */}
-        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap', margin: '1rem 0' }}>
-          <div style={{ position: 'relative', flex: '1 1 280px', maxWidth: 420 }}>
-            <Search size={16} style={{ position: 'absolute', left: '0.8rem', top: '50%', transform: 'translateY(-50%)', color: '#9CA3AF' }} />
-            <input className="input" type="text" placeholder="Search by reference, text or location" value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
-              style={{ paddingLeft: '2.4rem', paddingTop: '0.6rem', paddingBottom: '0.6rem', fontSize: '0.9rem' }} />
+        <div className="toolbar">
+          <div className="toolbar-left">
+            <div className="search-box">
+              <Search size={16} />
+              <input className="input" type="text" placeholder="Search by reference, text or location" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+            </div>
           </div>
-          <select className="input" value={routingFilter} onChange={e => setRoutingFilter(e.target.value)} style={{ width: 'auto', padding: '0.6rem 0.9rem', fontSize: '0.9rem', cursor: 'pointer' }} aria-label="Filter by routing">
-            {ROUTING_FILTERS.map(f => <option key={f.id} value={f.id}>{f.label}</option>)}
-          </select>
+          <div className="toolbar-right">
+            <select className="input control" value={routingFilter} onChange={e => setRoutingFilter(e.target.value)} aria-label="Filter by routing">
+              {ROUTING_FILTERS.map(f => <option key={f.id} value={f.id}>{f.label}</option>)}
+            </select>
+          </div>
         </div>
 
         {/* Register table */}
-        <div className="register-wrap">
+        <div className="panel">
           {loading && grievances.length === 0 ? (
             <div style={{ padding: '3rem', textAlign: 'center', color: '#6B7280' }}>Loading complaints…</div>
           ) : rows.length === 0 ? (
@@ -250,6 +256,8 @@ const OperatorDashboard = () => {
               <div style={{ fontSize: '0.875rem' }}>{searchTerm || routingFilter !== 'all' ? 'No complaints match your search or filter.' : `No ${TABS.find(t => t.id === activeTab).label.toLowerCase()} complaints.`}</div>
             </div>
           ) : (
+            <>
+            <div className="register-scroll">
             <table className="register">
               <thead>
                 <tr>
@@ -291,6 +299,12 @@ const OperatorDashboard = () => {
                 })}
               </tbody>
             </table>
+            </div>
+            <div className="panel-footer">
+              {rows.length} {TABS.find(t => t.id === activeTab).label.toLowerCase()} complaint{rows.length === 1 ? '' : 's'}
+              {(searchTerm || routingFilter !== 'all') && ' · search or filter applied'}
+            </div>
+            </>
           )}
         </div>
       </div>
