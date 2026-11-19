@@ -226,6 +226,9 @@ textarea { resize: none; }
 }
 @keyframes spinAnimGlobal { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 .spin-anim { animation: spinAnimGlobal 1s linear infinite; }
+/* Refresh icon: clockwise, one turn per 0.8 s, around its own centre */
+.spin-cw { animation: spinAnimGlobal 0.8s linear infinite; transform-origin: 50% 50%; }
+@media (prefers-reduced-motion: reduce) { .spin-cw, .spin-anim { animation-duration: 2.4s; } }
 
 /* ---------- Department choice ---------- */
 .choice-card {

@@ -62,6 +62,16 @@ const OperatorDashboard = () => {
   const [reviewNotes, setReviewNotes] = useState('');
   const [afterPhoto, setAfterPhoto] = useState(null);
   const [resolving, setResolving] = useState(false);
+  const [spinning, setSpinning] = useState(false);
+
+  // Refresh button: the icon turns clockwise for at least one full turn, longer if the reload is slower.
+  const handleRefresh = async () => {
+    if (spinning) return;
+    setSpinning(true);
+    const started = Date.now();
+    await fetchGrievances();
+    setTimeout(() => setSpinning(false), Math.max(0, 800 - (Date.now() - started)));
+  };
 
   const afterPhotoUrl = useMemo(() => (afterPhoto ? URL.createObjectURL(afterPhoto) : null), [afterPhoto]);
   useEffect(() => () => { if (afterPhotoUrl) URL.revokeObjectURL(afterPhotoUrl); }, [afterPhotoUrl]);
@@ -204,8 +214,8 @@ const OperatorDashboard = () => {
           title={title}
           subtitle="Complaints routed to your department, soonest deadline first."
           actions={<>
-            <button className="btn btn-outline" onClick={fetchGrievances} aria-label="Refresh">
-              <RefreshCw size={15} className={loading ? 'spin-anim' : ''} /> Refresh
+            <button className="btn btn-outline" onClick={handleRefresh} disabled={spinning} aria-label="Refresh" aria-busy={spinning}>
+              <RefreshCw size={15} className={spinning || loading ? 'spin-cw' : ''} /> Refresh
             </button>
             <button className="btn btn-outline" onClick={handleExport}>
               <Download size={15} /> Export CSV
