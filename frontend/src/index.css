@@ -179,7 +179,9 @@ body {
 }
 .input::placeholder { color: #9CA3AF; }
 .input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(255, 87, 34, 0.15); }
-textarea.input { resize: vertical; min-height: 5.5rem; }
+textarea.input { min-height: 5.5rem; }
+/* No drag-to-resize handle on any text box */
+textarea { resize: none; }
 
 .photo-drop {
   display: flex; align-items: center; gap: 0.9rem; width: 100%;
