@@ -239,6 +239,46 @@ textarea { resize: none; }
 .summary-row .k { color: #6B7280; font-size: 0.875rem; }
 .summary-row .v { font-weight: 600; display: flex; align-items: center; gap: 0.45rem; text-align: right; }
 
+/* ---------- Citizen complaints page ---------- */
+.summary-line { display: flex; flex-wrap: wrap; gap: 0.4rem 1.1rem; color: #4B5563; font-size: 0.95rem; }
+.summary-line span { display: inline-flex; align-items: center; gap: 0.4rem; }
+.summary-line i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+
+.segmented { display: inline-flex; padding: 3px; background: #F3F4F6; border-radius: 10px; }
+.segmented button {
+  border: none; background: none; font: inherit; font-size: 0.85rem; font-weight: 600; color: #6B7280;
+  padding: 0.4rem 0.85rem; border-radius: 8px; cursor: pointer;
+}
+.segmented button.active { background: #fff; color: #111827; box-shadow: var(--shadow-sm); }
+
+.complaint-card {
+  display: flex; flex-direction: column; gap: 1rem; width: 100%; text-align: left;
+  background: #fff; border: 1px solid var(--border); border-radius: 14px; padding: 1.15rem 1.25rem;
+  cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s;
+}
+.complaint-card:hover { border-color: #FDBA9F; box-shadow: var(--shadow-md); }
+.complaint-card:focus-visible { outline: 3px solid rgba(255, 87, 34, 0.35); outline-offset: 2px; }
+.mono-ref { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 0.78rem; color: #6B7280; }
+
+.tracker { display: flex; list-style: none; margin: 0; padding: 0; }
+.tracker-step { flex: 1; position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 0.45rem; min-width: 0; }
+.tracker-step:not(:last-child)::after {
+  content: ''; position: absolute; top: 10px; left: 22px; right: 4px; height: 2px; background: #E5E7EB;
+}
+.tracker-step.done:not(.current):not(:last-child)::after { background: #10B981; }
+.tracker-dot {
+  width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0; position: relative; z-index: 1;
+  display: flex; align-items: center; justify-content: center; background: #fff; border: 2px solid #D1D5DB; color: #fff;
+}
+.tracker-step.done .tracker-dot { background: #10B981; border-color: #10B981; }
+.tracker-step.current .tracker-dot { background: #fff; border-color: #F59E0B; box-shadow: inset 0 0 0 4px #F59E0B; }
+.tracker-step.current.warn .tracker-dot { border-color: #DC2626; box-shadow: inset 0 0 0 4px #DC2626; }
+.tracker-text { display: flex; flex-direction: column; padding-right: 0.5rem; }
+.tracker-label { font-size: 0.82rem; font-weight: 600; color: #9CA3AF; }
+.tracker-step.done .tracker-label { color: #111827; }
+.tracker-sub { font-size: 0.75rem; color: #6B7280; }
+.tracker-step.warn .tracker-sub { color: #DC2626; }
+
 /* ---------- Operator register ---------- */
 .tabs { display: flex; gap: 0.25rem; border-bottom: 1px solid #E5E7EB; overflow-x: auto; }
 .tab {
