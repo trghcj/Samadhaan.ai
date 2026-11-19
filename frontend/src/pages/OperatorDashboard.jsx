@@ -3,6 +3,7 @@ import { Clock, CheckCircle, Search, X, ShieldAlert, Activity, Calendar, MapPin,
 import { useAuth } from '../contexts/AuthContext';
 import { API_BASE } from '../api';
 import { deptInfo, formatRef, splitTranscript, routingInfo, TONE_COLORS, slaInfo } from '../utils/grievance';
+import LocationView from '../components/LocationView';
 
 const TABS = [
   { id: 'open', label: 'Open' },
@@ -266,7 +267,10 @@ const OperatorDashboard = () => {
                         </div>
                       </td>
                       <td><DeptBadge prediction={g.prediction} outOfScope={outOfScope} /></td>
-                      <td style={{ color: '#374151', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.location || '—'}</td>
+                      <td style={{ color: '#374151', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {g.latitude != null && g.longitude != null && <MapPin size={12} color="var(--accent)" style={{ marginRight: 4, verticalAlign: '-1px' }} aria-label="Map pin" />}
+                        {g.location || '—'}
+                      </td>
                       <td><RoutingTag g={g} /></td>
                       <td style={{ whiteSpace: 'nowrap', fontWeight: 600, color: activeTab === 'resolved' ? '#047857' : sla.color }}>
                         {activeTab === 'resolved'
@@ -335,8 +339,12 @@ const OperatorDashboard = () => {
                   </div>
                 </div>
 
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <div style={sectionTitle}>Location</div>
+                  <div style={{ ...box, padding: '1rem' }}><LocationView g={g} showDirections /></div>
+                </div>
+
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1.5rem' }}>
-                  <div style={box}><div style={k}>Location</div><div style={v}><MapPin size={14} color="#6B7280" /> {g.location || 'Not provided'}</div></div>
                   <div style={box}><div style={k}>Submitted</div><div style={v}><Calendar size={14} color="#6B7280" /> {new Date(g.created_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}</div></div>
                   <div style={box}><div style={k}>Model confidence</div><div style={v}><Activity size={14} color="#6B7280" /> {g.confidence_score != null ? `${Math.round(g.confidence_score * 100)}%` : '—'} <span style={{ fontWeight: 500, color: '#6B7280' }}>({g.confidence})</span></div></div>
                   <div style={box}><div style={k}>Due</div><div style={{ ...v, color: g.is_resolved ? '#047857' : sla.color }}><Clock size={14} /> {g.is_resolved ? 'Resolved' : sla.text}</div></div>

@@ -5,6 +5,7 @@ import { Check, Trash2, Search, X, AlertTriangle, Calendar, MapPin, ChevronRight
 import { useNavigate } from 'react-router-dom';
 import { API_BASE } from '../api';
 import { deptInfo, formatRef, splitTranscript, routingInfo } from '../utils/grievance';
+import LocationView from '../components/LocationView';
 
 const CATEGORY_LABELS = { Water: 'Water Supply', Roads: 'Roads', Electricity: 'Electricity', Sanitation: 'Sanitation', Drainage: 'Drainage', 'Street Lights': 'Street Lights', Unclear: 'Under officer review' };
 
@@ -324,13 +325,14 @@ const CitizenDashboard = () => {
                       {new Date(g.created_at).toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}
                     </div>
                   </div>
-                  {g.location && (
-                    <div>
-                      <div style={sectionTitle}>{t('Location', { defaultValue: 'Location' })}</div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 500 }}><MapPin size={16} color="var(--text-muted)" /> {g.location}</div>
-                    </div>
-                  )}
                 </div>
+
+                {(g.location || g.latitude != null) && (
+                  <div>
+                    <div style={sectionTitle}>{t('Location', { defaultValue: 'Location' })}</div>
+                    <LocationView g={g} showDirections={false} />
+                  </div>
+                )}
 
                 {g.ai_verification_status === 'Rejected' && !g.is_resolved && (
                   <div style={{ display: 'flex', gap: '0.6rem', padding: '0.85rem 1rem', borderRadius: 12, background: '#FFFBEB', border: '1px solid #FDE68A', color: '#92400E', fontSize: '0.9rem' }}>

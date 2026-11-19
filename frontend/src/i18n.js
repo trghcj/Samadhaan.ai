@@ -209,6 +209,7 @@ const resources = {
       "Map pin": "नक्शे पर पिन",
       "Saved": "सहेजा गया",
       "Open in Google Maps": "गूगल मैप्स में खोलें",
+      "Not provided": "नहीं दिया गया",
       "Report issue": "शिकायत करें",
       "My complaints": "मेरी शिकायतें",
       "Account": "खाता",
