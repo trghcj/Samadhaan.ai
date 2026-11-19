@@ -1,5 +1,7 @@
 # Demo setup
 
+New to the project? Read `TEAM_GUIDE.md` first. This file is only about running the demo.
+
 Two ways to run the demo with the MuRIL model:
 
 - **Local (recommended):** backend and website both run on this laptop, and you open `http://localhost:5173`.
@@ -19,7 +21,7 @@ Two ways to run the demo with the MuRIL model:
    ```
    (Already created on this laptop.)
 2. **`backend\.env`** with the database address (copy `DATABASE_URL` from the Render service's Environment tab, so accounts and the dashboard match the deployed site). `GEMINI_API_KEY` is optional; it is only used as a fallback.
-3. **MuRIL weights** in `research\outputs\muril\model\` (already there if you unzipped `model.zip`).
+3. **MuRIL weights** (the 40-epoch model) in `research\outputs\final_e40\model\`: `config.json`, `model.safetensors`, `tokenizer.json`, `tokenizer_config.json` (about 0.95 GB, not in git; ask for them). The routing settings next to it, `router_config.json`, are in git. The older 20-epoch model in `research\outputs\muril\` is only a backup and is not used.
 4. **For `-Local`: Node.js** (LTS, from https://nodejs.org), then open a new terminal and check `node -v`. The first run does `npm install` by itself.
    Put your Firebase settings in `frontend\.env.local`, next to the existing `VITE_API_URL=http://localhost:8000` line:
    `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_STORAGE_BUCKET`,

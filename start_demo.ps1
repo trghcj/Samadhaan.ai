@@ -45,7 +45,7 @@ function Wait-ForUrl($url, $seconds, $proc, $logHint) {
 # ---- checks ----
 if (-not $python) { throw "No backend virtual environment found (looked for `$env:SAMADHAAN_VENV, ~\.venvs\samadhaan, backend\venv). Create it first (see README_DEMO.md)." }
 if (-not (Test-Path (Join-Path $backend ".env"))) { Write-Warning "backend\.env not found: the backend needs DATABASE_URL there." }
-if (-not (Test-Path (Join-Path $root "research\outputs\muril\model\config.json"))) { Write-Warning "MuRIL model files not found; the backend will fall back to Gemini." }
+if (-not (Test-Path (Join-Path $root "research\outputs\final_e40\model\config.json"))) { Write-Warning "MuRIL model files not found in research\outputs\final_e40\model (see TEAM_GUIDE.md, section 5); the backend will fall back to Gemini." }
 
 if ($Local) {
     $npm = Get-Command npm.cmd -ErrorAction SilentlyContinue
