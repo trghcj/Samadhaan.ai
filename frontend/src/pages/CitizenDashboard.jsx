@@ -134,7 +134,7 @@ const CitizenDashboard = () => {
       setItemToDelete(null);
     } catch (err) {
       console.error(err);
-      alert("Failed to delete grievance");
+      alert(t("Failed to delete grievance"));
     }
     setIsDeleting(false);
   };
@@ -208,12 +208,12 @@ const CitizenDashboard = () => {
             </div>
           </div>
           <div className="toolbar-right">
-            <div className="segmented" role="group" aria-label="Filter by status">
+            <div className="segmented" role="group" aria-label={t('Filter by status')}>
               {FILTERS.map(([id, label]) => (
                 <button key={id} type="button" className={filter === id ? 'active' : ''} aria-pressed={filter === id} onClick={() => setFilter(id)}>{label}</button>
               ))}
             </div>
-            <select className="input control" value={sortOrder} onChange={e => setSortOrder(e.target.value)} aria-label="Sort">
+            <select className="input control" value={sortOrder} onChange={e => setSortOrder(e.target.value)} aria-label={t('Sort')}>
               <option value="newest">{t("Newest First")}</option>
               <option value="oldest">{t("Oldest First")}</option>
             </select>
@@ -298,7 +298,7 @@ const CitizenDashboard = () => {
                     <span className="mono-ref">{t('Reference number', { defaultValue: 'Reference number' })} {formatRef(g.id)}</span>
                   </div>
                 </div>
-                <button onClick={() => setSelectedIssue(null)} className="icon-btn" style={{ background: '#F3F4F6', color: 'var(--text-main)', boxShadow: 'none' }} aria-label="Close"><X size={18} /></button>
+                <button onClick={() => setSelectedIssue(null)} className="icon-btn" style={{ background: '#F3F4F6', color: 'var(--text-main)', boxShadow: 'none' }} aria-label={t('Close')}><X size={18} /></button>
               </div>
 
               <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
@@ -360,13 +360,13 @@ const CitizenDashboard = () => {
                       {g.before_photo_url && (
                         <a href={g.before_photo_url} target="_blank" rel="noreferrer" style={{ textDecoration: 'none', color: 'inherit' }}>
                           <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.25rem', fontWeight: 600 }}>{t('Your photo', { defaultValue: 'Your photo' })}</div>
-                          <img src={g.before_photo_url} alt="Before" style={{ width: '100%', height: 150, objectFit: 'cover', borderRadius: 10, border: '1px solid var(--border)' }} />
+                          <img src={g.before_photo_url} alt={t('Your photo', { defaultValue: 'Your photo' })} style={{ width: '100%', height: 150, objectFit: 'cover', borderRadius: 10, border: '1px solid var(--border)' }} />
                         </a>
                       )}
                       {g.after_photo_url && (
                         <a href={g.after_photo_url} target="_blank" rel="noreferrer" style={{ textDecoration: 'none', color: 'inherit' }}>
                           <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.25rem', fontWeight: 600 }}>{t('After the fix', { defaultValue: 'After the fix' })}</div>
-                          <img src={g.after_photo_url} alt="After" style={{ width: '100%', height: 150, objectFit: 'cover', borderRadius: 10, border: '1px solid var(--border)' }} />
+                          <img src={g.after_photo_url} alt={t('After the fix', { defaultValue: 'After the fix' })} style={{ width: '100%', height: 150, objectFit: 'cover', borderRadius: 10, border: '1px solid var(--border)' }} />
                         </a>
                       )}
                     </div>

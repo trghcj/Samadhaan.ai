@@ -60,11 +60,18 @@ export const TONE_COLORS = {
   scope: { color: '#6B7280', bg: '#F3F4F6' },
 };
 
-/** Days/hours left until the SLA deadline (stored as naive UTC). */
+/**
+ * Days/hours left until the SLA deadline (stored as naive UTC).
+ * `key` + `count` are for translation: t(sla.key, { count: sla.count }); `text` is the English form.
+ */
 export function slaInfo(deadline) {
-  if (!deadline) return { text: '—', color: '#9CA3AF', urgent: false };
+  if (!deadline) return { key: '—', text: '—', color: '#9CA3AF', urgent: false, overdue: false };
   const hours = (new Date(deadline + 'Z') - new Date()) / 3600000;
-  if (hours < 0) return { text: 'Overdue', color: '#DC2626', urgent: true };
-  if (hours < 24) return { text: `${Math.max(1, Math.floor(hours))}h left`, color: '#EA580C', urgent: true };
-  return { text: `${Math.floor(hours / 24)}d left`, color: '#4B5563', urgent: false };
+  if (hours < 0) return { key: 'Overdue', text: 'Overdue', color: '#DC2626', urgent: true, overdue: true };
+  if (hours < 24) {
+    const count = Math.max(1, Math.floor(hours));
+    return { key: '{{count}}h left', count, text: `${count}h left`, color: '#EA580C', urgent: true, overdue: false };
+  }
+  const count = Math.floor(hours / 24);
+  return { key: '{{count}}d left', count, text: `${count}d left`, color: '#4B5563', urgent: false, overdue: false };
 }

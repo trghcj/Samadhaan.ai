@@ -11,11 +11,16 @@ import { API_BASE, API_OVERRIDDEN } from './api';
 import Logo from './components/Logo';
 import './index.css';
 
+const Loading = () => {
+  const { t } = useTranslation();
+  return <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>{t('Loading...')}</div>;
+};
+
 // Protected Route Wrapper
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { currentUser, userRole, loading } = useAuth();
   
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <Loading />;
 
   if (!currentUser) {
     return <Navigate to="/auth" />;
@@ -215,7 +220,7 @@ const AppHeader = () => {
                 borderRight: '6px solid transparent',
                 borderBottom: '6px solid #4F46E5'
               }}></div>
-              🌍 Choose your language here!
+              🌍 {t('Choose your language here!')}
               <style>{`
                 @keyframes bounce {
                   0%, 100% { transform: translateY(0); }
@@ -243,7 +248,7 @@ const AppHeader = () => {
 const HomeRoute = () => {
   const { currentUser, userRole, loading } = useAuth();
   
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <Loading />;
   if (currentUser && userRole === 'operator') {
     return <Navigate to="/operator" />;
   }

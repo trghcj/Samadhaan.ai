@@ -152,7 +152,7 @@ const CitizenPortal = () => {
 
   const startTyping = () => {
     if (!currentUser) {
-      const wantToLogin = window.confirm("Log in to track your grievance status on a personalized dashboard!\n\nClick OK to log in, or Cancel to report anonymously.");
+      const wantToLogin = window.confirm(t("Log in to track your grievance status on a personalized dashboard!\n\nClick OK to log in, or Cancel to report anonymously."));
       if (wantToLogin) {
         navigate('/auth');
         return;
@@ -165,7 +165,7 @@ const CitizenPortal = () => {
   const startRecording = async () => {
     setInputMode('voice');
     if (!currentUser) {
-      const wantToLogin = window.confirm("Log in to track your grievance status on a personalized dashboard!\n\nClick OK to log in, or Cancel to report anonymously.");
+      const wantToLogin = window.confirm(t("Log in to track your grievance status on a personalized dashboard!\n\nClick OK to log in, or Cancel to report anonymously."));
       if (wantToLogin) {
         navigate('/auth');
         return;
@@ -199,7 +199,7 @@ const CitizenPortal = () => {
       setStatus('recording');
     } catch (err) {
       console.error("Error accessing microphone:", err);
-      alert("Microphone access is required to report a grievance.");
+      alert(t("Microphone access is required to report a grievance."));
     }
   };
 
@@ -283,7 +283,7 @@ const CitizenPortal = () => {
             } else if (statusData.status === 'error') {
               clearInterval(pollInterval);
               console.error("Backend Task Error:", statusData.error);
-              alert("An error occurred during AI processing: " + (statusData.error || "Unknown Error. Please try again."));
+              alert(t("An error occurred during AI processing:") + " " + (statusData.error || t("Unknown Error. Please try again.")));
               setStatus(inputMode === 'text' ? 'form' : 'idle');
             } else if (statusData.status === 'processing') {
               // Update the UI with the specific step from the backend
@@ -299,7 +299,7 @@ const CitizenPortal = () => {
     } catch (err) {
       // Do not fake a result: a failed request must be visible, not shown as a routed complaint.
       console.error("Could not reach the backend:", err);
-      alert(`Could not reach the server at ${API_BASE}. Is the backend running?`);
+      alert(t("Could not reach the server at {{url}}. Is the backend running?", { url: API_BASE }));
       setStatus(inputMode === 'text' ? 'form' : 'idle');
     }
   };
@@ -328,7 +328,7 @@ const CitizenPortal = () => {
       setStatus('success');
     } catch (e) {
       console.error(e);
-      alert("Failed to submit your answer. Please try again.");
+      alert(t("Failed to submit your answer. Please try again."));
       setStatus('clarification');
     }
   };
@@ -358,11 +358,11 @@ const CitizenPortal = () => {
               {isRecording ? <Square size={48} /> : <Mic size={48} />}
             </button>
             <p style={{ fontWeight: 500, fontSize: '1.25rem' }}>
-              {isRecording ? "Recording... Tap to stop" : "Tap to start recording"}
+              {isRecording ? t("Recording... Tap to stop") : t("Tap to start recording")}
             </p>
             {!isRecording && (
               <>
-                <div role="group" aria-label="Language of your complaint" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                <div role="group" aria-label={t("Language of your complaint")} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                   <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>{t('I will speak in', { defaultValue: 'I will speak in' })}</span>
                   {[['hi', 'हिन्दी'], ['en', 'English']].map(([code, label]) => (
                     <button key={code} type="button" className={`btn ${language === code ? 'btn-primary' : 'btn-outline'}`}
@@ -400,7 +400,7 @@ const CitizenPortal = () => {
               <div className="field">
                 <label className="field-label"><FileText size={14} /> {t('Your complaint *', { defaultValue: 'Your complaint *' })}</label>
                 <textarea className="input" value={typedText} onChange={e => setTypedText(e.target.value)} required rows="4" maxLength={1000} dir="auto"
-                  placeholder="e.g. meri gali mein paani nahi aa raha hai / no water in my street" />
+                  placeholder={t("e.g. meri gali mein paani nahi aa raha hai / no water in my street")} />
               </div>
             )}
 
@@ -408,11 +408,11 @@ const CitizenPortal = () => {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0 1rem' }}>
                 <div className="field">
                   <label className="field-label">{t("Full Name *")}</label>
-                  <input className="input" type="text" value={reporterName} onChange={e => setReporterName(e.target.value)} required placeholder="E.g. Ramesh Kumar" />
+                  <input className="input" type="text" value={reporterName} onChange={e => setReporterName(e.target.value)} required placeholder={t("E.g. Ramesh Kumar")} />
                 </div>
                 <div className="field">
                   <label className="field-label">{t("Phone Number *")}</label>
-                  <input className="input" type="tel" value={reporterPhone} onChange={e => setReporterPhone(e.target.value)} required placeholder="E.g. +91 98765 43210" />
+                  <input className="input" type="tel" value={reporterPhone} onChange={e => setReporterPhone(e.target.value)} required placeholder={t("E.g. +91 98765 43210")} />
                 </div>
               </div>
             )}
@@ -436,7 +436,7 @@ const CitizenPortal = () => {
               </div>
               <div className="field">
                 <label className="field-label">{t("Location / Village *")}</label>
-                <input className="input" type="text" value={location} onChange={e => setLocation(e.target.value)} required placeholder="E.g. Near main square, Palampur" />
+                <input className="input" type="text" value={location} onChange={e => setLocation(e.target.value)} required placeholder={t("E.g. Near main square, Palampur")} />
               </div>
               <div className="field">
                 <label className="field-label">{t('PIN code', { defaultValue: 'PIN code' })} <span className="optional">· {t('optional', { defaultValue: 'optional' })}</span></label>
@@ -459,7 +459,7 @@ const CitizenPortal = () => {
                     <div style={{ fontWeight: 600, fontSize: '0.9rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{beforePhoto.name}</div>
                     <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{(beforePhoto.size / 1024 / 1024).toFixed(1)} MB</div>
                   </div>
-                  <button type="button" className="icon-btn" style={{ color: '#6B7280' }} onClick={() => setBeforePhoto(null)} aria-label="Remove photo"><X size={16} /></button>
+                  <button type="button" className="icon-btn" style={{ color: '#6B7280' }} onClick={() => setBeforePhoto(null)} aria-label={t("Remove photo")}><X size={16} /></button>
                 </div>
               ) : (
                 <label className="photo-drop">
@@ -482,7 +482,7 @@ const CitizenPortal = () => {
           <div style={{ padding: '2rem', textAlign: 'center' }}>
             {/* simple inline spinner style */}
             <div style={{ border: '4px solid #E2E8F0', borderTop: '4px solid var(--color-primary)', borderRadius: '50%', width: '50px', height: '50px', animation: 'spin 1s linear infinite', margin: '0 auto 1.5rem' }} />
-            <p style={{ fontSize: '1.125rem', fontWeight: 500 }}>{statusStep || t("Analyzing grievance...")}</p>
+            <p style={{ fontSize: '1.125rem', fontWeight: 500 }}>{statusStep ? t(statusStep) : t("Analyzing grievance...")}</p>
             <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
           </div>
         ) : status === 'success' ? (() => {

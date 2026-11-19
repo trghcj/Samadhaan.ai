@@ -6,7 +6,6 @@ import {
   signInWithEmailAndPassword, 
   signInWithPopup 
 } from 'firebase/auth';
-import { LogIn } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
 
@@ -88,22 +87,19 @@ const AuthPage = () => {
           {authMode === 'email_signup' && (
             <>
               <div>
-                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.25rem' }}>I am a...</label>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.25rem' }}>{t('I am a...')}</label>
                 <select value={role} onChange={(e) => setRole(e.target.value)} style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-main)' }}>
-                  <option value="citizen">Citizen (Report & Track Issues)</option>
-                  <option value="operator">Government Operator (Manage Issues)</option>
+                  <option value="citizen">{t('Citizen (Report & Track Issues)')}</option>
+                  <option value="operator">{t('Government Operator (Manage Issues)')}</option>
                 </select>
               </div>
               {role === 'operator' && (
                 <div style={{ marginTop: '1rem' }}>
-                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Assigned Department</label>
+                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.25rem' }}>{t('Assigned Department')}</label>
                   <select value={department} onChange={(e) => setDepartment(e.target.value)} style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-main)' }}>
-                    <option value="Water">Water</option>
-                    <option value="Electricity">Electricity</option>
-                    <option value="Roads">Roads</option>
-                    <option value="Sanitation">Sanitation</option>
-                    <option value="Drainage">Drainage</option>
-                    <option value="Street Lights">Street Lights</option>
+                    {['Water', 'Electricity', 'Roads', 'Sanitation', 'Drainage', 'Street Lights'].map(d => (
+                      <option key={d} value={d}>{t(d)}</option>
+                    ))}
                   </select>
                 </div>
               )}
@@ -114,14 +110,14 @@ const AuthPage = () => {
           </button>
           <div style={{ textAlign: 'center', fontSize: '0.95rem', marginTop: '1rem', marginBottom: '0.5rem' }}>
             <span style={{ color: 'var(--text-muted)', cursor: 'pointer' }} onClick={() => setAuthMode(authMode === 'email_login' ? 'email_signup' : 'email_login')}>
-              {authMode === 'email_login' ? "Don't have an account? Sign Up" : "Already have an account? Sign In"}
+              {authMode === 'email_login' ? t("Don't have an account? Sign Up") : t("Already have an account? Sign In")}
             </span>
           </div>
         </form>
 
         <div style={{ margin: '2.5rem 0', display: 'flex', alignItems: 'center' }}>
           <div style={{ flex: 1, height: '1px', backgroundColor: 'var(--border)' }}></div>
-          <span style={{ padding: '0 1rem', color: 'var(--text-muted)', fontSize: '0.875rem' }}>OR</span>
+          <span style={{ padding: '0 1rem', color: 'var(--text-muted)', fontSize: '0.875rem' }}>{t('OR')}</span>
           <div style={{ flex: 1, height: '1px', backgroundColor: 'var(--border)' }}></div>
         </div>
 
@@ -136,7 +132,7 @@ const AuthPage = () => {
         
         <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
           <button onClick={() => navigate('/')} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', textDecoration: 'underline', cursor: 'pointer', fontSize: '0.9rem' }}>
-            Continue anonymously (cannot track status)
+            {t('Continue anonymously (cannot track status)')}
           </button>
         </div>
         
