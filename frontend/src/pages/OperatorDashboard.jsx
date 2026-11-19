@@ -15,7 +15,7 @@ const getCategoryIcon = (prediction) => {
   return '📄';
 };
 
-// The model was sure the complaint belongs to none of the departments (class "Unclear" with High confidence).
+// The model was sure the complaint matches none of the departments (vague or out of scope; it cannot tell which) (class "Unclear" with High confidence).
 // Told apart from unsure ones, which keep the label "Unclear".
 const isOutOfScope = (g) => g.prediction === 'Unclear' && g.confidence === 'High';
 const categoryLabel = (g, fallback) => (isOutOfScope(g) ? 'Out of scope' : (g.prediction || fallback).replace('Department', '').trim());
