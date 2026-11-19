@@ -1,11 +1,11 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, Navigate, useLocation } from 'react-router-dom';
 import CitizenPortal from './pages/CitizenPortal';
 import OperatorDashboard from './pages/OperatorDashboard';
 import CitizenDashboard from './pages/CitizenDashboard';
 import AuthPage from './pages/AuthPage';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { LogOut, Globe } from 'lucide-react';
+import { LogOut, Globe, Mic, ClipboardList, ChevronDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { API_BASE, API_OVERRIDDEN } from './api';
 import './index.css';
@@ -29,8 +29,55 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 };
 
 // Header Component so we can use useAuth and useLocation safely inside Router
+const LANGUAGES = [
+  ['en', 'English'], ['hi', 'हिंदी'], ['bn', 'বাংলা'], ['te', 'తెలుగు'],
+  ['ta', 'தமிழ்'], ['mr', 'मराठी'], ['es', 'Español'], ['fr', 'Français'],
+];
+
+// Avatar button that opens a small account menu (email, role, department, log out).
+const AccountMenu = ({ currentUser, userRole, userDepartment, logout, t }) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  useEffect(() => {
+    if (!open) return;
+    const close = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    const esc = (e) => { if (e.key === 'Escape') setOpen(false); };
+    document.addEventListener('mousedown', close);
+    document.addEventListener('keydown', esc);
+    return () => { document.removeEventListener('mousedown', close); document.removeEventListener('keydown', esc); };
+  }, [open]);
+
+  const label = currentUser.displayName || currentUser.email || 'User';
+  const initial = label.trim().charAt(0).toUpperCase();
+  const isOperator = userRole === 'operator';
+
+  return (
+    <div className="account" ref={ref}>
+      <button type="button" className="account-btn" onClick={() => setOpen(o => !o)} aria-haspopup="menu" aria-expanded={open} aria-label={t('Account', { defaultValue: 'Account' })}>
+        <span className="avatar">{initial}</span>
+        <ChevronDown size={14} className="hide-sm" />
+      </button>
+      {open && (
+        <div className="account-menu" role="menu">
+          <div style={{ padding: '0.85rem 1rem', borderBottom: '1px solid var(--border)' }}>
+            <div style={{ fontWeight: 600, fontSize: '0.9rem', wordBreak: 'break-all' }}>{label}</div>
+            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
+              {isOperator
+                ? `${t('Operator', { defaultValue: 'Operator' })}${userDepartment ? ` · ${userDepartment}` : ''}`
+                : t('Citizen', { defaultValue: 'Citizen' })}
+            </div>
+          </div>
+          <button type="button" role="menuitem" className="menu-item" onClick={() => { setOpen(false); logout(); }}>
+            <LogOut size={15} /> {t('Logout')}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const AppHeader = () => {
-  const { currentUser, userRole, logout } = useAuth();
+  const { currentUser, userRole, userDepartment, logout } = useAuth();
   const location = useLocation();
   const { t, i18n } = useTranslation();
 
@@ -38,49 +85,49 @@ const AppHeader = () => {
     i18n.changeLanguage(e.target.value);
   };
 
+  const isOperator = currentUser && userRole === 'operator';
+  const navItems = isOperator ? [] : [
+    { to: '/', label: t('Report issue', { defaultValue: 'Report issue' }), Icon: Mic, active: location.pathname === '/' },
+    ...(currentUser && userRole === 'citizen'
+      ? [{ to: '/dashboard', label: t('My complaints', { defaultValue: 'My complaints' }), Icon: ClipboardList, active: location.pathname.startsWith('/dashboard') }]
+      : []),
+  ];
+
   return (
-    <header className="header-nav">
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-        <Link to="/" style={{ textDecoration: 'none', color: 'var(--accent)', fontWeight: 900, fontSize: '1.5rem', fontStyle: 'italic', letterSpacing: '-1px' }}>
-          Samadhaan<span style={{color: 'var(--text-main)'}}>.ai</span>
+    <header className="app-header">
+      <div className="app-header-left">
+        <Link to="/" className="brand">
+          Samadhaan<span>.ai</span>
         </Link>
-      </div>
-
-      <div className="nav-links">
-        {userRole !== 'operator' && (
-          <Link to="/" className={`nav-item ${location.pathname === '/' ? 'active' : ''}`} style={{ textDecoration: 'none' }}>
-            {t("Report Issue")}
-          </Link>
+        {currentUser && (
+          <span className="role-pill">
+            {isOperator
+              ? <>{t('Operator', { defaultValue: 'Operator' })}{userDepartment && <span className="hide-sm"> · {userDepartment}</span>}</>
+              : t('Citizen', { defaultValue: 'Citizen' })}
+          </span>
         )}
-        {currentUser && userRole === 'operator' && (
-          <Link to="/operator" className={`nav-item ${location.pathname.startsWith('/operator') ? 'active' : ''}`} style={{ textDecoration: 'none' }}>
-            {t("Operator Dashboard")}
-          </Link>
-        )}
-        {currentUser && userRole === 'citizen' && (
-          <Link to="/dashboard" className={`nav-item ${location.pathname.startsWith('/dashboard') ? 'active' : ''}`} style={{ textDecoration: 'none' }}>
-            {t("My Dashboard")}
-          </Link>
+        {navItems.length > 0 && (
+          <nav className="app-nav" aria-label="Main">
+            {navItems.map(({ to, label, Icon, active }) => (
+              <Link key={to} to={to} className={`app-nav-item${active ? ' active' : ''}`} aria-current={active ? 'page' : undefined} title={label}>
+                <Icon size={16} /> <span className="hide-sm">{label}</span>
+              </Link>
+            ))}
+          </nav>
         )}
       </div>
 
-      <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-        <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '0.35rem', backgroundColor: '#f1f5f9', padding: '0.4rem 0.75rem', borderRadius: '8px' }}>
+      <div className="app-header-right">
+        <div className="lang-select" style={{ position: 'relative' }}>
           <Globe size={16} color="var(--text-muted)" />
-          <select 
-            onChange={handleLanguageChange} 
+          <select
+            onChange={handleLanguageChange}
             value={i18n.resolvedLanguage || 'en'}
-            style={{ background: 'transparent', border: 'none', fontSize: '0.85rem', color: 'var(--text-main)', fontWeight: 600, outline: 'none', cursor: 'pointer' }}
+            aria-label={t('Language')}
           >
-            <option value="en">English</option>
-            <option value="hi">हिंदी (Hindi)</option>
-            <option value="bn">বাংলা (Bengali)</option>
-            <option value="te">తెలుగు (Telugu)</option>
-            <option value="ta">தமிழ் (Tamil)</option>
-            <option value="mr">मराठी (Marathi)</option>
-            <option value="es">Español</option>
-            <option value="fr">Français</option>
+            {LANGUAGES.map(([code, name]) => <option key={code} value={code}>{name}</option>)}
           </select>
+          <ChevronDown size={14} color="var(--text-muted)" style={{ pointerEvents: 'none' }} />
           
           {location.pathname === '/auth' && (
             <div style={{
@@ -120,21 +167,9 @@ const AppHeader = () => {
         </div>
 
         {currentUser ? (
-          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)', fontWeight: 500 }}>
-              {currentUser.email || 'Citizen User'}
-            </span>
-            <button 
-              onClick={logout} 
-              style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.875rem', fontWeight: 500, padding: '0.5rem', borderRadius: '8px', transition: 'background-color 0.2s' }}
-              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f1f5f9'}
-              onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-            >
-              <LogOut size={16} /> {t("Logout")}
-            </button>
-          </div>
+          <AccountMenu currentUser={currentUser} userRole={userRole} userDepartment={userDepartment} logout={logout} t={t} />
         ) : (
-          <Link to="/auth" className="btn btn-primary" style={{ textDecoration: 'none', padding: '0.4rem 1rem', fontSize: '0.875rem', fontWeight: 600 }}>
+          <Link to="/auth" className="btn btn-primary" style={{ textDecoration: 'none', padding: '0.45rem 1rem', fontSize: '0.875rem', fontWeight: 600, borderRadius: 8 }}>
             {t("Login / Register")}
           </Link>
         )}

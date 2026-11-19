@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
-import { Clock, CheckCircle, Navigation, Trash2, Search, X, AlertTriangle, Calendar, MapPin, ArrowRight, UserCheck } from 'lucide-react';
+import { Clock, CheckCircle, Navigation, Trash2, Search, X, AlertTriangle, Calendar, MapPin, ArrowRight, UserCheck, ClipboardList } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { API_BASE } from '../api';
 import { deptInfo, formatRef, splitTranscript } from '../utils/grievance';
@@ -237,7 +237,9 @@ const CitizenDashboard = () => {
         </div>
       ) : grievances.length === 0 ? (
         <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', border: '1px solid var(--border)', padding: '5rem 2rem', textAlign: 'center', marginTop: '2rem' }}>
-          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📍</div>
+          <div style={{ width: 64, height: 64, borderRadius: '50%', background: '#FFF7F3', color: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem' }}>
+            <ClipboardList size={28} />
+          </div>
           <h3 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.5rem' }}>No issues reported yet</h3>
           <p style={{ color: 'var(--text-muted)', maxWidth: '400px', margin: '0 auto 2rem auto' }}>
             Report a civic issue and track its progress directly from your dashboard.

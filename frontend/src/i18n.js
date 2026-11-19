@@ -157,6 +157,11 @@ const resources = {
       "In progress": "कार्रवाई जारी",
       "You chose {{dept}}": "आपने {{dept}} चुना",
       "Options offered": "दिए गए विकल्प",
+      "Report issue": "शिकायत करें",
+      "My complaints": "मेरी शिकायतें",
+      "Account": "खाता",
+      "Operator": "अधिकारी",
+      "Citizen": "नागरिक",
       "Electricity Dept.": "बिजली विभाग",
       "Drainage Dept.": "जल निकासी विभाग",
       "Street Lights Dept.": "स्ट्रीट लाइट विभाग"
