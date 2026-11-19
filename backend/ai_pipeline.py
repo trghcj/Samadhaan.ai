@@ -51,7 +51,7 @@ def get_whisper_model(progress_callback=None):
     return whisper_model
 
 
-def process_audio_task(audio_file_path: str, user_id: str = None, reporter_name: str = None, reporter_phone: str = None, location: str = None, extra_details: str = None, progress_callback=None, before_photo_url: str = None, language: str = None):
+def process_audio_task(audio_file_path: str, user_id: str = None, reporter_name: str = None, reporter_phone: str = None, location: str = None, extra_details: str = None, progress_callback=None, before_photo_url: str = None, language: str = None, place: dict = None):
     # 1. Transcription Phase (raw transcript: asr.py never corrects or rewrites what Whisper heard)
     audio = asr.load_audio(audio_file_path)  # raises asr.AudioError (empty / corrupted / too short / silent)
     model = get_whisper_model(progress_callback)
@@ -74,20 +74,20 @@ def process_audio_task(audio_file_path: str, user_id: str = None, reporter_name:
         transcript = "[Inaudible / Empty Audio]"
 
     return route_and_save(transcript, asr_info, user_id, reporter_name, reporter_phone, location, extra_details,
-                          progress_callback, before_photo_url)
+                          progress_callback, before_photo_url, place=place)
 
 
-def process_text_task(text: str, user_id: str = None, reporter_name: str = None, reporter_phone: str = None, location: str = None, extra_details: str = None, progress_callback=None, before_photo_url: str = None):
+def process_text_task(text: str, user_id: str = None, reporter_name: str = None, reporter_phone: str = None, location: str = None, extra_details: str = None, progress_callback=None, before_photo_url: str = None, place: dict = None):
     """A typed complaint: the same classifier, routing and database save as a spoken one, without the speech stage."""
     text = (text or "").strip()
     if not text:
         raise ValueError("The complaint text is empty.")
     return route_and_save(text, None, user_id, reporter_name, reporter_phone, location, extra_details,
-                          progress_callback, before_photo_url)
+                          progress_callback, before_photo_url, place=place)
 
 
 def route_and_save(transcript, asr_info, user_id, reporter_name, reporter_phone, location, extra_details,
-                   progress_callback, before_photo_url):
+                   progress_callback, before_photo_url, place=None):
     """Classify and route a transcript (spoken or typed), then save the grievance."""
     result_dict = None
 
@@ -226,7 +226,8 @@ def route_and_save(transcript, asr_info, user_id, reporter_name, reporter_phone,
             before_photo_url=before_photo_url,
             priority=priority,
             sla_deadline=sla_deadline,
-            ai_verification_status="Pending"
+            ai_verification_status="Pending",
+            **(place or {}),  # latitude, longitude, address_line, landmark, pincode (see location.parse_place)
         )
         db.add(new_g)
         db.commit()

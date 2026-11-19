@@ -1,6 +1,7 @@
 from fastapi import FastAPI, File, UploadFile, BackgroundTasks, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from ai_pipeline import process_audio_task, process_text_task
+from location import parse_place
 import muril_classifier
 import shutil
 import os
@@ -231,7 +232,12 @@ async def upload_audio(
     location: Optional[str] = Form(None),
     extra_details: Optional[str] = Form(None),
     before_photo_url: Optional[str] = Form(None),
-    language: Optional[str] = Form(None)
+    language: Optional[str] = Form(None),
+    latitude: Optional[str] = Form(None),
+    longitude: Optional[str] = Form(None),
+    address_line: Optional[str] = Form(None),
+    landmark: Optional[str] = Form(None),
+    pincode: Optional[str] = Form(None),
 ):
     """
     Accepts audio, saves it locally, and queues the ML task in FastAPI BackgroundTasks.
@@ -239,6 +245,7 @@ async def upload_audio(
     `language` is the citizen's choice ("hi" or "en"); "auto" or nothing lets Whisper choose between Hindi and English.
     """
     language = check_language(language)
+    place = check_place(latitude, longitude, address_line, landmark, pincode)
     # Never use the client's filename as a path: two uploads would overwrite each other mid-processing,
     # and a name like "../x" could write outside temp_audio. Keep only a known audio extension.
     ext = os.path.splitext(os.path.basename(file.filename or ""))[1].lower()
@@ -256,9 +263,9 @@ async def upload_audio(
         def update_progress(msg):
             task_tracker[tid] = {"status": "processing", "step": msg}
             print(f"Task {tid} progress: {msg}")
-            
+
         try:
-            result = process_audio_task(fp, c_uid, r_name, r_phone, loc, extra, progress_callback=update_progress, before_photo_url=b_photo, language=lang)
+            result = process_audio_task(fp, c_uid, r_name, r_phone, loc, extra, progress_callback=update_progress, before_photo_url=b_photo, language=lang, place=place)
             task_tracker[tid] = {
                 "status": "success",
                 "ai_result": result
@@ -285,6 +292,13 @@ async def upload_audio(
 MAX_TEXT_CHARS = 1000
 
 
+def check_place(latitude, longitude, address_line, landmark, pincode):
+    try:
+        return parse_place(latitude, longitude, address_line, landmark, pincode)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
 def check_language(language):
     lang = (language or "auto").strip().lower()
     if lang not in ("hi", "en", "auto"):
@@ -302,9 +316,15 @@ async def submit_text(
     location: Optional[str] = Form(None),
     extra_details: Optional[str] = Form(None),
     before_photo_url: Optional[str] = Form(None),
+    latitude: Optional[str] = Form(None),
+    longitude: Optional[str] = Form(None),
+    address_line: Optional[str] = Form(None),
+    landmark: Optional[str] = Form(None),
+    pincode: Optional[str] = Form(None),
 ):
     """A typed complaint: same classifier, routing and database save as a spoken one, without the speech stage.
     Poll /api/status/{task_id} exactly as for an upload."""
+    place = check_place(latitude, longitude, address_line, landmark, pincode)
     text = text.strip()
     if not text:
         raise HTTPException(status_code=400, detail="The complaint text is empty. Please type your complaint.")
@@ -319,7 +339,7 @@ async def submit_text(
 
         try:
             result = process_text_task(text, user_id, reporter_name, reporter_phone, location, extra_details,
-                                       progress_callback=update_progress, before_photo_url=before_photo_url)
+                                       progress_callback=update_progress, before_photo_url=before_photo_url, place=place)
             task_tracker[tid] = {"status": "success", "ai_result": result}
         except Exception as e:
             task_tracker[tid] = {"status": "error", "error": str(e)}
