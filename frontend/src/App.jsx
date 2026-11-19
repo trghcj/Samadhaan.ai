@@ -5,7 +5,7 @@ import OperatorDashboard from './pages/OperatorDashboard';
 import CitizenDashboard from './pages/CitizenDashboard';
 import AuthPage from './pages/AuthPage';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { LogOut, Globe, Mic, ClipboardList, ChevronDown } from 'lucide-react';
+import { LogOut, Globe, Mic, ClipboardList, ChevronDown, Check } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { API_BASE, API_OVERRIDDEN } from './api';
 import './index.css';
@@ -30,41 +30,117 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 
 // Header Component so we can use useAuth and useLocation safely inside Router
 const LANGUAGES = [
-  ['en', 'English'], ['hi', 'हिंदी'], ['bn', 'বাংলা'], ['te', 'తెలుగు'],
-  ['ta', 'தமிழ்'], ['mr', 'मराठी'], ['es', 'Español'], ['fr', 'Français'],
+  { code: 'hi', short: 'हि', native: 'हिंदी', english: 'Hindi', group: 'india' },
+  { code: 'bn', short: 'বা', native: 'বাংলা', english: 'Bengali', group: 'india' },
+  { code: 'te', short: 'తె', native: 'తెలుగు', english: 'Telugu', group: 'india' },
+  { code: 'ta', short: 'த', native: 'தமிழ்', english: 'Tamil', group: 'india' },
+  { code: 'mr', short: 'म', native: 'मराठी', english: 'Marathi', group: 'india' },
+  { code: 'en', short: 'EN', native: 'English', english: 'English', group: 'other' },
+  { code: 'es', short: 'ES', native: 'Español', english: 'Spanish', group: 'other' },
+  { code: 'fr', short: 'FR', native: 'Français', english: 'French', group: 'other' },
 ];
 
-// Avatar button that opens a small account menu (email, role, department, log out).
-const AccountMenu = ({ currentUser, userRole, userDepartment, logout, t }) => {
-  const [open, setOpen] = useState(false);
-  const ref = useRef(null);
+// Close a popover on outside click or Esc.
+const useDismiss = (open, setOpen, ref) => {
   useEffect(() => {
-    if (!open) return;
+    if (!open) return undefined;
     const close = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
     const esc = (e) => { if (e.key === 'Escape') setOpen(false); };
     document.addEventListener('mousedown', close);
     document.addEventListener('keydown', esc);
     return () => { document.removeEventListener('mousedown', close); document.removeEventListener('keydown', esc); };
+  }, [open, setOpen, ref]);
+};
+
+// Language pill + menu (native name, English name, tick on the current one; arrow keys move between rows).
+const LanguageMenu = ({ t, i18n, children }) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  const listRef = useRef(null);
+  useDismiss(open, setOpen, ref);
+  const current = LANGUAGES.find(l => l.code === (i18n.resolvedLanguage || 'en')) || LANGUAGES[5];
+
+  useEffect(() => {
+    if (open) listRef.current?.querySelector('[aria-checked="true"]')?.focus();
   }, [open]);
 
-  const label = currentUser.displayName || currentUser.email || 'User';
-  const initial = label.trim().charAt(0).toUpperCase();
-  const isOperator = userRole === 'operator';
+  const onKeyDown = (e) => {
+    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+    e.preventDefault();
+    const items = [...listRef.current.querySelectorAll('[role="menuitemradio"]')];
+    const i = items.indexOf(document.activeElement);
+    const next = e.key === 'ArrowDown' ? (i + 1) % items.length : (i - 1 + items.length) % items.length;
+    items[next].focus();
+  };
+
+  const choose = (code) => { i18n.changeLanguage(code); setOpen(false); };
 
   return (
-    <div className="account" ref={ref}>
-      <button type="button" className="account-btn" onClick={() => setOpen(o => !o)} aria-haspopup="menu" aria-expanded={open} aria-label={t('Account', { defaultValue: 'Account' })}>
-        <span className="avatar">{initial}</span>
-        <ChevronDown size={14} className="hide-sm" />
+    <div className="hdr-popover" ref={ref}>
+      <button type="button" className="hdr-pill" onClick={() => setOpen(o => !o)} aria-haspopup="menu" aria-expanded={open}
+        aria-label={`${t('Language')}: ${current.english}`} title={t('Language')}>
+        <Globe size={16} color="var(--text-muted)" />
+        <span className="lang-short">{current.short}</span>
+        <ChevronDown size={14} color="var(--text-muted)" />
       </button>
       {open && (
-        <div className="account-menu" role="menu">
-          <div style={{ padding: '0.85rem 1rem', borderBottom: '1px solid var(--border)' }}>
-            <div style={{ fontWeight: 600, fontSize: '0.9rem', wordBreak: 'break-all' }}>{label}</div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
-              {isOperator
-                ? `${t('Operator', { defaultValue: 'Operator' })}${userDepartment ? ` · ${userDepartment}` : ''}`
-                : t('Citizen', { defaultValue: 'Citizen' })}
+        <div className="hdr-menu lang-menu" role="menu" ref={listRef} onKeyDown={onKeyDown}>
+          {[['india', t('Indian languages', { defaultValue: 'Indian languages' })], ['other', t('Other', { defaultValue: 'Other' })]].map(([group, heading]) => (
+            <div key={group} role="group" aria-label={heading}>
+              <div className="menu-heading">{heading}</div>
+              {LANGUAGES.filter(l => l.group === group).map(l => {
+                const active = l.code === current.code;
+                return (
+                  <button key={l.code} type="button" role="menuitemradio" aria-checked={active} className={`lang-item${active ? ' active' : ''}`} onClick={() => choose(l.code)} lang={l.code}>
+                    <span>
+                      <span className="lang-native">{l.native}</span>
+                      {l.native !== l.english && <span className="lang-english">{l.english}</span>}
+                    </span>
+                    {active && <Check size={16} color="var(--accent)" />}
+                  </button>
+                );
+              })}
+            </div>
+          ))}
+        </div>
+      )}
+      {children}
+    </div>
+  );
+};
+
+// Avatar + name + role chip that opens a small account menu (email, role, department, log out).
+const AccountMenu = ({ currentUser, userRole, userDepartment, logout, t }) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  useDismiss(open, setOpen, ref);
+
+  const email = currentUser.email || '';
+  const name = currentUser.displayName || email.split('@')[0] || 'User';
+  const initial = name.trim().charAt(0).toUpperCase();
+  const isOperator = userRole === 'operator';
+  const role = isOperator
+    ? `${t('Operator', { defaultValue: 'Operator' })}${userDepartment ? ` · ${userDepartment}` : ''}`
+    : t('Citizen', { defaultValue: 'Citizen' });
+
+  return (
+    <div className="hdr-popover" ref={ref}>
+      <button type="button" className="account-chip" onClick={() => setOpen(o => !o)} aria-haspopup="menu" aria-expanded={open} aria-label={t('Account', { defaultValue: 'Account' })}>
+        <span className="avatar">{initial}</span>
+        <span className="account-text hide-sm">
+          <span className="account-name">{name}</span>
+          <span className="account-role">{role}</span>
+        </span>
+        <ChevronDown size={14} color="var(--text-muted)" className="hide-sm" />
+      </button>
+      {open && (
+        <div className="hdr-menu" role="menu" style={{ width: 260 }}>
+          <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--border)', display: 'flex', gap: 12, alignItems: 'center' }}>
+            <span className="avatar" style={{ width: 40, height: 40 }}>{initial}</span>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontWeight: 600, fontSize: '0.9rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</div>
+              {email && <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{email}</div>}
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 2 }}>{role}</div>
             </div>
           </div>
           <button type="button" role="menuitem" className="menu-item" onClick={() => { setOpen(false); logout(); }}>
@@ -81,31 +157,23 @@ const AppHeader = () => {
   const location = useLocation();
   const { t, i18n } = useTranslation();
 
-  const handleLanguageChange = (e) => {
-    i18n.changeLanguage(e.target.value);
-  };
-
   const isOperator = currentUser && userRole === 'operator';
-  const navItems = isOperator ? [] : [
-    { to: '/', label: t('Report issue', { defaultValue: 'Report issue' }), Icon: Mic, active: location.pathname === '/' },
-    ...(currentUser && userRole === 'citizen'
-      ? [{ to: '/dashboard', label: t('My complaints', { defaultValue: 'My complaints' }), Icon: ClipboardList, active: location.pathname.startsWith('/dashboard') }]
-      : []),
-  ];
+  const navItems = isOperator
+    ? [{ to: '/operator', label: t('Complaint register', { defaultValue: 'Complaint register' }), Icon: ClipboardList, active: location.pathname.startsWith('/operator') }]
+    : [
+      { to: '/', label: t('Report issue', { defaultValue: 'Report issue' }), Icon: Mic, active: location.pathname === '/' },
+      ...(currentUser && userRole === 'citizen'
+        ? [{ to: '/dashboard', label: t('My complaints', { defaultValue: 'My complaints' }), Icon: ClipboardList, active: location.pathname.startsWith('/dashboard') }]
+        : []),
+    ];
 
   return (
     <header className="app-header">
+      <div className="app-header-inner">
       <div className="app-header-left">
         <Link to="/" className="brand">
           Samadhaan<span>.ai</span>
         </Link>
-        {currentUser && (
-          <span className="role-pill">
-            {isOperator
-              ? <>{t('Operator', { defaultValue: 'Operator' })}{userDepartment && <span className="hide-sm"> · {userDepartment}</span>}</>
-              : t('Citizen', { defaultValue: 'Citizen' })}
-          </span>
-        )}
         {navItems.length > 0 && (
           <nav className="app-nav" aria-label="Main">
             {navItems.map(({ to, label, Icon, active }) => (
@@ -118,17 +186,7 @@ const AppHeader = () => {
       </div>
 
       <div className="app-header-right">
-        <div className="lang-select" style={{ position: 'relative' }}>
-          <Globe size={16} color="var(--text-muted)" />
-          <select
-            onChange={handleLanguageChange}
-            value={i18n.resolvedLanguage || 'en'}
-            aria-label={t('Language')}
-          >
-            {LANGUAGES.map(([code, name]) => <option key={code} value={code}>{name}</option>)}
-          </select>
-          <ChevronDown size={14} color="var(--text-muted)" style={{ pointerEvents: 'none' }} />
-          
+        <LanguageMenu t={t} i18n={i18n}>
           {location.pathname === '/auth' && (
             <div style={{
               position: 'absolute',
@@ -164,15 +222,16 @@ const AppHeader = () => {
               `}</style>
             </div>
           )}
-        </div>
+        </LanguageMenu>
 
         {currentUser ? (
           <AccountMenu currentUser={currentUser} userRole={userRole} userDepartment={userDepartment} logout={logout} t={t} />
         ) : (
-          <Link to="/auth" className="btn btn-primary" style={{ textDecoration: 'none', padding: '0.45rem 1rem', fontSize: '0.875rem', fontWeight: 600, borderRadius: 8 }}>
+          <Link to="/auth" className="btn btn-primary" style={{ textDecoration: 'none', height: 40, padding: '0 16px', fontSize: '0.875rem', fontWeight: 600, borderRadius: 8 }}>
             {t("Login / Register")}
           </Link>
         )}
+      </div>
       </div>
     </header>
   );
