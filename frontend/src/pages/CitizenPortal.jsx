@@ -1,9 +1,21 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Mic, Square, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Mic, Square, CheckCircle, AlertTriangle, Play, Pause, RotateCcw, ImagePlus, X, MapPin, FileText, UserCheck, ArrowRight } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { API_BASE } from '../api';
+import { deptInfo, formatRef } from '../utils/grievance';
+
+const formatDuration = (s) => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, '0')}`;
+
+const DeptIcon = ({ prediction, size = 20 }) => {
+  const d = deptInfo(prediction);
+  return (
+    <span className="dept-icon" style={{ background: d.bg, color: d.color, width: size + 22, height: size + 22, borderRadius: 10, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+      <d.Icon size={size} />
+    </span>
+  );
+};
 
 // TEMPORARY (mentor demo): shows what the classifier saw. Remove this component and its
 // two usages below once the review is over.
@@ -14,7 +26,7 @@ const ConfidenceDebug = ({ result }) => {
   const row = { display: 'flex', justifyContent: 'space-between', gap: '1rem', padding: '0.15rem 0' };
   if (!open) {
     return (
-      <button type="button" className="btn btn-outline" style={{ marginTop: '1.5rem', padding: '0.35rem 1rem', fontSize: '0.85rem' }} onClick={() => setOpen(true)}>
+      <button type="button" className="link-btn muted" style={{ marginTop: '1.25rem', fontSize: '0.8rem' }} onClick={() => setOpen(true)}>
         Show details
       </button>
     );
@@ -82,13 +94,31 @@ const CitizenPortal = () => {
 
   const mediaRecorderRef = useRef(null);
   const chunksRef = useRef([]);
-  
+  const recordStartRef = useRef(0);
+  const audioElRef = useRef(null);
+  const [recordSeconds, setRecordSeconds] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  // Object URLs for playing back the recording and previewing the photo; revoked when replaced.
+  const audioUrl = useMemo(() => (audioData ? URL.createObjectURL(audioData) : null), [audioData]);
+  useEffect(() => () => { if (audioUrl) URL.revokeObjectURL(audioUrl); }, [audioUrl]);
+  const photoUrl = useMemo(() => (beforePhoto ? URL.createObjectURL(beforePhoto) : null), [beforePhoto]);
+  useEffect(() => () => { if (photoUrl) URL.revokeObjectURL(photoUrl); }, [photoUrl]);
+
+  const togglePlayback = () => {
+    const el = audioElRef.current;
+    if (!el) return;
+    if (el.paused) { el.play(); setIsPlaying(true); } else { el.pause(); setIsPlaying(false); }
+  };
+
   const { currentUser } = useAuth();
   const navigate = useNavigate();
 
   const resetToStart = () => {
     setInputMode('voice');
     setTypedText('');
+    setBeforePhoto(null);
+    setIsPlaying(false);
     setStatus('idle');
   };
 
@@ -128,12 +158,15 @@ const CitizenPortal = () => {
       mediaRecorderRef.current.onstop = async () => {
         const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
         setAudioData(blob);
+        setRecordSeconds((Date.now() - recordStartRef.current) / 1000);
+        setIsPlaying(false);
         chunksRef.current = [];
         
         setStatus('form');
       };
 
       mediaRecorderRef.current.start();
+      recordStartRef.current = Date.now();
       setIsRecording(true);
       setStatus('recording');
     } catch (err) {
@@ -307,48 +340,84 @@ const CitizenPortal = () => {
           </>
         ) : status === 'form' ? (
           <form onSubmit={submitGrievanceForm} style={{ width: '100%', textAlign: 'left' }}>
-            <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', textAlign: 'center', fontWeight: 700 }}>Just a few more details...</h2>
+            <h2 style={{ fontSize: '1.5rem', marginBottom: '0.35rem', textAlign: 'center', fontWeight: 700 }}>{t('Where is the problem?', { defaultValue: 'Where is the problem?' })}</h2>
+            <p style={{ textAlign: 'center', color: 'var(--text-muted)', marginBottom: '1.75rem', fontSize: '0.95rem' }}>
+              {t('A location helps the department reach the spot quickly.', { defaultValue: 'A location helps the department reach the spot quickly.' })}
+            </p>
+
+            {inputMode === 'voice' && audioUrl && (
+              <div className="voice-ready">
+                <button type="button" className="icon-btn" onClick={togglePlayback} aria-label={isPlaying ? 'Pause recording' : 'Play recording'}>
+                  {isPlaying ? <Pause size={16} /> : <Play size={16} style={{ marginLeft: 2 }} />}
+                </button>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 600 }}>{t('Voice recording ready', { defaultValue: 'Voice recording ready' })}</div>
+                  <div style={{ fontSize: '0.8rem', opacity: 0.8 }}>{formatDuration(recordSeconds)} · {language === 'hi' ? 'हिन्दी' : 'English'}</div>
+                </div>
+                <button type="button" className="link-btn" style={{ color: '#065F46' }} onClick={() => { setAudioData(null); setIsPlaying(false); setStatus('idle'); }}>
+                  <RotateCcw size={14} /> {t('Re-record', { defaultValue: 'Re-record' })}
+                </button>
+                <audio ref={audioElRef} src={audioUrl} onEnded={() => setIsPlaying(false)} preload="metadata" hidden />
+              </div>
+            )}
 
             {inputMode === 'text' && (
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.25rem', color: 'var(--text-muted)' }}>{t('Your complaint *', { defaultValue: 'Your complaint *' })}</label>
-                <textarea value={typedText} onChange={e => setTypedText(e.target.value)} required rows="4" maxLength={1000} dir="auto"
-                  style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-main)' }}
+              <div className="field">
+                <label className="field-label"><FileText size={14} /> {t('Your complaint *', { defaultValue: 'Your complaint *' })}</label>
+                <textarea className="input" value={typedText} onChange={e => setTypedText(e.target.value)} required rows="4" maxLength={1000} dir="auto"
                   placeholder="e.g. meri gali mein paani nahi aa raha hai / no water in my street" />
               </div>
             )}
-            
+
             {!currentUser && (
-              <>
-                <div style={{ marginBottom: '1rem' }}>
-                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.25rem', color: 'var(--text-muted)' }}>{t("Full Name *")}</label>
-                  <input type="text" value={reporterName} onChange={e => setReporterName(e.target.value)} required style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-main)' }} placeholder="E.g. Ramesh Kumar" />
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0 1rem' }}>
+                <div className="field">
+                  <label className="field-label">{t("Full Name *")}</label>
+                  <input className="input" type="text" value={reporterName} onChange={e => setReporterName(e.target.value)} required placeholder="E.g. Ramesh Kumar" />
                 </div>
-                <div style={{ marginBottom: '1rem' }}>
-                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.25rem', color: 'var(--text-muted)' }}>{t("Phone Number *")}</label>
-                  <input type="tel" value={reporterPhone} onChange={e => setReporterPhone(e.target.value)} required style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-main)' }} placeholder="E.g. +91 98765 43210" />
+                <div className="field">
+                  <label className="field-label">{t("Phone Number *")}</label>
+                  <input className="input" type="tel" value={reporterPhone} onChange={e => setReporterPhone(e.target.value)} required placeholder="E.g. +91 98765 43210" />
                 </div>
-              </>
+              </div>
             )}
-            
-            <div style={{ marginBottom: '1rem' }}>
-              <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.25rem', color: 'var(--text-muted)' }}>{t("Location / Village *")}</label>
-              <input type="text" value={location} onChange={e => setLocation(e.target.value)} required style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-main)' }} placeholder="E.g. Near main square, Palampur" />
+
+            <div className="field">
+              <label className="field-label"><MapPin size={14} /> {t("Location / Village *")}</label>
+              <input className="input" type="text" value={location} onChange={e => setLocation(e.target.value)} required placeholder="E.g. Near main square, Palampur" />
             </div>
 
-            <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.25rem', color: 'var(--text-muted)' }}>{t("Extra Details (Optional)")}</label>
-              <textarea value={extraDetails} onChange={e => setExtraDetails(e.target.value)} rows="3" style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-main)' }} placeholder="Any other context we should know?" />
-            </div>
-            
-            <div style={{ marginBottom: '2rem' }}>
-              <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.25rem', color: 'var(--text-muted)' }}>{t('"Before" Photo (Optional)')}</label>
-              <input type="file" accept="image/*" onChange={(e) => setBeforePhoto(e.target.files[0])} style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-main)' }} />
+            <div className="field">
+              <label className="field-label">{t('Extra details', { defaultValue: 'Extra details' })} <span className="optional">· {t('optional', { defaultValue: 'optional' })}</span></label>
+              <textarea className="input" value={extraDetails} onChange={e => setExtraDetails(e.target.value)} rows="2" placeholder={t('Landmark, since when, how many houses affected…', { defaultValue: 'Landmark, since when, how many houses affected…' })} />
             </div>
 
-            <div style={{ display: 'flex', gap: '1rem' }}>
-              <button type="button" className="btn btn-outline" style={{ flex: 1, padding: '1rem' }} onClick={resetToStart}>{t("Cancel")}</button>
-              <button type="submit" className="btn btn-primary" style={{ flex: 2, padding: '1rem' }}>{t("Submit Grievance")}</button>
+            <div className="field" style={{ marginBottom: '1.75rem' }}>
+              <label className="field-label">{t('Photo of the problem', { defaultValue: 'Photo of the problem' })} <span className="optional">· {t('optional', { defaultValue: 'optional' })}</span></label>
+              {photoUrl ? (
+                <div className="photo-preview">
+                  <img src={photoUrl} alt="" />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 600, fontSize: '0.9rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{beforePhoto.name}</div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{(beforePhoto.size / 1024 / 1024).toFixed(1)} MB</div>
+                  </div>
+                  <button type="button" className="icon-btn" style={{ color: '#6B7280' }} onClick={() => setBeforePhoto(null)} aria-label="Remove photo"><X size={16} /></button>
+                </div>
+              ) : (
+                <label className="photo-drop">
+                  <span className="photo-icon"><ImagePlus size={20} /></span>
+                  <span>
+                    <span style={{ display: 'block', fontWeight: 600, color: '#111827' }}>{t('Add a photo', { defaultValue: 'Add a photo' })}</span>
+                    <span style={{ fontSize: '0.82rem' }}>{t('It helps the officer find and verify the issue', { defaultValue: 'It helps the officer find and verify the issue' })}</span>
+                  </span>
+                  <input type="file" accept="image/*" hidden onChange={(e) => setBeforePhoto(e.target.files[0] || null)} />
+                </label>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              <button type="button" className="btn btn-outline" style={{ flex: 1, padding: '0.9rem', borderRadius: 10 }} onClick={resetToStart}>{t("Cancel")}</button>
+              <button type="submit" className="btn btn-primary" style={{ flex: 2, padding: '0.9rem', borderRadius: 10 }}>{t("Submit Grievance")}</button>
             </div>
           </form>
         ) : status === 'processing' ? (
@@ -358,10 +427,17 @@ const CitizenPortal = () => {
             <p style={{ fontSize: '1.125rem', fontWeight: 500 }}>{statusStep || t("Analyzing grievance...")}</p>
             <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
           </div>
-        ) : status === 'success' ? (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
-            <CheckCircle size={72} style={{ marginBottom: '1.5rem', color: '#10B981' }} />
-            <h2 style={{ color: 'var(--text-main)', marginBottom: '0.5rem' }}>{t("Grievance Routed")}</h2>
+        ) : status === 'success' ? (() => {
+          const toOfficer = result?.confidence_level === 'Low' || result?.prediction_set === 'Unclear';
+          const accent = toOfficer ? '#D97706' : '#10B981';
+          return (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', width: '100%' }}>
+            <div style={{ width: 76, height: 76, borderRadius: '50%', background: toOfficer ? '#FEF3C7' : '#D1FAE5', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.25rem' }}>
+              {toOfficer ? <UserCheck size={38} color={accent} /> : <CheckCircle size={40} color={accent} />}
+            </div>
+            <h2 style={{ color: 'var(--text-main)', marginBottom: '0.5rem' }}>
+              {toOfficer ? t('Sent to an officer', { defaultValue: 'Sent to an officer' }) : t('Complaint registered', { defaultValue: 'Complaint registered' })}
+            </h2>
             {result?.confidence_level === 'Low' ? (
               <p style={{ color: 'var(--text-muted)' }}>{t("We were unable to confidently categorize your issue automatically. It has been sent directly to a Human Operator for manual review.")}</p>
             ) : result?.prediction_set === 'Unclear' && result?.confidence_level === 'High' ? (
@@ -375,40 +451,93 @@ const CitizenPortal = () => {
                 <strong>{result?.prediction_set ? t(`${result.prediction_set} Dept.`, { defaultValue: `${result.prediction_set} Department` }) : 'relevant department'}</strong>.
               </p>
             )}
-            <TranscriptBox result={result} />
-            <ConfidenceDebug result={result} />
-            <button className="btn btn-outline" style={{ marginTop: '2rem' }} onClick={resetToStart}>{t("Report Another")}</button>
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <AlertTriangle size={72} style={{ marginBottom: '1.5rem', color: '#F59E0B' }} />
-            <h2 style={{ color: 'var(--text-main)', marginBottom: '0.5rem', textAlign: 'center' }}>
-              {result?.prediction_set === 'Error' ? 'Analysis Failed' : 'We Need More Info'}
-            </h2>
-            {result?.prediction_set === 'Error' ? (
-              <p style={{ color: 'var(--text-muted)', textAlign: 'center' }}>
-                {t("The AI encountered an error:")} <br/><strong style={{color: '#EF4444'}}>{result?.error || 'Unknown classification error'}</strong>
+            <div className="summary">
+              {result?.id !== undefined && (
+                <div className="summary-row">
+                  <span className="k">{t('Reference number', { defaultValue: 'Reference number' })}</span>
+                  <span className="v" style={{ fontFamily: 'ui-monospace, Consolas, monospace', fontSize: '1.05rem' }}>{formatRef(result.id)}</span>
+                </div>
+              )}
+              <div className="summary-row">
+                <span className="k">{t('Handled by', { defaultValue: 'Handled by' })}</span>
+                <span className="v">
+                  {toOfficer ? (
+                    <><UserCheck size={16} color={accent} /> {t('Officer review', { defaultValue: 'Officer review' })}</>
+                  ) : (
+                    <><DeptIcon prediction={result?.prediction_set} size={14} /> {t(`${result?.prediction_set} Dept.`, { defaultValue: `${result?.prediction_set} Department` })}</>
+                  )}
+                </span>
+              </div>
+              {result?.confidence_level === 'Confirmed by citizen' && (
+                <div className="summary-row">
+                  <span className="k">{t('Department chosen by', { defaultValue: 'Department chosen by' })}</span>
+                  <span className="v">{t('You', { defaultValue: 'You' })}</span>
+                </div>
+              )}
+              {location && (
+                <div className="summary-row">
+                  <span className="k">{t('Location', { defaultValue: 'Location' })}</span>
+                  <span className="v"><MapPin size={14} color="#6B7280" /> {location}</span>
+                </div>
+              )}
+            </div>
+            {result?.id !== undefined && (
+              <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: '0.6rem' }}>
+                {t('Keep this number to follow up on your complaint.', { defaultValue: 'Keep this number to follow up on your complaint.' })}
               </p>
+            )}
+            <TranscriptBox result={result} />
+            <div style={{ display: 'flex', gap: '0.75rem', width: '100%', marginTop: '1.75rem', flexWrap: 'wrap' }}>
+              {currentUser && (
+                <button className="btn btn-primary" style={{ flex: '2 1 200px', borderRadius: 10 }} onClick={() => navigate('/dashboard')}>
+                  {t('Track on my dashboard', { defaultValue: 'Track on my dashboard' })} <ArrowRight size={16} />
+                </button>
+              )}
+              <button className="btn btn-outline" style={{ flex: '1 1 150px', borderRadius: 10 }} onClick={resetToStart}>{t("Report Another")}</button>
+            </div>
+            <ConfidenceDebug result={result} />
+          </div>
+          );
+        })() : (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+            {result?.prediction_set === 'Error' ? (
+              <>
+                <AlertTriangle size={56} style={{ marginBottom: '1.25rem', color: '#EF4444' }} />
+                <h2 style={{ color: 'var(--text-main)', marginBottom: '0.5rem', textAlign: 'center' }}>{t('Analysis failed', { defaultValue: 'Analysis failed' })}</h2>
+                <p style={{ color: 'var(--text-muted)', textAlign: 'center' }}>
+                  {t("The AI encountered an error:")} <br/><strong style={{color: '#EF4444'}}>{result?.error || 'Unknown classification error'}</strong>
+                </p>
+                <button className="btn btn-outline" style={{ marginTop: '1.5rem', borderRadius: 10 }} onClick={resetToStart}>{t("Start Over")}</button>
+              </>
             ) : (
               <div style={{ width: '100%' }}>
-                <div style={{ padding: '1rem', backgroundColor: '#FEF3C7', borderRadius: 'var(--radius-sm)', color: '#92400E', marginBottom: '1.5rem' }}>
-                  <strong>{t("Question from AI:")}</strong><br/>
-                  {result?.clarifying_question || "We detected multiple possible departments. Could you provide a bit more detail to help us route this correctly?"}
-                </div>
+                <h2 style={{ color: 'var(--text-main)', marginBottom: '0.35rem', textAlign: 'center', fontSize: '1.5rem' }}>
+                  {t('Which department should handle this?', { defaultValue: 'Which department should handle this?' })}
+                </h2>
+                <p style={{ color: 'var(--text-muted)', textAlign: 'center', fontSize: '0.95rem' }}>
+                  {t('Your complaint could belong to more than one department. Pick the one that fits best.', { defaultValue: 'Your complaint could belong to more than one department. Pick the one that fits best.' })}
+                </p>
                 <TranscriptBox result={result} />
-            <ConfidenceDebug result={result} />
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1rem' }}>
-                  {(result?.options?.length ? result.options : DEFAULT_OPTIONS).map(dept => (
-                    <button key={dept} className="btn btn-primary" style={{ width: '100%', padding: '1rem' }} onClick={() => submitClarification(dept)}>
-                      {t(`${dept} Dept.`, { defaultValue: `${dept} Department` })}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', margin: '1.5rem 0 1rem' }}>
+                  {(result?.options?.length ? result.options : DEFAULT_OPTIONS).map((dept, i) => (
+                    <button key={dept} type="button" className={`choice-card${i === 0 ? ' top' : ''}`} onClick={() => submitClarification(dept)}>
+                      <DeptIcon prediction={dept} />
+                      <span style={{ flex: 1 }}>{t(`${dept} Dept.`, { defaultValue: `${dept} Department` })}</span>
+                      {i === 0 && result?.options?.length > 0 && (
+                        <span className="tag" style={{ background: 'var(--accent)', color: '#fff' }}>{t('Most likely', { defaultValue: 'Most likely' })}</span>
+                      )}
+                      <ArrowRight size={16} color="#9CA3AF" />
                     </button>
                   ))}
-                  <button className="btn btn-outline" style={{ width: '100%', padding: '1rem' }} onClick={() => submitClarification('none_of_these')}>
-                    {t("None of these", { defaultValue: 'None of these' })}
-                  </button>
                 </div>
-                <button className="btn btn-outline" style={{ width: '100%' }} onClick={resetToStart}>{t("Start Over")}</button>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                  <button type="button" className="link-btn" onClick={() => submitClarification('none_of_these')}>
+                    <UserCheck size={15} /> {t('None of these – let an officer decide', { defaultValue: 'None of these – let an officer decide' })}
+                  </button>
+                  <button type="button" className="link-btn muted" onClick={resetToStart}><RotateCcw size={14} /> {t("Start Over")}</button>
+                </div>
+                <div style={{ textAlign: 'center' }}><ConfidenceDebug result={result} /></div>
               </div>
             )}
           </div>

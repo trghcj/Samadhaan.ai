@@ -1,20 +1,39 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
-import { Clock, CheckCircle, Navigation, Trash2, Search, X, AlertTriangle, ChevronDown, Calendar, MapPin, Tag, FileText, ArrowRight } from 'lucide-react';
+import { Clock, CheckCircle, Navigation, Trash2, Search, X, AlertTriangle, Calendar, MapPin, ArrowRight, UserCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { API_BASE } from '../api';
+import { deptInfo, formatRef, splitTranscript } from '../utils/grievance';
+
+const CATEGORY_LABELS = { Water: 'Water Supply', Roads: 'Roads', Electricity: 'Electricity', Sanitation: 'Sanitation', Drainage: 'Drainage', 'Street Lights': 'Street Lights', Unclear: 'Under officer review' };
 
 const getCategoryInfo = (prediction) => {
-  const pred = (prediction || '').toLowerCase();
-  if (pred.includes('water')) return { icon: '💧', label: 'Water Issue' };
-  if (pred.includes('road')) return { icon: '🛣️', label: 'Road Damage' };
-  if (pred.includes('electric')) return { icon: '⚡', label: 'Electricity' };
-  if (pred.includes('sanitation') || pred.includes('waste')) return { icon: '🗑️', label: 'Sanitation' };
-  if (pred.includes('drainage')) return { icon: '🚰', label: 'Drainage' };
-  if (pred.includes('light')) return { icon: '💡', label: 'Streetlight' };
-  if (pred.includes('error') || pred.includes('unclear') || pred.includes('unknown')) return { icon: '⚠️', label: 'Uncategorized Issue' };
-  return { icon: '📄', label: prediction || 'Reported Issue' };
+  const d = deptInfo(prediction);
+  return { ...d, label: CATEGORY_LABELS[d.key] || prediction || 'Reported Issue' };
+};
+
+const CategoryIcon = ({ prediction, size = 18 }) => {
+  const d = deptInfo(prediction);
+  return (
+    <span style={{ width: size + 18, height: size + 18, borderRadius: 10, background: d.bg, color: d.color, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+      <d.Icon size={size} />
+    </span>
+  );
+};
+
+// "You chose Sanitation" / "Sent to an officer": the citizen's answer, shown as a chip instead of raw text.
+const ClarificationChip = ({ clarification, t }) => {
+  if (!clarification || clarification.type === 'other') return null;
+  const chose = clarification.type === 'chose';
+  return (
+    <span className="tag" style={{ background: chose ? '#EFF6FF' : '#FFFBEB', color: chose ? '#1D4ED8' : '#B45309' }}>
+      <UserCheck size={12} />
+      {chose
+        ? t('You chose {{dept}}', { dept: clarification.choice, defaultValue: 'You chose {{dept}}' })
+        : t('Sent to an officer', { defaultValue: 'Sent to an officer' })}
+    </span>
+  );
 };
 
 
@@ -25,7 +44,7 @@ const CitizenDashboard = () => {
     if (g.is_resolved) return { id: 'resolved', label: t("Resolved"), color: '#10B981', bg: '#D1FAE5', icon: <CheckCircle size={14} /> };
     if (g.ai_verification_status === 'Rejected') return { id: 'rejected', label: t("Rejected"), color: '#EF4444', bg: '#FEE2E2', icon: <AlertTriangle size={14} /> };
     if (g.ai_verification_status === 'Verified') return { id: 'resolved', label: t("Resolved"), color: '#10B981', bg: '#D1FAE5', icon: <CheckCircle size={14} /> }; // fallback
-    return { id: 'pending', label: t("Pending") + " Review", color: '#F59E0B', bg: '#FEF3C7', icon: <Clock size={14} /> };
+    return { id: 'pending', label: t('In progress', { defaultValue: 'In progress' }), color: '#B45309', bg: '#FEF3C7', icon: <Clock size={14} /> };
   };
     const [grievances, setGrievances] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -240,6 +259,7 @@ const CitizenDashboard = () => {
           {filteredAndSorted.map(g => {
             const cat = getCategoryInfo(g.prediction);
             const status = getStatusInfo(g);
+            const { complaint, clarification } = splitTranscript(g.transcript);
             return (
               <div 
                 key={g.id} 
@@ -258,23 +278,29 @@ const CitizenDashboard = () => {
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', marginBottom: '0.75rem' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <span style={{ fontSize: '1.5rem' }}>{cat.icon}</span>
-                    <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-main)', margin: 0 }}>{cat.label}</h3>
+                    <CategoryIcon prediction={g.prediction} />
+                    <div>
+                      <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-main)', margin: 0 }}>{cat.label}</h3>
+                      <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontFamily: 'ui-monospace, Consolas, monospace' }}>{formatRef(g.id)}</span>
+                    </div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', padding: '0.35rem 0.75rem', backgroundColor: status.bg, color: status.color, borderRadius: '20px', fontSize: '0.8rem', fontWeight: 700, gap: '0.35rem' }}>
                     {status.icon} {status.label}
                   </div>
                 </div>
                 
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', marginBottom: '1.25rem', paddingLeft: '2.25rem' }}>
-                  {g.transcript}
+                <p dir="auto" style={{ color: '#374151', fontSize: '0.95rem', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', marginBottom: '0.75rem' }}>
+                  {complaint}
                 </p>
-                
+                {clarification && <div style={{ marginBottom: '1rem' }}><ClarificationChip clarification={clarification} t={t} /></div>}
+
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border)', paddingTop: '1rem', marginTop: 'auto' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: 500 }}>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                      <Tag size={14} /> {(g.prediction || 'Unknown').replace('Department', '').trim()} Dept.
-                    </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: 500, flexWrap: 'wrap' }}>
+                    {g.location && (
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                        <MapPin size={14} /> {g.location}
+                      </span>
+                    )}
                     <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                       <Calendar size={14} /> {new Date(g.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                     </span>
@@ -284,12 +310,13 @@ const CitizenDashboard = () => {
                     <span style={{ color: 'var(--accent)', fontWeight: 600, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                       {t("View Details")} <ArrowRight size={14} />
                     </span>
-                    <button 
+                    <button
                       onClick={(e) => handleDeleteClick(e, g.id)}
-                      style={{ background: 'none', border: 'none', color: '#cbd5e1', cursor: 'pointer', padding: '0.25rem', transition: 'color 0.2s' }} 
-                      onMouseOver={(e) => e.currentTarget.style.color = '#EF4444'}
-                      onMouseOut={(e) => e.currentTarget.style.color = '#cbd5e1'}
-                      title="Delete Report"
+                      style={{ background: 'none', border: '1px solid transparent', borderRadius: 8, color: '#9CA3AF', cursor: 'pointer', padding: '0.4rem', display: 'flex', transition: 'all 0.15s' }}
+                      onMouseOver={(e) => { e.currentTarget.style.color = '#EF4444'; e.currentTarget.style.background = '#FEF2F2'; e.currentTarget.style.borderColor = '#FECACA'; }}
+                      onMouseOut={(e) => { e.currentTarget.style.color = '#9CA3AF'; e.currentTarget.style.background = 'none'; e.currentTarget.style.borderColor = 'transparent'; }}
+                      title="Delete report"
+                      aria-label="Delete report"
                     >
                       <Trash2 size={16} />
                     </button>
@@ -312,13 +339,13 @@ const CitizenDashboard = () => {
             <div style={{ padding: '1.5rem 2rem', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', position: 'sticky', top: 0, backgroundColor: '#fff', zIndex: 10, borderRadius: '20px 20px 0 0' }}>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
-                  <span style={{ fontSize: '1.75rem' }}>{getCategoryInfo(selectedIssue.prediction).icon}</span>
+                  <CategoryIcon prediction={selectedIssue.prediction} size={20} />
                   <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
                     {getCategoryInfo(selectedIssue.prediction).label}
                   </h2>
                 </div>
                 <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', fontFamily: 'monospace' }}>
-                  Report ID: #{selectedIssue.id.toString().padStart(6, '0')}
+                  {t('Reference number', { defaultValue: 'Reference number' })}: {formatRef(selectedIssue.id)}
                 </div>
               </div>
               <button onClick={() => setSelectedIssue(null)} style={{ background: '#f1f5f9', border: 'none', borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--text-main)' }}>
@@ -357,11 +384,22 @@ const CitizenDashboard = () => {
               {/* Full Description */}
               <div>
                 <h4 style={{ fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text-muted)', fontWeight: 700, marginBottom: '0.75rem' }}>Report Details</h4>
-                <div style={{ backgroundColor: '#f8fafc', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border)' }}>
-                  <p style={{ color: 'var(--text-main)', fontSize: '1rem', lineHeight: 1.6, margin: 0 }}>
-                    "{selectedIssue.transcript}"
-                  </p>
-                </div>
+                {(() => {
+                  const { complaint, clarification } = splitTranscript(selectedIssue.transcript);
+                  return (
+                    <div style={{ backgroundColor: '#f8fafc', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border)' }}>
+                      <p dir="auto" style={{ color: 'var(--text-main)', fontSize: '1rem', lineHeight: 1.6, margin: 0, whiteSpace: 'pre-wrap' }}>
+                        {complaint}
+                      </p>
+                      {clarification && (
+                        <div style={{ marginTop: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                          <ClarificationChip clarification={clarification} t={t} />
+                          {clarification.offered && <span>{t('Options offered', { defaultValue: 'Options offered' })}: {clarification.offered.join(', ')}</span>}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* Metadata Grid */}

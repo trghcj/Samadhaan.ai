@@ -27,5 +27,8 @@ __pycache__/
 *.pyc
 .pytest_cache/
 
+# Trained model weights (about 1 GB; too big for GitHub)
+research/outputs/**/model/
+
 # Colab run downloads (result zips)
 research/colab_runs/

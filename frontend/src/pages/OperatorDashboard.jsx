@@ -1,34 +1,55 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Filter, Clock, AlertTriangle, CheckCircle, Search, X, ShieldAlert, ShieldCheck, Activity, Calendar, MapPin, Download, RefreshCw, LayoutDashboard } from 'lucide-react';
+import { Clock, CheckCircle, Search, X, ShieldAlert, Activity, Calendar, MapPin, Download, RefreshCw, ImagePlus, PlayCircle, Undo2, UserCheck, Inbox } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { API_BASE } from '../api';
+import { deptInfo, formatRef, splitTranscript, routingInfo, TONE_COLORS, slaInfo } from '../utils/grievance';
 
-// Helper for category icons
-const getCategoryIcon = (prediction) => {
-  const p = (prediction || '').toLowerCase();
-  if (p.includes('water')) return '💧';
-  if (p.includes('road')) return '🛣️';
-  if (p.includes('electric')) return '⚡';
-  if (p.includes('sanitation') || p.includes('waste')) return '🗑️';
-  if (p.includes('drainage')) return '🚰';
-  if (p.includes('light')) return '💡';
-  return '📄';
+const TABS = [
+  { id: 'open', label: 'Open' },
+  { id: 'inProgress', label: 'In progress' },
+  { id: 'flagged', label: 'Flagged' },
+  { id: 'resolved', label: 'Resolved' },
+];
+
+const ROUTING_FILTERS = [
+  { id: 'all', label: 'All routing' },
+  { id: 'auto', label: 'Auto-routed' },
+  { id: 'citizen', label: 'Citizen chose' },
+  { id: 'officer', label: 'Needs officer' },
+  { id: 'waiting', label: 'Awaiting citizen' },
+  { id: 'scope', label: 'Out of scope' },
+];
+
+const sectionTitle = { fontSize: '0.72rem', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.6rem' };
+
+const DeptBadge = ({ prediction, outOfScope }) => {
+  const d = deptInfo(prediction);
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontWeight: 600, fontSize: '0.85rem', color: '#111827', whiteSpace: 'nowrap' }}>
+      <span style={{ width: 26, height: 26, borderRadius: 7, background: d.bg, color: d.color, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+        <d.Icon size={14} />
+      </span>
+      {outOfScope ? 'Out of scope' : d.key}
+    </span>
+  );
 };
 
-// The model was sure the complaint matches none of the departments (vague or out of scope; it cannot tell which) (class "Unclear" with High confidence).
-// Told apart from unsure ones, which keep the label "Unclear".
-const isOutOfScope = (g) => g.prediction === 'Unclear' && g.confidence === 'High';
-const categoryLabel = (g, fallback) => (isOutOfScope(g) ? 'Out of scope' : (g.prediction || fallback).replace('Department', '').trim());
+const RoutingTag = ({ g }) => {
+  const r = routingInfo(g);
+  const c = TONE_COLORS[r.tone];
+  return <span className="tag" style={{ background: c.bg, color: c.color }}>{r.label}</span>;
+};
 
 const OperatorDashboard = () => {
   const { currentUser, userDepartment } = useAuth();
-  
+
   const [grievances, setGrievances] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeFilters, setActiveFilters] = useState([]); // Array of string filters
-  
-  // Local state to simulate "In Progress" without altering backend DB schema
+  const [activeTab, setActiveTab] = useState('open');
+  const [routingFilter, setRoutingFilter] = useState('all');
+
+  // "In progress" lives in this browser only (no backend field for it yet).
   const [inProgressIds, setInProgressIds] = useState(() => {
     try { return new Set(JSON.parse(localStorage.getItem('inProgressIds') || '[]')); }
     catch { return new Set(); }
@@ -38,8 +59,9 @@ const OperatorDashboard = () => {
   const [reviewNotes, setReviewNotes] = useState('');
   const [afterPhoto, setAfterPhoto] = useState(null);
   const [resolving, setResolving] = useState(false);
-  const [draggedItem, setDraggedItem] = useState(null);
-  const [dragOverCol, setDragOverCol] = useState(null);
+
+  const afterPhotoUrl = useMemo(() => (afterPhoto ? URL.createObjectURL(afterPhoto) : null), [afterPhoto]);
+  useEffect(() => () => { if (afterPhotoUrl) URL.revokeObjectURL(afterPhotoUrl); }, [afterPhotoUrl]);
 
   const fetchGrievances = async () => {
     setLoading(true);
@@ -47,8 +69,7 @@ const OperatorDashboard = () => {
       const url = currentUser ? `${API_BASE}/api/grievances?uid=${currentUser.uid}` : `${API_BASE}/api/grievances`;
       const response = await fetch(url);
       const data = await response.json();
-      if (Array.isArray(data)) setGrievances(data);
-      else setGrievances([]);
+      setGrievances(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Failed to fetch grievances", err);
     }
@@ -57,14 +78,19 @@ const OperatorDashboard = () => {
 
   useEffect(() => { fetchGrievances(); }, [currentUser]);
 
-  // Persist In Progress state
   useEffect(() => {
-    localStorage.setItem('inProgressIds', JSON.stringify(Array.from(inProgressIds)));
+    try { localStorage.setItem('inProgressIds', JSON.stringify(Array.from(inProgressIds))); } catch { /* storage unavailable */ }
   }, [inProgressIds]);
+
+  const closeDrawer = () => { setSelectedGrievance(null); setReviewNotes(''); setAfterPhoto(null); };
+
+  const setInProgress = (id, on) => {
+    setInProgressIds(prev => { const n = new Set(prev); if (on) n.add(id); else n.delete(id); return n; });
+  };
 
   const handleResolve = async () => {
     if (!afterPhoto && !window.confirm("You are resolving this without an 'After' photo. AI Verification will be skipped. Proceed?")) return;
-    
+
     setResolving(true);
     let uploadedUrl = null;
     if (afterPhoto) {
@@ -86,18 +112,15 @@ const OperatorDashboard = () => {
         body: JSON.stringify({ resolution_notes: reviewNotes, after_photo_url: uploadedUrl })
       });
       const data = await response.json();
-      
+
       if (data.status === 'error') {
         alert(`AI Verification Failed:\n\n${data.reason}\n\nPlease upload a valid photo showing the exact issue repaired.`);
       } else {
-        alert("Issue successfully resolved and verified!");
-        setSelectedGrievance(null);
-        setReviewNotes('');
-        setAfterPhoto(null);
-        setInProgressIds(prev => { const n = new Set(prev); n.delete(selectedGrievance.id); return n; });
+        setInProgress(selectedGrievance.id, false);
+        closeDrawer();
         fetchGrievances();
       }
-    } catch(err) {
+    } catch {
       alert("Failed to connect to server for resolution.");
     }
     setResolving(false);
@@ -125,440 +148,279 @@ const OperatorDashboard = () => {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.setAttribute('href', url);
-    a.setAttribute('download', `complaints_export_${new Date().toISOString().slice(0,10)}.csv`);
+    a.setAttribute('download', `complaints_export_${new Date().toISOString().slice(0, 10)}.csv`);
     a.click();
   };
 
-  const processedData = useMemo(() => {
+  const { byTab, counts } = useMemo(() => {
+    const tabOf = (g) => {
+      if (g.is_resolved) return 'resolved';
+      if (g.ai_verification_status === 'Rejected') return 'flagged';
+      if (inProgressIds.has(g.id)) return 'inProgress';
+      return 'open';
+    };
     let filtered = grievances;
-    
-    // 1. Search text filter (AND)
     if (searchTerm) {
-      const q = searchTerm.toLowerCase();
-      filtered = filtered.filter(g => 
-        (g.transcript||'').toLowerCase().includes(q) || 
-        g.id.toString().includes(q) || 
-        (g.location||'').toLowerCase().includes(q)
+      const q = searchTerm.toLowerCase().replace(/^#0*/, '');
+      filtered = filtered.filter(g =>
+        (g.transcript || '').toLowerCase().includes(q) ||
+        g.id.toString().includes(q) ||
+        (g.location || '').toLowerCase().includes(q)
       );
     }
-    
-    // 2. Chip filters (OR logic between active chips to allow cumulative filtering)
-    if (activeFilters.length > 0) {
-      filtered = filtered.filter(g => {
-        let match = false;
-        if (activeFilters.includes('High Priority') && (g.priority === 'High' || g.priority === 'Critical')) match = true;
-        if (activeFilters.includes('Fraud Alert') && g.ai_verification_status === 'Rejected') match = true;
-        if (activeFilters.includes('High Confidence') && (g.confidence === 'High' || g.confidence === 'Confirmed by citizen')) match = true;
-        return match;
-      });
-    }
+    if (routingFilter !== 'all') filtered = filtered.filter(g => routingInfo(g).tone === routingFilter);
 
-    const toReview = [];
-    const inProgress = [];
-    const flagged = [];
-    const resolved = [];
+    const groups = { open: [], inProgress: [], flagged: [], resolved: [] };
+    filtered.forEach(g => groups[tabOf(g)].push(g));
+    // Open work: soonest deadline first. Resolved: most recently resolved first.
+    const due = (g) => (g.sla_deadline ? new Date(g.sla_deadline + 'Z').getTime() : Infinity);
+    ['open', 'inProgress', 'flagged'].forEach(k => groups[k].sort((a, b) => due(a) - due(b)));
+    groups.resolved.sort((a, b) => new Date(b.resolved_at || b.created_at) - new Date(a.resolved_at || a.created_at));
 
-    filtered.forEach(g => {
-      if (g.is_resolved) {
-        resolved.push(g);
-      } else if (g.ai_verification_status === 'Rejected') {
-        flagged.push(g);
-      } else if (inProgressIds.has(g.id)) {
-        inProgress.push(g);
-      } else {
-        toReview.push(g);
-      }
-    });
+    return { byTab: groups, counts: Object.fromEntries(Object.entries(groups).map(([k, v]) => [k, v.length])) };
+  }, [grievances, searchTerm, routingFilter, inProgressIds]);
 
-    return { toReview, inProgress, flagged, resolved, total: filtered.length, resolvedToday: resolved.length };
-  }, [grievances, searchTerm, activeFilters, inProgressIds]);
-
-  const toggleFilter = (f) => {
-    setActiveFilters(prev => prev.includes(f) ? prev.filter(x => x !== f) : [...prev, f]);
-  };
-
-  const getSlaInfo = (deadline) => {
-    if (!deadline) return { text: "No SLA", color: "var(--text-muted)", urgent: false };
-    const diffHours = (new Date(deadline + 'Z') - new Date()) / 3600000;
-    if (diffHours < 0) return { text: "OVERDUE", color: "#DC2626", urgent: true };
-    if (diffHours < 24) return { text: `${Math.floor(diffHours)}h left`, color: "#EA580C", urgent: true };
-    return { text: `${Math.floor(diffHours/24)}d left`, color: "#16A34A", urgent: false };
-  };
-
-  const getPriorityColor = (p) => {
-    if (p === 'Critical' || p === 'High') return '#DC2626';
-    if (p === 'Medium') return '#EAB308';
-    return '#6B7280';
-  };
-
-  // Drag and Drop Handlers
-  const handleDragStart = (e, g, sourceCol) => {
-    setDraggedItem({ grievance: g, sourceCol });
-    e.dataTransfer.effectAllowed = 'move';
-    e.currentTarget.style.opacity = '0.4';
-  };
-
-  const handleDragEnd = (e) => {
-    e.currentTarget.style.opacity = '1';
-    setDraggedItem(null);
-    setDragOverCol(null);
-  };
-
-  const handleDragOver = (e, colId) => {
-    e.preventDefault();
-    if (dragOverCol !== colId) setDragOverCol(colId);
-  };
-
-  const handleDrop = (e, colId) => {
-    e.preventDefault();
-    setDragOverCol(null);
-    if (!draggedItem) return;
-    
-    const { grievance, sourceCol } = draggedItem;
-    if (sourceCol === colId) return;
-
-    if (colId === 'inProgress') {
-      if (grievance.is_resolved) return; 
-      setInProgressIds(prev => new Set(prev).add(grievance.id));
-    } 
-    else if (colId === 'toReview') {
-      if (grievance.is_resolved) return;
-      setInProgressIds(prev => { const n = new Set(prev); n.delete(grievance.id); return n; });
-    }
-    else if (colId === 'resolved') {
-      setSelectedGrievance(grievance);
-    }
-  };
-
-  const renderCard = (g, colId) => {
-    const sla = getSlaInfo(g.sla_deadline);
-    const priColor = getPriorityColor(g.priority);
-    const confScore = Math.round((g.confidence_score || 0.8) * 100);
-    const isFraud = g.ai_verification_status === 'Rejected';
-    
-    return (
-      <div 
-        key={g.id} 
-        draggable
-        onDragStart={(e) => handleDragStart(e, g, colId)}
-        onDragEnd={handleDragEnd}
-        onClick={() => setSelectedGrievance(g)}
-        style={{ 
-          backgroundColor: '#fff', 
-          borderRadius: '10px', 
-          padding: '1rem', 
-          marginBottom: '1rem', 
-          cursor: 'grab', 
-          boxShadow: '0 2px 4px rgba(0,0,0,0.04)',
-          border: '1px solid #E5E7EB',
-          borderLeft: `4px solid ${priColor}`,
-          position: 'relative'
-        }}
-        className="op-card"
-      >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#6B7280' }}>#{g.id}</span>
-            <span style={{ fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', color: priColor, backgroundColor: priColor+'1A', padding: '0.15rem 0.4rem', borderRadius: '4px' }}>
-              {g.priority || 'Medium'}
-            </span>
-          </div>
-          <span style={{ fontSize: '0.75rem', fontWeight: 700, color: sla.color, backgroundColor: sla.urgent ? '#FEE2E2' : 'transparent', padding: '0.15rem 0.4rem', borderRadius: '4px' }}>
-            {sla.text}
-          </span>
-        </div>
-        
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-          <span>{getCategoryIcon(g.prediction)}</span>
-          <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#111827' }}>{categoryLabel(g, 'Issue')}</span>
-        </div>
-        
-        <p style={{ fontSize: '0.85rem', color: '#4B5563', marginBottom: '1rem', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: 1.4 }}>
-          {g.transcript}
-        </p>
-        
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #F3F4F6', paddingTop: '0.75rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: confScore > 80 ? '#10B981' : '#F59E0B', display: 'flex', alignItems: 'center', gap: '0.25rem', backgroundColor: '#F9FAFB', padding: '0.2rem 0.5rem', borderRadius: '4px' }}>
-              <Activity size={12}/> {confScore}% Conf
-            </span>
-            {isFraud ? (
-              <span style={{ color: '#DC2626', display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', fontWeight: 700, backgroundColor: '#FEF2F2', padding: '0.2rem 0.5rem', borderRadius: '4px' }}>
-                <ShieldAlert size={12}/> High Risk
-              </span>
-            ) : (
-              <span style={{ color: '#10B981', display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', fontWeight: 600, backgroundColor: '#ECFDF5', padding: '0.2rem 0.5rem', borderRadius: '4px' }}>
-                <ShieldCheck size={12}/> Safe
-              </span>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  const renderColumn = (title, id, items, bgTint, countColor) => (
-    <div 
-      onDragOver={(e) => handleDragOver(e, id)}
-      onDrop={(e) => handleDrop(e, id)}
-      style={{ 
-        backgroundColor: dragOverCol === id ? '#E5E7EB' : bgTint, 
-        borderRadius: '12px', 
-        display: 'flex', 
-        flexDirection: 'column', 
-        height: '100%',
-        minWidth: '300px',
-        border: dragOverCol === id ? '2px dashed #9CA3AF' : '2px solid transparent',
-        transition: 'all 0.2s ease'
-      }}
-    >
-      <div style={{ padding: '1.25rem 1rem 0.75rem 1rem', borderBottom: '2px solid rgba(0,0,0,0.03)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 10 }}>
-        <h3 style={{ fontSize: '0.85rem', fontWeight: 800, color: '#4B5563', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{title}</h3>
-        <span style={{ backgroundColor: countColor, color: '#fff', fontSize: '0.75rem', fontWeight: 800, padding: '0.15rem 0.5rem', borderRadius: '12px' }}>{items.length}</span>
-      </div>
-      <div style={{ padding: '1rem', overflowY: 'auto', flex: 1 }}>
-        {items.length === 0 ? (
-          <div style={{ height: '100px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9CA3AF', fontSize: '0.85rem', fontWeight: 500, border: '2px dashed #D1D5DB', borderRadius: '8px' }}>
-            No complaints here
-          </div>
-        ) : (
-          items.map(g => renderCard(g, id))
-        )}
-      </div>
-    </div>
-  );
+  const rows = byTab[activeTab];
+  const overdue = byTab.open.concat(byTab.inProgress).filter(g => slaInfo(g.sla_deadline).text === 'Overdue').length;
+  const title = userDepartment === 'All Departments' ? 'All departments' : `${userDepartment || 'Department'}`;
 
   return (
-    <div style={{ backgroundColor: '#F9FAFB', height: 'calc(100vh - 64px)', display: 'flex', flexDirection: 'column', overflow: 'hidden', fontFamily: 'Inter, sans-serif' }}>
-      
-      {/* Workspace Header */}
-      <div style={{ backgroundColor: '#fff', borderBottom: '1px solid #E5E7EB', padding: '1.5rem 2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', flexShrink: 0 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+    <div style={{ backgroundColor: '#F9FAFB', minHeight: 'calc(100vh - 64px)' }}>
+      <div style={{ maxWidth: 1240, margin: '0 auto', padding: '1.75rem 1.5rem 3rem' }}>
+
+        {/* Header */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: '1rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.25rem' }}>
-              <div style={{ width: '40px', height: '40px', backgroundColor: '#FFF7ED', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#EA580C' }}>
-                <LayoutDashboard size={20} />
-              </div>
-              <div>
-                <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#111827', margin: 0, lineHeight: 1.2 }}>
-                  {userDepartment === 'All Departments' ? 'Central Operations' : `${userDepartment} Operations`}
-                </h1>
-                <p style={{ fontSize: '0.875rem', color: '#6B7280', margin: 0 }}>Manage, verify, and resolve civic complaints.</p>
-              </div>
-            </div>
+            <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#6B7280', marginBottom: '0.2rem' }}>Complaint register</div>
+            <h1 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#111827', margin: 0, lineHeight: 1.2 }}>{title}</h1>
+            <p style={{ fontSize: '0.9rem', color: '#6B7280', margin: '0.25rem 0 0' }}>
+              {counts.open + counts.inProgress} open{overdue > 0 && <> · <span style={{ color: '#DC2626', fontWeight: 600 }}>{overdue} overdue</span></>} · {counts.resolved} resolved
+            </p>
           </div>
-          
-          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-            <div style={{ display: 'flex', backgroundColor: '#F3F4F6', borderRadius: '8px', padding: '0.25rem' }}>
-              {['Total', 'Pending', 'AI Flagged', 'Resolved'].map((s, i) => (
-                <div key={s} style={{ padding: '0.5rem 1rem', display: 'flex', flexDirection: 'column', alignItems: 'center', borderRight: i < 3 ? '1px solid #E5E7EB' : 'none' }}>
-                  <span style={{ fontSize: '0.7rem', textTransform: 'uppercase', fontWeight: 700, color: '#6B7280', marginBottom: '0.15rem' }}>{s}</span>
-                  <span style={{ fontSize: '1.1rem', fontWeight: 800, color: '#111827', lineHeight: 1 }}>
-                    {i===0 ? processedData.total : i===1 ? processedData.toReview.length : i===2 ? processedData.flagged.length : processedData.resolvedToday}
-                  </span>
-                </div>
-              ))}
-            </div>
-            <button onClick={fetchGrievances} style={{ backgroundColor: '#fff', border: '1px solid #D1D5DB', padding: '0.6rem', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', color: '#4B5563', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
-              <RefreshCw size={16} className={loading ? 'spin-anim' : ''} />
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button className="btn btn-outline" onClick={fetchGrievances} style={{ background: '#fff', borderRadius: 8, padding: '0.55rem 0.9rem', fontSize: '0.875rem' }} aria-label="Refresh">
+              <RefreshCw size={15} className={loading ? 'spin-anim' : ''} /> Refresh
             </button>
-            <button onClick={handleExport} style={{ backgroundColor: '#fff', border: '1px solid #D1D5DB', padding: '0.5rem 1rem', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#4B5563', fontSize: '0.875rem', fontWeight: 600, boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
-              <Download size={16} /> Export
+            <button className="btn btn-outline" onClick={handleExport} style={{ background: '#fff', borderRadius: 8, padding: '0.55rem 0.9rem', fontSize: '0.875rem' }}>
+              <Download size={15} /> Export CSV
             </button>
           </div>
         </div>
 
-        {/* Filters Bar */}
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-          <div style={{ position: 'relative', width: '300px' }}>
-            <Search size={16} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: '#9CA3AF' }} />
-            <input 
-              type="text" 
-              placeholder="Search complaints, IDs, locations..." 
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              style={{ width: '100%', padding: '0.5rem 1rem 0.5rem 2.25rem', borderRadius: '8px', border: '1px solid #D1D5DB', outline: 'none', fontSize: '0.875rem', backgroundColor: '#F9FAFB' }}
-            />
-          </div>
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', borderLeft: '1px solid #E5E7EB', paddingLeft: '1rem' }}>
-            <Filter size={14} color="#6B7280" />
-            <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#6B7280', marginRight: '0.25rem' }}>FILTERS:</span>
-            {['High Priority', 'High Confidence', 'Fraud Alert'].map(f => (
-              <button 
-                key={f}
-                onClick={() => toggleFilter(f)}
-                style={{ 
-                  backgroundColor: activeFilters.includes(f) ? '#DBEAFE' : '#fff', 
-                  color: activeFilters.includes(f) ? '#1E40AF' : '#4B5563', 
-                  border: `1px solid ${activeFilters.includes(f) ? '#BFDBFE' : '#D1D5DB'}`, 
-                  padding: '0.35rem 0.75rem', 
-                  borderRadius: '20px', 
-                  fontSize: '0.75rem', 
-                  fontWeight: 600, 
-                  cursor: 'pointer',
-                  transition: 'all 0.2s'
-                }}
-              >
-                {f}
-              </button>
-            ))}
-          </div>
+        {/* Tabs */}
+        <div className="tabs" role="tablist">
+          {TABS.map(tab => (
+            <button key={tab.id} role="tab" aria-selected={activeTab === tab.id} className={`tab${activeTab === tab.id ? ' active' : ''}`} onClick={() => setActiveTab(tab.id)}>
+              {tab.id === 'flagged' && counts.flagged > 0 && <ShieldAlert size={14} color="#DC2626" />}
+              {tab.label} <span className="count">{counts[tab.id]}</span>
+            </button>
+          ))}
         </div>
-      </div>
 
-      {/* Kanban Board */}
-      <div style={{ flex: 1, padding: '1.5rem 2rem', overflowX: 'auto' }}>
-        <div style={{ display: 'flex', gap: '1.5rem', height: '100%', minWidth: '1200px' }}>
-          {renderColumn('To Review', 'toReview', processedData.toReview, '#F3F4F6', '#6B7280')}
-          {renderColumn('In Progress', 'inProgress', processedData.inProgress, '#EFF6FF', '#3B82F6')}
-          {renderColumn('AI Flagged', 'flagged', processedData.flagged, '#FEF2F2', '#EF4444')}
-          {renderColumn('Resolved', 'resolved', processedData.resolved, '#F0FDF4', '#10B981')}
+        {/* Search + filter */}
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap', margin: '1rem 0' }}>
+          <div style={{ position: 'relative', flex: '1 1 280px', maxWidth: 420 }}>
+            <Search size={16} style={{ position: 'absolute', left: '0.8rem', top: '50%', transform: 'translateY(-50%)', color: '#9CA3AF' }} />
+            <input className="input" type="text" placeholder="Search by reference, text or location" value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
+              style={{ paddingLeft: '2.4rem', paddingTop: '0.6rem', paddingBottom: '0.6rem', fontSize: '0.9rem' }} />
+          </div>
+          <select className="input" value={routingFilter} onChange={e => setRoutingFilter(e.target.value)} style={{ width: 'auto', padding: '0.6rem 0.9rem', fontSize: '0.9rem', cursor: 'pointer' }} aria-label="Filter by routing">
+            {ROUTING_FILTERS.map(f => <option key={f.id} value={f.id}>{f.label}</option>)}
+          </select>
         </div>
-      </div>
 
-      {/* Right Drawer for Details */}
-      {selectedGrievance && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.3)', zIndex: 1000, display: 'flex', justifyContent: 'flex-end', backdropFilter: 'blur(2px)' }} onClick={() => setSelectedGrievance(null)}>
-          <div 
-            style={{ width: '600px', maxWidth: '90%', backgroundColor: '#fff', height: '100%', boxShadow: '-5px 0 25px rgba(0,0,0,0.1)', display: 'flex', flexDirection: 'column', animation: 'slideIn 0.3s ease-out' }}
-            onClick={e => e.stopPropagation()}
-          >
-            <div style={{ padding: '1.5rem 2rem', borderBottom: '1px solid #E5E7EB', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#F9FAFB' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#111827', margin: 0 }}>Ticket #{selectedGrievance.id}</h2>
-                <span style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', color: getPriorityColor(selectedGrievance.priority), backgroundColor: getPriorityColor(selectedGrievance.priority)+'1A', padding: '0.25rem 0.6rem', borderRadius: '20px' }}>
-                  {selectedGrievance.priority || 'Medium'} PRIORITY
-                </span>
-              </div>
-              <button onClick={() => setSelectedGrievance(null)} style={{ background: 'none', border: 'none', color: '#6B7280', cursor: 'pointer', padding: '0.5rem', borderRadius: '50%' }} className="hover-bg-gray">
-                <X size={20} />
-              </button>
+        {/* Register table */}
+        <div className="register-wrap">
+          {loading && grievances.length === 0 ? (
+            <div style={{ padding: '3rem', textAlign: 'center', color: '#6B7280' }}>Loading complaints…</div>
+          ) : rows.length === 0 ? (
+            <div style={{ padding: '3.5rem 1rem', textAlign: 'center', color: '#6B7280' }}>
+              <Inbox size={32} style={{ opacity: 0.35, marginBottom: '0.5rem' }} />
+              <div style={{ fontWeight: 600, color: '#374151' }}>Nothing here</div>
+              <div style={{ fontSize: '0.875rem' }}>{searchTerm || routingFilter !== 'all' ? 'No complaints match your search or filter.' : `No ${TABS.find(t => t.id === activeTab).label.toLowerCase()} complaints.`}</div>
             </div>
-            
-            <div style={{ flex: 1, overflowY: 'auto', padding: '2rem' }}>
-              
-              {selectedGrievance.ai_verification_status === 'Rejected' && (
-                <div style={{ backgroundColor: '#FEF2F2', padding: '1rem', borderRadius: '8px', border: '1px solid #FCA5A5', marginBottom: '2rem', display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
-                  <ShieldAlert size={24} color="#DC2626" style={{ flexShrink: 0 }} />
-                  <div>
-                    <h4 style={{ color: '#991B1B', margin: '0 0 0.25rem 0', fontWeight: 700, fontSize: '0.9rem' }}>High Fraud Risk Detected</h4>
-                    <p style={{ color: '#7F1D1D', fontSize: '0.85rem', margin: 0 }}>{selectedGrievance.ai_verification_notes}</p>
+          ) : (
+            <table className="register">
+              <thead>
+                <tr>
+                  <th style={{ width: 96 }}>Ref</th>
+                  <th>Complaint</th>
+                  <th>Department</th>
+                  <th>Location</th>
+                  <th>Routing</th>
+                  <th style={{ width: 110 }}>{activeTab === 'resolved' ? 'Resolved' : 'Due'}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map(g => {
+                  const { complaint } = splitTranscript(g.transcript);
+                  const sla = slaInfo(g.sla_deadline);
+                  const outOfScope = routingInfo(g).tone === 'scope';
+                  return (
+                    <tr key={g.id} onClick={() => setSelectedGrievance(g)} tabIndex={0} onKeyDown={e => { if (e.key === 'Enter') setSelectedGrievance(g); }}>
+                      <td className="ref">{formatRef(g.id)}</td>
+                      <td>
+                        <div className="excerpt" dir="auto">{complaint || '—'}</div>
+                        <div className="sub"><Calendar size={12} /> {new Date(g.created_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}
+                          {g.ai_verification_status === 'Rejected' && <span className="tag" style={{ background: '#FEF2F2', color: '#DC2626' }}><ShieldAlert size={11} /> Photo rejected</span>}
+                        </div>
+                      </td>
+                      <td><DeptBadge prediction={g.prediction} outOfScope={outOfScope} /></td>
+                      <td style={{ color: '#374151', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.location || '—'}</td>
+                      <td><RoutingTag g={g} /></td>
+                      <td style={{ whiteSpace: 'nowrap', fontWeight: 600, color: activeTab === 'resolved' ? '#047857' : sla.color }}>
+                        {activeTab === 'resolved'
+                          ? (g.resolved_at ? new Date(g.resolved_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) : 'Done')
+                          : <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>{sla.urgent && <Clock size={13} />}{sla.text}</span>}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
+
+      {/* Ticket drawer */}
+      {selectedGrievance && (() => {
+        const g = selectedGrievance;
+        const { complaint, clarification } = splitTranscript(g.transcript);
+        const sla = slaInfo(g.sla_deadline);
+        const outOfScope = routingInfo(g).tone === 'scope';
+        const inProgress = inProgressIds.has(g.id);
+        const box = { border: '1px solid #E5E7EB', borderRadius: 10, padding: '0.85rem 1rem' };
+        const k = { fontSize: '0.7rem', fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.25rem' };
+        const v = { fontSize: '0.9rem', fontWeight: 600, color: '#111827', display: 'flex', alignItems: 'center', gap: '0.45rem' };
+        return (
+          <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(17,24,39,0.35)', zIndex: 1000, display: 'flex', justifyContent: 'flex-end' }} onClick={closeDrawer}>
+            <div style={{ width: 560, maxWidth: '100%', backgroundColor: '#fff', height: '100%', boxShadow: '-8px 0 30px rgba(0,0,0,0.12)', display: 'flex', flexDirection: 'column', animation: 'slideIn 0.25s ease-out' }} onClick={e => e.stopPropagation()}>
+              <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid #E5E7EB', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
+                <div>
+                  <div style={{ fontFamily: 'ui-monospace, Consolas, monospace', fontSize: '0.85rem', color: '#6B7280' }}>{formatRef(g.id)}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginTop: '0.2rem' }}>
+                    <DeptBadge prediction={g.prediction} outOfScope={outOfScope} />
+                    <RoutingTag g={g} />
+                    {inProgress && !g.is_resolved && <span className="tag" style={{ background: '#EFF6FF', color: '#1D4ED8' }}>In progress</span>}
                   </div>
                 </div>
-              )}
-
-              <div style={{ marginBottom: '2rem' }}>
-                <h3 style={{ fontSize: '0.75rem', fontWeight: 800, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '0.75rem' }}>Complaint Details</h3>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
-                  <span style={{ fontSize: '1.5rem' }}>{getCategoryIcon(selectedGrievance.prediction)}</span>
-                  <span style={{ fontSize: '1.1rem', fontWeight: 700, color: '#111827' }}>{isOutOfScope(selectedGrievance) ? 'Out of scope' : `${categoryLabel(selectedGrievance, 'Unknown')} Classification`}</span>
-                </div>
-                <p style={{ fontSize: '1rem', color: '#374151', lineHeight: 1.6, backgroundColor: '#F9FAFB', padding: '1rem', borderRadius: '8px', border: '1px solid #E5E7EB' }}>
-                  "{selectedGrievance.transcript}"
-                </p>
+                <button onClick={closeDrawer} className="icon-btn" style={{ color: '#6B7280', boxShadow: 'none', background: '#F3F4F6' }} aria-label="Close"><X size={18} /></button>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '2rem' }}>
-                <div style={{ border: '1px solid #E5E7EB', borderRadius: '8px', padding: '1rem' }}>
-                  <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#9CA3AF', textTransform: 'uppercase', marginBottom: '0.25rem' }}>Location</div>
-                  <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#111827', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><MapPin size={14}/> {selectedGrievance.location || 'Not Provided'}</div>
-                </div>
-                <div style={{ border: '1px solid #E5E7EB', borderRadius: '8px', padding: '1rem' }}>
-                  <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#9CA3AF', textTransform: 'uppercase', marginBottom: '0.25rem' }}>Submitted</div>
-                  <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#111827', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Calendar size={14}/> {new Date(selectedGrievance.created_at).toLocaleDateString()}</div>
-                </div>
-                <div style={{ border: '1px solid #E5E7EB', borderRadius: '8px', padding: '1rem' }}>
-                  <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#9CA3AF', textTransform: 'uppercase', marginBottom: '0.25rem' }}>AI Confidence</div>
-                  <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#111827', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Activity size={14}/> {Math.round((selectedGrievance.confidence_score||0.8)*100)}% ({selectedGrievance.confidence})</div>
-                </div>
-                <div style={{ border: '1px solid #E5E7EB', borderRadius: '8px', padding: '1rem' }}>
-                  <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#9CA3AF', textTransform: 'uppercase', marginBottom: '0.25rem' }}>SLA Deadline</div>
-                  <div style={{ fontSize: '0.9rem', fontWeight: 600, color: getSlaInfo(selectedGrievance.sla_deadline).color, display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Clock size={14}/> {getSlaInfo(selectedGrievance.sla_deadline).text}</div>
-                </div>
-              </div>
-
-              {(selectedGrievance.before_photo_url || selectedGrievance.after_photo_url) && (
-                <div style={{ marginBottom: '2rem' }}>
-                  <h3 style={{ fontSize: '0.75rem', fontWeight: 800, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '0.75rem' }}>Evidence Photos</h3>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                    {selectedGrievance.before_photo_url && (
-                      <div>
-                        <div style={{ fontSize: '0.75rem', color: '#6B7280', fontWeight: 600, marginBottom: '0.25rem' }}>Citizen Photo (Before)</div>
-                        <img src={selectedGrievance.before_photo_url} alt="Before" style={{ width: '100%', height: '180px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #E5E7EB' }} />
-                      </div>
-                    )}
-                    {selectedGrievance.after_photo_url && (
-                      <div>
-                        <div style={{ fontSize: '0.75rem', color: '#6B7280', fontWeight: 600, marginBottom: '0.25rem' }}>Operator Photo (After)</div>
-                        <img src={selectedGrievance.after_photo_url} alt="After" style={{ width: '100%', height: '180px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #E5E7EB' }} />
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              <div style={{ marginBottom: '2rem' }}>
-                <h3 style={{ fontSize: '0.75rem', fontWeight: 800, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '0.75rem' }}>Resolution Workflow</h3>
-                {selectedGrievance.is_resolved ? (
-                  <div style={{ backgroundColor: '#F0FDF4', border: '1px solid #BBF7D0', padding: '1.25rem', borderRadius: '8px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#166534', fontWeight: 700, marginBottom: '0.5rem' }}>
-                      <CheckCircle size={18} /> Officially Resolved
+              <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem' }}>
+                {g.ai_verification_status === 'Rejected' && (
+                  <div style={{ backgroundColor: '#FEF2F2', padding: '0.9rem 1rem', borderRadius: 10, border: '1px solid #FCA5A5', marginBottom: '1.5rem', display: 'flex', gap: '0.75rem' }}>
+                    <ShieldAlert size={20} color="#DC2626" style={{ flexShrink: 0 }} />
+                    <div>
+                      <div style={{ color: '#991B1B', fontWeight: 700, fontSize: '0.9rem' }}>"After" photo was rejected</div>
+                      <div style={{ color: '#7F1D1D', fontSize: '0.85rem' }}>{g.ai_verification_notes}</div>
                     </div>
-                    <p style={{ color: '#14532D', fontSize: '0.9rem', margin: 0 }}>{selectedGrievance.resolution_notes || 'No official notes provided.'}</p>
-                  </div>
-                ) : (
-                  <div style={{ backgroundColor: '#F9FAFB', border: '1px solid #E5E7EB', padding: '1.5rem', borderRadius: '8px' }}>
-                    <textarea 
-                      value={reviewNotes}
-                      onChange={(e) => setReviewNotes(e.target.value)}
-                      placeholder="Enter official resolution notes for the citizen..."
-                      style={{ width: '100%', padding: '0.75rem', borderRadius: '6px', border: '1px solid #D1D5DB', minHeight: '100px', resize: 'vertical', fontFamily: 'inherit', marginBottom: '1rem', fontSize: '0.9rem', outline: 'none' }}
-                    />
-                    <div style={{ marginBottom: '1.25rem' }}>
-                      <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#4B5563', marginBottom: '0.5rem' }}>Attach "After" Verification Photo</label>
-                      <input 
-                        type="file" 
-                        accept="image/*" 
-                        onChange={(e) => setAfterPhoto(e.target.files[0])} 
-                        style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px dashed #9CA3AF', background: '#fff', fontSize: '0.85rem' }} 
-                      />
-                    </div>
-                    <button 
-                      className="btn btn-primary" 
-                      disabled={resolving} 
-                      onClick={handleResolve}
-                      style={{ width: '100%', display: 'flex', justifyContent: 'center', padding: '0.75rem', borderRadius: '6px', fontSize: '0.95rem', fontWeight: 600, backgroundColor: '#EA580C', color: '#fff', border: 'none', cursor: 'pointer' }}
-                    >
-                      {resolving ? 'Verifying AI Evidence...' : 'Mark as Resolved'}
-                    </button>
                   </div>
                 )}
-              </div>
 
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <div style={sectionTitle}>Complaint</div>
+                  <div style={{ background: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: 10, padding: '1rem' }}>
+                    <p dir="auto" style={{ fontSize: '1rem', color: '#111827', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{complaint}</p>
+                    {clarification && clarification.type !== 'other' && (
+                      <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px dashed #E5E7EB', fontSize: '0.85rem', color: '#4B5563', display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
+                        <UserCheck size={15} style={{ marginTop: 2, flexShrink: 0 }} />
+                        <span>
+                          {clarification.type === 'chose'
+                            ? <>Citizen chose <strong>{clarification.choice}</strong> from {clarification.offered.join(', ')}.</>
+                            : <>Citizen said none of {clarification.offered.join(', ')} fit; needs an officer's decision.</>}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1.5rem' }}>
+                  <div style={box}><div style={k}>Location</div><div style={v}><MapPin size={14} color="#6B7280" /> {g.location || 'Not provided'}</div></div>
+                  <div style={box}><div style={k}>Submitted</div><div style={v}><Calendar size={14} color="#6B7280" /> {new Date(g.created_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}</div></div>
+                  <div style={box}><div style={k}>Model confidence</div><div style={v}><Activity size={14} color="#6B7280" /> {g.confidence_score != null ? `${Math.round(g.confidence_score * 100)}%` : '—'} <span style={{ fontWeight: 500, color: '#6B7280' }}>({g.confidence})</span></div></div>
+                  <div style={box}><div style={k}>Due</div><div style={{ ...v, color: g.is_resolved ? '#047857' : sla.color }}><Clock size={14} /> {g.is_resolved ? 'Resolved' : sla.text}</div></div>
+                </div>
+
+                {(g.before_photo_url || g.after_photo_url) && (
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    <div style={sectionTitle}>Photos</div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                      {g.before_photo_url && (
+                        <a href={g.before_photo_url} target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>
+                          <div style={{ fontSize: '0.75rem', color: '#6B7280', fontWeight: 600, marginBottom: '0.25rem' }}>Citizen (before)</div>
+                          <img src={g.before_photo_url} alt="Before" style={{ width: '100%', height: 160, objectFit: 'cover', borderRadius: 10, border: '1px solid #E5E7EB' }} />
+                        </a>
+                      )}
+                      {g.after_photo_url && (
+                        <a href={g.after_photo_url} target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>
+                          <div style={{ fontSize: '0.75rem', color: '#6B7280', fontWeight: 600, marginBottom: '0.25rem' }}>Officer (after)</div>
+                          <img src={g.after_photo_url} alt="After" style={{ width: '100%', height: 160, objectFit: 'cover', borderRadius: 10, border: '1px solid #E5E7EB' }} />
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                <div>
+                  <div style={sectionTitle}>Action</div>
+                  {g.is_resolved ? (
+                    <div style={{ backgroundColor: '#F0FDF4', border: '1px solid #BBF7D0', padding: '1rem', borderRadius: 10 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#166534', fontWeight: 700, marginBottom: '0.35rem' }}>
+                        <CheckCircle size={18} /> Resolved{g.resolved_at && ` on ${new Date(g.resolved_at).toLocaleDateString()}`}
+                      </div>
+                      <p style={{ color: '#14532D', fontSize: '0.9rem' }}>{g.resolution_notes || 'No notes provided.'}</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', padding: '0.75rem 1rem', border: '1px solid #E5E7EB', borderRadius: 10, marginBottom: '1rem' }}>
+                        <span style={{ fontSize: '0.9rem', color: '#374151' }}>{inProgress ? 'Work has started on this complaint.' : 'Not started yet.'}</span>
+                        {inProgress ? (
+                          <button className="link-btn muted" onClick={() => setInProgress(g.id, false)}><Undo2 size={14} /> Move back to open</button>
+                        ) : (
+                          <button className="btn btn-outline" style={{ padding: '0.45rem 0.9rem', fontSize: '0.875rem', borderRadius: 8 }} onClick={() => setInProgress(g.id, true)}><PlayCircle size={15} /> Start work</button>
+                        )}
+                      </div>
+
+                      <div className="field">
+                        <label className="field-label">Resolution notes for the citizen</label>
+                        <textarea className="input" value={reviewNotes} onChange={e => setReviewNotes(e.target.value)} placeholder="What was done, and when" />
+                      </div>
+                      <div className="field" style={{ marginBottom: '1.25rem' }}>
+                        <label className="field-label">"After" photo <span className="optional">· used to verify the fix</span></label>
+                        {afterPhotoUrl ? (
+                          <div className="photo-preview">
+                            <img src={afterPhotoUrl} alt="" />
+                            <div style={{ flex: 1, minWidth: 0, fontWeight: 600, fontSize: '0.9rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{afterPhoto.name}</div>
+                            <button type="button" className="icon-btn" style={{ color: '#6B7280' }} onClick={() => setAfterPhoto(null)} aria-label="Remove photo"><X size={16} /></button>
+                          </div>
+                        ) : (
+                          <label className="photo-drop">
+                            <span className="photo-icon"><ImagePlus size={20} /></span>
+                            <span>
+                              <span style={{ display: 'block', fontWeight: 600, color: '#111827' }}>Add a photo of the repaired spot</span>
+                              <span style={{ fontSize: '0.82rem' }}>Compared with the citizen's photo before closing</span>
+                            </span>
+                            <input type="file" accept="image/*" hidden onChange={e => setAfterPhoto(e.target.files[0] || null)} />
+                          </label>
+                        )}
+                      </div>
+                      <button className="btn btn-primary" disabled={resolving} onClick={handleResolve} style={{ width: '100%', padding: '0.8rem', borderRadius: 10 }}>
+                        {resolving ? 'Checking the photo…' : <><CheckCircle size={17} /> Mark as resolved</>}
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       <style>{`
-        .op-card:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
-        }
-        .hover-bg-gray:hover {
-          background-color: #E5E7EB !important;
-        }
-        @keyframes slideIn {
-          from { transform: translateX(100%); }
-          to { transform: translateX(0); }
-        }
-        @keyframes spinAnim {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-        .spin-anim {
-          animation: spinAnim 1s linear infinite;
-        }
+        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+        @keyframes spinAnim { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .spin-anim { animation: spinAnim 1s linear infinite; }
       `}</style>
     </div>
   );
