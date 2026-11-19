@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Mic, Square, CheckCircle, AlertTriangle, Play, Pause, RotateCcw, ImagePlus, X, MapPin, FileText, UserCheck, ArrowRight } from 'lucide-react';
+import { Mic, Square, CheckCircle, AlertTriangle, Play, Pause, RotateCcw, ImagePlus, X, MapPin, FileText, UserCheck, ArrowRight, Check } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { API_BASE } from '../api';
 import { deptInfo, formatRef } from '../utils/grievance';
+import LocationPicker from '../components/LocationPicker';
 
 const formatDuration = (s) => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, '0')}`;
 
@@ -86,6 +87,13 @@ const CitizenPortal = () => {
   const [reporterPhone, setReporterPhone] = useState('');
   const [location, setLocation] = useState('');
   const [extraDetails, setExtraDetails] = useState('');
+  // Map pin and address lines (all optional except the area / village in `location`)
+  const [pin, setPin] = useState(null); // {lat, lng}
+  const [addressLine, setAddressLine] = useState('');
+  const [landmark, setLandmark] = useState('');
+  const [pincode, setPincode] = useState('');
+  const [near, setNear] = useState(null);
+  const autoFilled = useRef({ area: null, pincode: null }); // what the map filled in, so typed values are never overwritten
   const DEFAULT_OPTIONS = ['Water', 'Electricity', 'Roads', 'Sanitation', 'Drainage', 'Street Lights']; // only for the Gemini fallback, which sends no options
   const [beforePhoto, setBeforePhoto] = useState(null);
   const [language, setLanguage] = useState('hi'); // the language the citizen will speak; sent to Whisper so it need not guess
@@ -114,10 +122,30 @@ const CitizenPortal = () => {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
 
+  // Fill Area and PIN from the map only when empty or still holding the previous auto-filled value.
+  const applyAddress = (addr) => {
+    setNear(addr?.display || null);
+    if (!addr) return;
+    if (addr.area) {
+      setLocation(cur => (!cur.trim() || cur === autoFilled.current.area ? addr.area : cur));
+      autoFilled.current.area = addr.area;
+    }
+    if (addr.pincode) {
+      setPincode(cur => (!cur.trim() || cur === autoFilled.current.pincode ? addr.pincode : cur));
+      autoFilled.current.pincode = addr.pincode;
+    }
+  };
+
   const resetToStart = () => {
     setInputMode('voice');
     setTypedText('');
     setBeforePhoto(null);
+    setPin(null);
+    setAddressLine('');
+    setLandmark('');
+    setPincode('');
+    setNear(null);
+    autoFilled.current = { area: null, pincode: null };
     setIsPlaying(false);
     setStatus('idle');
   };
@@ -195,6 +223,13 @@ const CitizenPortal = () => {
     }
     formData.append('location', location);
     if (extraDetails) formData.append('extra_details', extraDetails);
+    if (pin) {
+      formData.append('latitude', pin.lat.toFixed(6));
+      formData.append('longitude', pin.lng.toFixed(6));
+    }
+    if (addressLine.trim()) formData.append('address_line', addressLine.trim());
+    if (landmark.trim()) formData.append('landmark', landmark.trim());
+    if (pincode.trim()) formData.append('pincode', pincode.trim());
     
     // Upload Before Photo to Cloudinary if selected
     if (beforePhoto) {
@@ -383,8 +418,31 @@ const CitizenPortal = () => {
             )}
 
             <div className="field">
-              <label className="field-label"><MapPin size={14} /> {t("Location / Village *")}</label>
-              <input className="input" type="text" value={location} onChange={e => setLocation(e.target.value)} required placeholder="E.g. Near main square, Palampur" />
+              <label className="field-label"><MapPin size={14} /> {t('Mark the spot', { defaultValue: 'Mark the spot' })} <span className="optional">· {t('optional', { defaultValue: 'optional' })}</span></label>
+              <LocationPicker value={pin} onChange={setPin} onAddress={applyAddress} />
+              {pin && near && (
+                <div className="near-line"><MapPin size={14} style={{ flexShrink: 0, marginTop: 2, color: 'var(--accent)' }} /> <span><strong>{t('Near', { defaultValue: 'Near' })}:</strong> {near}</span></div>
+              )}
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0 1rem' }}>
+              <div className="field">
+                <label className="field-label">{t('House / street', { defaultValue: 'House / street' })} <span className="optional">· {t('optional', { defaultValue: 'optional' })}</span></label>
+                <input className="input" type="text" value={addressLine} onChange={e => setAddressLine(e.target.value)} maxLength={200} placeholder={t('E.g. H.No 12, Gali 4', { defaultValue: 'E.g. H.No 12, Gali 4' })} />
+              </div>
+              <div className="field">
+                <label className="field-label">{t('Landmark', { defaultValue: 'Landmark' })} <span className="optional">· {t('optional', { defaultValue: 'optional' })}</span></label>
+                <input className="input" type="text" value={landmark} onChange={e => setLandmark(e.target.value)} maxLength={200} placeholder={t('E.g. opposite the temple', { defaultValue: 'E.g. opposite the temple' })} />
+              </div>
+              <div className="field">
+                <label className="field-label">{t("Location / Village *")}</label>
+                <input className="input" type="text" value={location} onChange={e => setLocation(e.target.value)} required placeholder="E.g. Near main square, Palampur" />
+              </div>
+              <div className="field">
+                <label className="field-label">{t('PIN code', { defaultValue: 'PIN code' })} <span className="optional">· {t('optional', { defaultValue: 'optional' })}</span></label>
+                <input className="input" type="text" inputMode="numeric" pattern="\d{6}" maxLength={6} value={pincode} onChange={e => setPincode(e.target.value.replace(/\D/g, ''))}
+                  title={t('6-digit PIN code', { defaultValue: '6-digit PIN code' })} placeholder="110085" />
+              </div>
             </div>
 
             <div className="field">
@@ -477,7 +535,13 @@ const CitizenPortal = () => {
               {location && (
                 <div className="summary-row">
                   <span className="k">{t('Location', { defaultValue: 'Location' })}</span>
-                  <span className="v"><MapPin size={14} color="#6B7280" /> {location}</span>
+                  <span className="v"><MapPin size={14} color="#6B7280" /> {[addressLine.trim(), location, pincode.trim()].filter(Boolean).join(', ')}</span>
+                </div>
+              )}
+              {pin && (
+                <div className="summary-row">
+                  <span className="k">{t('Map pin', { defaultValue: 'Map pin' })}</span>
+                  <span className="v" style={{ color: '#047857' }}><Check size={15} /> {t('Saved', { defaultValue: 'Saved' })}</span>
                 </div>
               )}
             </div>
