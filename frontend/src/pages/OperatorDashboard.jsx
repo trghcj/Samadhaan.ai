@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { API_BASE } from '../api';
 import { deptInfo, formatRef, splitTranscript, routingInfo, TONE_COLORS, slaInfo } from '../utils/grievance';
 import LocationView from '../components/LocationView';
+import { googleMapsUrl } from '../utils/geo';
 
 const TABS = [
   { id: 'open', label: 'Open' },
@@ -129,18 +130,26 @@ const OperatorDashboard = () => {
 
   const handleExport = () => {
     if (grievances.length === 0) return alert("No data to export");
-    const headers = ['ID', 'Transcript', 'Prediction', 'Confidence', 'Priority', 'SLA Deadline', 'Status', 'Location', 'Submitted Date'];
+    const headers = ['ID', 'Transcript', 'Prediction', 'Confidence', 'Priority', 'SLA Deadline', 'Status', 'Location', 'House / Street', 'Landmark', 'PIN Code', 'Latitude', 'Longitude', 'Map Link', 'Submitted Date'];
     const csvRows = [headers.join(',')];
+    const q = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
     grievances.forEach(g => {
+      const hasPin = g.latitude != null && g.longitude != null;
       const row = [
         g.id,
-        `"${(g.transcript || '').replace(/"/g, '""')}"`,
+        q(g.transcript),
         g.prediction,
         g.confidence,
         g.priority,
         g.sla_deadline,
         g.is_resolved ? 'Resolved' : (g.ai_verification_status === 'Rejected' ? 'AI Flagged' : 'Pending'),
-        `"${(g.location || '').replace(/"/g, '""')}"`,
+        q(g.location),
+        q(g.address_line),
+        q(g.landmark),
+        q(g.pincode),
+        hasPin ? g.latitude : '',
+        hasPin ? g.longitude : '',
+        hasPin ? q(googleMapsUrl(g.latitude, g.longitude)) : '',
         new Date(g.created_at).toISOString()
       ];
       csvRows.push(row.join(','));
