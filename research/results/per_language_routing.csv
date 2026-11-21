@@ -1,0 +1,19 @@
+method,language,n_runs,auto_share_pct_mean,auto_share_pct_spread,silent_error_pct_mean,silent_error_pct_spread
+1 raw softmax + threshold,English,5,60.01,12.82,2.72,2.23
+1 raw softmax + threshold,Hindi,5,57.51,14.41,6.02,5.41
+1 raw softmax + threshold,Hinglish,5,59.49,7.34,13.32,5.11
+2 temperature + threshold,English,5,60.81,10.07,2.62,2.16
+2 temperature + threshold,Hindi,5,58.72,12.48,6.06,5.27
+2 temperature + threshold,Hinglish,5,60.75,6.75,13.48,5.23
+"3 threshold, risk-corrected",English,5,54.32,16.09,1.85,3.0
+"3 threshold, risk-corrected",Hindi,5,51.69,18.02,5.32,5.43
+"3 threshold, risk-corrected",Hinglish,5,53.01,10.3,11.41,4.16
+4 ensemble + threshold,English,1,67.91,,1.59,
+4 ensemble + threshold,Hindi,1,66.09,,5.77,
+4 ensemble + threshold,Hinglish,1,64.52,,12.93,
+5 conformal sets (alpha 0.10),English,5,40.61,49.89,3.07,2.8
+5 conformal sets (alpha 0.10),Hindi,5,40.11,48.0,6.26,5.02
+5 conformal sets (alpha 0.10),Hinglish,5,39.83,47.73,10.66,8.14
+6 MC dropout + threshold,English,5,66.61,19.16,2.83,1.77
+6 MC dropout + threshold,Hindi,5,62.96,15.48,5.75,3.11
+6 MC dropout + threshold,Hinglish,5,63.75,12.05,13.35,3.84
