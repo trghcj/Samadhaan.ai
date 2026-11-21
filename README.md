@@ -44,6 +44,7 @@ Complaint portals usually expect an English form and ask the citizen to pick the
   - Map with "Open in Google Maps"
   - Before and after photos
   - Start work, and resolve with notes
+- Central review: an allowlisted "All Departments" operator (`CENTRAL_OPERATOR_EMAILS`) sees every complaint, including unclear ones, and can reassign any open complaint to the right department
 - Photo verification of resolutions; rejected fixes stay open as "Flagged"
 - CSV export including location columns
 
@@ -93,6 +94,7 @@ A spoken complaint is uploaded to `POST /api/upload` and processed in the backgr
 | PATCH | `/api/grievances/{id}/clarify` | Citizen chooses a department |
 | GET | `/api/grievances` | Operator register (department-scoped) |
 | GET | `/api/grievances/me/{uid}` | A citizen's complaints |
+| PATCH | `/api/grievances/{id}/reassign` | Central operator sends a complaint to a department |
 | PATCH | `/api/grievances/{id}/resolve` | Resolve, with optional photo verification |
 | DELETE | `/api/grievances/{id}` | Delete a complaint |
 | POST | `/api/users/sync` | Create or update the signed-in user |

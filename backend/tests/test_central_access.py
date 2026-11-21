@@ -131,6 +131,61 @@ def test_operator_without_valid_department_sees_nothing(client, allow):
     assert register_ids(client, uid) == set()
 
 
+def test_central_operator_can_reassign_unclear_to_a_department(client, allow):
+    gid = add_grievance("Unclear")
+    email = new_email()
+    allow(email)
+    uid, _ = sync(client, email)
+
+    r = client.patch(f"/api/grievances/{gid}/reassign", json={"uid": uid, "department": "Roads"})
+    assert r.status_code == 200, r.text
+    assert r.json()["prediction"] == "Roads"
+
+    row = next(g for g in client.get("/api/grievances", params={"uid": uid}).json() if g["id"] == gid)
+    assert (row["prediction"], row["confidence"], row["previous_prediction"], row["assigned_by"]) == ("Roads", "Assigned by officer", "Unclear", email)
+    assert row["assigned_at"]
+
+    roads_uid, _ = sync(client, new_email(), role="operator", department="Roads")
+    assert gid in register_ids(client, roads_uid)
+
+
+def test_department_operator_cannot_reassign(client, allow):
+    gid = add_grievance("Unclear")
+    uid, _ = sync(client, new_email(), role="operator", department="Roads")
+    assert client.patch(f"/api/grievances/{gid}/reassign", json={"uid": uid, "department": "Roads"}).status_code == 403
+
+
+def test_unknown_uid_cannot_reassign(client, allow):
+    gid = add_grievance("Unclear")
+    assert client.patch(f"/api/grievances/{gid}/reassign", json={"uid": "nobody", "department": "Roads"}).status_code == 403
+
+
+def test_reassign_rejects_unknown_department(client, allow):
+    gid = add_grievance("Unclear")
+    email = new_email()
+    allow(email)
+    uid, _ = sync(client, email)
+    for dept in ("Unclear", "All Departments", "Parks"):
+        assert client.patch(f"/api/grievances/{gid}/reassign", json={"uid": uid, "department": dept}).status_code == 400
+
+
+def test_reassign_missing_or_resolved_complaint(client, allow):
+    import models
+    from database import SessionLocal
+
+    email = new_email()
+    allow(email)
+    uid, _ = sync(client, email)
+    assert client.patch("/api/grievances/999999999/reassign", json={"uid": uid, "department": "Roads"}).status_code == 404
+
+    gid = add_grievance("Unclear")
+    db = SessionLocal()
+    db.query(models.Grievance).filter(models.Grievance.id == gid).update({"is_resolved": True})
+    db.commit()
+    db.close()
+    assert client.patch(f"/api/grievances/{gid}/reassign", json={"uid": uid, "department": "Roads"}).status_code == 409
+
+
 def test_central_row_without_allowlist_sees_nothing(client, allow):
     add_grievance("Roads")
     uid = uuid.uuid4().hex

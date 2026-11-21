@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Clock, CheckCircle, Search, X, ShieldAlert, Activity, Calendar, MapPin, Download, RefreshCw, ImagePlus, PlayCircle, Undo2, UserCheck, Inbox, AlertTriangle } from 'lucide-react';
+import { Clock, CheckCircle, Search, X, ShieldAlert, Activity, Calendar, MapPin, Download, RefreshCw, ImagePlus, PlayCircle, Undo2, UserCheck, Inbox, AlertTriangle, Shuffle } from 'lucide-react';
 import { PageHeader, StatTiles } from '../components/PageLayout';
 import { useAuth } from '../contexts/AuthContext';
 import { API_BASE } from '../api';
@@ -21,6 +21,7 @@ const ROUTING_FILTERS = [
   { id: 'all', label: 'All routing' },
   { id: 'auto', label: 'Auto-routed' },
   { id: 'citizen', label: 'Citizen chose' },
+  { id: 'assigned', label: 'Assigned by officer' },
   { id: 'officer', label: 'Needs officer' },
   { id: 'waiting', label: 'Awaiting citizen' },
   { id: 'scope', label: 'Out of scope' },
@@ -46,6 +47,51 @@ const RoutingTag = ({ g }) => {
   const r = routingInfo(g);
   const c = TONE_COLORS[r.tone];
   return <span className="tag" style={{ background: c.bg, color: c.color }}>{t(r.label)}</span>;
+};
+
+const DEPARTMENTS = ['Water', 'Electricity', 'Roads', 'Sanitation', 'Drainage', 'Street Lights'];
+
+// Central operator only: send a complaint (typically "Unclear") to one of the six departments.
+const AssignBox = ({ g, uid, onAssigned }) => {
+  const { t } = useTranslation();
+  const [dept, setDept] = useState(DEPARTMENTS.includes(g.prediction) ? g.prediction : '');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
+
+  const assign = async () => {
+    if (!dept) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch(`${API_BASE}/api/grievances/${g.id}/reassign`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ uid, department: dept }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || `HTTP ${res.status}`);
+      onAssigned({ ...g, prediction: data.prediction, previous_prediction: data.previous_prediction, confidence: 'Assigned by officer', clarifying_question: null, assigned_by: data.assigned_by, assigned_at: data.assigned_at });
+    } catch (e) {
+      setError(e.message || String(e));
+    }
+    setBusy(false);
+  };
+
+  return (
+    <div style={{ padding: '0.85rem 1rem', border: '1px solid #DDD6FE', background: '#FAF5FF', borderRadius: 10, marginBottom: '1rem' }}>
+      <label className="field-label" htmlFor={`assign-${g.id}`} style={{ color: '#5B21B6' }}><Shuffle size={14} /> {t('Assign to department')}</label>
+      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+        <select id={`assign-${g.id}`} className="input control" value={dept} onChange={e => setDept(e.target.value)} style={{ flex: '1 1 180px' }} disabled={busy}>
+          <option value="" disabled>{t('Choose a department')}</option>
+          {DEPARTMENTS.map(d => <option key={d} value={d}>{t(d)}</option>)}
+        </select>
+        <button type="button" className="btn btn-primary" onClick={assign} disabled={!dept || busy} style={{ height: 40, padding: '0 16px', borderRadius: 8, fontSize: '0.875rem' }}>
+          {busy ? t('Assigning…') : t('Assign')}
+        </button>
+      </div>
+      {error && <div style={{ fontSize: '0.8rem', color: '#B91C1C', marginTop: '0.4rem' }}>{t("Couldn't assign: {{reason}}", { reason: error })}</div>}
+    </div>
+  );
 };
 
 const OperatorDashboard = () => {
@@ -102,6 +148,13 @@ const OperatorDashboard = () => {
   }, [inProgressIds]);
 
   const closeDrawer = () => { setSelectedGrievance(null); setReviewNotes(''); setAfterPhoto(null); };
+
+  const isCentral = userDepartment === 'All Departments';
+  // Reassignment succeeded: update the row in place so the register and the open ticket reflect it at once.
+  const handleAssigned = (updated) => {
+    setGrievances(prev => prev.map(x => (x.id === updated.id ? { ...x, ...updated } : x)));
+    setSelectedGrievance(updated);
+  };
 
   const setInProgress = (id, on) => {
     setInProgressIds(prev => { const n = new Set(prev); if (on) n.add(id); else n.delete(id); return n; });
@@ -384,8 +437,21 @@ const OperatorDashboard = () => {
                         </span>
                       </div>
                     )}
+                    {g.assigned_by && (
+                      <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px dashed #E5E7EB', fontSize: '0.85rem', color: '#5B21B6', display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
+                        <Shuffle size={15} style={{ marginTop: 2, flexShrink: 0 }} />
+                        <span>
+                          {t('Assigned to {{dept}} by {{who}} on {{date}}.', { dept: t(g.prediction), who: g.assigned_by, date: new Date(g.assigned_at + (String(g.assigned_at).endsWith('Z') ? '' : 'Z')).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) })}
+                          {g.previous_prediction && g.previous_prediction !== g.prediction && <> {t('Was: {{dept}}', { dept: t(g.previous_prediction) })}</>}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
+
+                {isCentral && !g.is_resolved && (
+                  <AssignBox key={g.id} g={g} uid={currentUser?.uid} onAssigned={handleAssigned} />
+                )}
 
                 <div style={{ marginBottom: '1.5rem' }}>
                   <div style={sectionTitle}>{t('Location')}</div>

@@ -199,6 +199,40 @@ def clarify_grievance(g_id: int, req: ClarifyRequest, db: Session = Depends(get_
     return {"status": "success", "outcome": "confirmed", "prediction": choice}
 
 
+class ReassignRequest(BaseModel):
+    uid: str          # Firebase UID of the operator making the change
+    department: str   # one of the six departments
+
+
+@app.patch("/api/grievances/{g_id}/reassign")
+def reassign_grievance(g_id: int, req: ReassignRequest, db: Session = Depends(get_db)):
+    """Central ("All Departments") operator sends a complaint to a department, e.g. an "Unclear" one."""
+    from datetime import datetime
+
+    operator = db.query(models.User).filter(models.User.uid == req.uid).first()
+    if not (operator and operator.role == "operator" and operator.department == CENTRAL_DEPARTMENT
+            and is_central_operator_email(operator.email)):
+        raise HTTPException(status_code=403, detail="Only the central operator can reassign complaints")
+    if req.department not in FALLBACK_DEPARTMENTS:
+        raise HTTPException(status_code=400, detail=f"department must be one of: {', '.join(FALLBACK_DEPARTMENTS)}")
+
+    grievance = db.query(models.Grievance).filter(models.Grievance.id == g_id).first()
+    if not grievance:
+        raise HTTPException(status_code=404, detail="Grievance not found")
+    if grievance.is_resolved:
+        raise HTTPException(status_code=409, detail="A resolved complaint cannot be reassigned")
+
+    grievance.previous_prediction = grievance.prediction
+    grievance.prediction = req.department
+    grievance.confidence = "Assigned by officer"
+    grievance.clarifying_question = None  # no longer waiting for the citizen's choice
+    grievance.assigned_by = operator.email
+    grievance.assigned_at = datetime.utcnow()
+    db.commit()
+    return {"status": "success", "prediction": grievance.prediction, "previous_prediction": grievance.previous_prediction,
+            "assigned_by": grievance.assigned_by, "assigned_at": grievance.assigned_at.isoformat()}
+
+
 class UserSyncRequest(BaseModel):
     uid: str
     email: str

@@ -151,6 +151,7 @@ Base URL: `https://samadhaan-ai.onrender.com` (production) or `http://localhost:
 | PATCH | `/api/grievances/{g_id}/clarify` | Citizen picks a department for a Medium-confidence complaint |
 | GET | `/api/grievances` | Complaint list for the operator register (department-scoped) |
 | GET | `/api/grievances/me/{uid}` | A citizen's own complaints |
+| PATCH | `/api/grievances/{g_id}/reassign` | Central operator sends a complaint to a department |
 | PATCH | `/api/grievances/{g_id}/resolve` | Operator resolves a complaint (optional photo verification) |
 | DELETE | `/api/grievances/{g_id}` | Delete a complaint |
 | POST | `/api/users/sync` | Create or update the user record after Firebase sign-in |
@@ -195,8 +196,17 @@ Response: `{"task_id": "<uuid>", "status": "processing"}`. Invalid language or l
 - Errors: 404 unknown id, 409 not awaiting clarification, 400 a choice that was not offered.
 
 **`GET /api/grievances?uid=<firebase uid>`**
-- Returns all grievance rows, newest first.
-- If `uid` belongs to an operator whose department is not `All Departments`, only that department's rows are returned.
+- Returns grievance rows, newest first.
+- For an operator `uid`:
+  - A central operator (department `All Departments` and email in `CENTRAL_OPERATOR_EMAILS`) gets every row, including `Unclear`.
+  - A department operator gets only rows of their department.
+  - An operator without a valid department gets an empty list.
+
+**`PATCH /api/grievances/{g_id}/reassign`** — JSON `{"uid": "<operator uid>", "department": "<one of the six>"}`
+- Only the central operator may call it; anyone else gets 403.
+- Sets `prediction` to the department and `confidence` to `Assigned by officer`, and clears a pending clarifying question. It records `assigned_by` (operator email), `assigned_at` and `previous_prediction`.
+- The complaint then appears in that department's register. The deadline is unchanged.
+- Errors: 400 unknown department, 404 unknown id, 409 already resolved.
 
 **`GET /api/grievances/me/{uid}`** — the grievances whose `citizen_uid` equals `uid`, newest first.
 
@@ -208,7 +218,8 @@ Response: `{"task_id": "<uuid>", "status": "processing"}`. Invalid language or l
 **`DELETE /api/grievances/{g_id}`** — `{"status": "success"}`, or `{"error": "Not found", "status": 404}`.
 
 **`POST /api/users/sync`** — JSON `{"uid", "email", "display_name", "role": "citizen" | "operator", "department"}`
-- Creates the user on first sign-in. On later sign-ins it updates email, name and last login but never changes role or department.
+- Creates the user on first sign-in. An operator must name one of the six departments, otherwise the account becomes a citizen.
+- On later sign-ins it updates email, name and last login, and keeps role and department, with one exception: central access follows `CENTRAL_OPERATOR_EMAILS` on every login. A listed email becomes the `All Departments` operator; anyone else holding that department becomes a citizen.
 - Response `{"status": "success", "role": "...", "department": "..."}`.
 
 **`GET /api/reset-db`** — drops and recreates every table. Kept from early development; must not be called against the shared database.
@@ -231,7 +242,7 @@ Response: `{"task_id": "<uuid>", "status": "processing"}`. Invalid language or l
 | `id` | Integer, PK | Shown to users as `#000123` |
 | `transcript` | String | Complaint text as spoken or typed (never translated); a citizen clarification line may be appended |
 | `prediction` | String | Department (`Water`, `Electricity`, `Roads`, `Sanitation`, `Drainage`, `Street Lights`) or `Unclear` |
-| `confidence` | String | `High`, `Medium`, `Low` or `Confirmed by citizen` |
+| `confidence` | String | `High`, `Medium`, `Low`, `Confirmed by citizen` or `Assigned by officer` |
 | `confidence_score` | Float | Calibrated estimate that the routing is right |
 | `clarifying_question` | String, null | Set while waiting for the citizen's department choice |
 | `alternative_departments` | String, null | Comma-separated departments offered to the citizen |
@@ -242,6 +253,7 @@ Response: `{"task_id": "<uuid>", "status": "processing"}`. Invalid language or l
 | `latitude`, `longitude` | Float, null | Map pin (WGS84) |
 | `address_line`, `landmark`, `pincode` | String, null | Address lines |
 | `before_photo_url`, `after_photo_url` | String, null | Cloudinary URLs |
+| `assigned_by`, `assigned_at`, `previous_prediction` | String / DateTime / String, null | Reassignment by the central operator: who, when, and the department before |
 | `priority` | String | `High`, `Medium` or `Low` |
 | `sla_deadline` | DateTime, null | Due date (UTC) |
 | `ai_verification_status` | String | `Pending`, `Verified` or `Rejected` |
@@ -447,6 +459,7 @@ Used only by the training and evaluation scripts (see section 14): torch, transf
 | `WHISPER_LANGUAGES` | `hi,en` | Languages Whisper may choose between |
 | `WHISPER_VAD` | `1` | Voice-activity filter on/off |
 | `WHISPER_PROMPT` | empty | Optional vocabulary hint |
+| `CENTRAL_OPERATOR_EMAILS` | empty | Comma-separated emails allowed central "All Departments" access (sees every complaint, can reassign) |
 | `CLASSIFIER` | `muril` | `muril` or `gemini` |
 | `MURIL_MODEL_DIR` | from `router_config.json` | Folder with the MuRIL weights |
 | `MURIL_ROUTER_CONFIG` | `research/outputs/final_e40/router_config.json` | Routing thresholds |

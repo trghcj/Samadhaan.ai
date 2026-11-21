@@ -43,8 +43,9 @@ export function splitTranscript(text) {
   return { complaint, clarification: { type: 'other', text: tail } };
 }
 
-/** How the complaint reached its department. tone: 'auto' | 'citizen' | 'officer' | 'waiting' | 'scope' */
+/** How the complaint reached its department. tone: 'auto' | 'citizen' | 'assigned' | 'officer' | 'waiting' | 'scope' */
 export function routingInfo(g) {
+  if (g.confidence === 'Assigned by officer') return { tone: 'assigned', label: 'Assigned by officer' };
   if (g.prediction === 'Unclear' && g.confidence === 'High') return { tone: 'scope', label: 'Out of scope' };
   if (g.confidence === 'Confirmed by citizen') return { tone: 'citizen', label: 'Citizen chose' };
   if (g.confidence === 'Low' || g.prediction === 'Unclear') return { tone: 'officer', label: 'Needs officer' };
@@ -55,6 +56,7 @@ export function routingInfo(g) {
 export const TONE_COLORS = {
   auto: { color: '#047857', bg: '#ECFDF5' },
   citizen: { color: '#1D4ED8', bg: '#EFF6FF' },
+  assigned: { color: '#6D28D9', bg: '#F5F3FF' },
   officer: { color: '#B45309', bg: '#FFFBEB' },
   waiting: { color: '#6B7280', bg: '#F3F4F6' },
   scope: { color: '#6B7280', bg: '#F3F4F6' },

@@ -13,7 +13,7 @@ export const DYNAMIC_KEYS = [
   ...DEPARTMENTS.map((d) => `${d} Dept.`),
   'Unclear', 'Other', 'Water Supply', 'Under officer review', 'Reported Issue', 'Out of scope',
   // routing labels (utils/grievance.js routingInfo)
-  'Auto-routed', 'Citizen chose', 'Needs officer', 'Awaiting citizen',
+  'Auto-routed', 'Citizen chose', 'Needs officer', 'Awaiting citizen', 'Assigned by officer',
   // operator register tabs and routing filter
   'Open', 'In progress', 'Flagged', 'Resolved', 'All routing',
   // SLA texts (utils/grievance.js slaInfo)

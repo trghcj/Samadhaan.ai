@@ -40,6 +40,11 @@ class Grievance(Base):
     priority = Column(String, default="Medium") # High, Medium, Low
     sla_deadline = Column(DateTime, nullable=True)
     
+    # Reassignment by the central operator (e.g. an "Unclear" complaint sent to a department)
+    assigned_by = Column(String, nullable=True)          # operator email
+    assigned_at = Column(DateTime, nullable=True)
+    previous_prediction = Column(String, nullable=True)  # department (or "Unclear") before the reassignment
+
     # Verification
     ai_verification_status = Column(String, default="Pending") # Pending, Verified, Rejected
     ai_verification_notes = Column(String, nullable=True)
