@@ -80,18 +80,37 @@ def reset_database():
     except Exception as e:
         return {"error": str(e), "status": 500}
 
+CENTRAL_DEPARTMENT = "All Departments"
+
+
+def central_operator_emails():
+    """Emails allowed to be central ("All Departments") operators: CENTRAL_OPERATOR_EMAILS, comma-separated.
+    Read on every call so a change in the environment takes effect without code changes. Empty = nobody."""
+    return {e.strip().lower() for e in os.getenv("CENTRAL_OPERATOR_EMAILS", "").split(",") if e.strip()}
+
+
+def is_central_operator_email(email):
+    return (email or "").strip().lower() in central_operator_emails()
+
+
 @app.get("/api/grievances")
 def get_grievances(uid: str | None = None, db: Session = Depends(get_db)):
     """Fetch grievances for the Operator Dashboard with RBAC"""
     try:
         query = db.query(models.Grievance)
-        
-        # Enforce RBAC if uid is provided
+
+        # Enforce RBAC if uid is provided. Central operators (allowlisted) see everything, including "Unclear";
+        # department operators see their department; an operator with no valid department sees nothing.
         if uid:
             user = db.query(models.User).filter(models.User.uid == uid).first()
-            if user and user.role == "operator" and user.department and user.department != "All Departments":
-                query = query.filter(models.Grievance.prediction == user.department)
-                
+            if user and user.role == "operator":
+                if user.department == CENTRAL_DEPARTMENT and is_central_operator_email(user.email):
+                    pass
+                elif user.department in FALLBACK_DEPARTMENTS:
+                    query = query.filter(models.Grievance.prediction == user.department)
+                else:
+                    return []
+
         grievances = query.order_by(models.Grievance.created_at.desc()).all()
         return grievances
     except Exception as e:
@@ -190,14 +209,22 @@ class UserSyncRequest(BaseModel):
 @app.post("/api/users/sync")
 def sync_user(req: UserSyncRequest, db: Session = Depends(get_db)):
     from datetime import datetime
+    central = is_central_operator_email(req.email)
     user = db.query(models.User).filter(models.User.uid == req.uid).first()
     if not user:
+        if central:
+            role, department = "operator", CENTRAL_DEPARTMENT
+        elif req.role == "operator" and req.department in FALLBACK_DEPARTMENTS:
+            role, department = "operator", req.department
+        else:
+            # A citizen, or an operator request without a real department (incl. "All Departments"): citizen.
+            role, department = "citizen", None
         user = models.User(
             uid=req.uid,
             email=req.email,
             display_name=req.display_name,
-            role=req.role,
-            department=req.department
+            role=role,
+            department=department
         )
         db.add(user)
     else:
@@ -205,7 +232,12 @@ def sync_user(req: UserSyncRequest, db: Session = Depends(get_db)):
         user.email = req.email
         user.display_name = req.display_name
         user.last_login = datetime.utcnow()
-    
+        # ...except for central access, which follows CENTRAL_OPERATOR_EMAILS on every login.
+        if central:
+            user.role, user.department = "operator", CENTRAL_DEPARTMENT
+        elif user.department == CENTRAL_DEPARTMENT:
+            user.role, user.department = "citizen", None
+
     db.commit()
     return {"status": "success", "role": user.role, "department": user.department}
 

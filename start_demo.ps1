@@ -45,7 +45,9 @@ function Wait-ForUrl($url, $seconds, $proc, $logHint) {
 # ---- checks ----
 if (-not $python) { throw "No backend virtual environment found (looked for `$env:SAMADHAAN_VENV, ~\.venvs\samadhaan, backend\venv). Create it first (see README_DEMO.md)." }
 if (-not (Test-Path (Join-Path $backend ".env"))) { Write-Warning "backend\.env not found: the backend needs DATABASE_URL there." }
-if (-not (Test-Path (Join-Path $root "research\outputs\final_e40\model\config.json"))) { Write-Warning "MuRIL model files not found in research\outputs\final_e40\model (see TEAM_GUIDE.md, section 5); the backend will fall back to Gemini." }
+$murilDir = (Select-String -Path (Join-Path $backend ".env") -Pattern "^\s*MURIL_MODEL_DIR\s*=\s*(.+)$" -ErrorAction SilentlyContinue | Select-Object -First 1).Matches.Groups[1].Value
+if (-not $murilDir) { $murilDir = Join-Path $root "research\outputs\final_e40\model" }
+if (-not (Test-Path (Join-Path $murilDir.Trim().Trim('"') "config.json"))) { Write-Warning "MuRIL model files not found in research\outputs\final_e40\model (see TEAM_GUIDE.md, section 5); the backend will fall back to Gemini." }
 
 if ($Local) {
     $npm = Get-Command npm.cmd -ErrorAction SilentlyContinue
@@ -92,6 +94,16 @@ function Free-Port($port, $ours) {
 }
 Free-Port 8000 "uvicorn"
 if ($Local) { Free-Port 5173 "vite" }
+
+# A DATABASE_URL already set in this shell (e.g. by a PowerShell profile for another project) would beat
+# backend\.env, because the backend never overrides an existing variable. Use backend\.env for this run,
+# and put the shell's value back afterwards.
+$savedDbUrl = $env:DATABASE_URL
+$envFile = Join-Path $backend ".env"
+if ($savedDbUrl -and (Test-Path $envFile) -and (Select-String -Path $envFile -Pattern "^\s*DATABASE_URL\s*=" -Quiet)) {
+    Write-Warning "Ignoring DATABASE_URL from this shell ($($savedDbUrl -replace '://([^:/@]+):[^@]+@', '://$1:****@')); using backend\.env."
+    Remove-Item Env:DATABASE_URL
+}
 
 $procs = @()
 try {
@@ -141,5 +153,6 @@ try {
 }
 finally {
     foreach ($p in $procs) { Stop-Tree $p }
+    if ($savedDbUrl) { $env:DATABASE_URL = $savedDbUrl }
     Write-Host "Stopped."
 }
